@@ -1,0 +1,42 @@
+name: "Bug report"
+description: "Report a reproducible problem in Hopper Files or its documentation."
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: "For suspected vulnerabilities, follow the [Security Policy](https://github.com/jonathanpah/hopper-files/security/policy) and [report privately](https://github.com/jonathanpah/hopper-files/security/advisories/new). Do not post security-sensitive details here."
+  - type: input
+    id: version
+    attributes:
+      label: "Version"
+      description: "Provide the release tag or commit, or say that it is unknown."
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "Name the operating system and version, the Python version, the access mode (local or remote), the proxy if any, and the browser. Omit host names, private paths, and account details."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Steps to reproduce"
+      description: "Give a minimal example with synthetic files. Identify the relevant documentation section if there is one."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-observed
+    attributes:
+      label: "Expected and observed behavior"
+      description: "Separate what should have happened from what you observed."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "Evidence and limitations"
+      description: "Include a short redacted log excerpt or screenshot. State what was not verified. Do not upload passwords, cookies, private keys, or personal files."
+    validations:
+      required: true

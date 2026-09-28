@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hopper-files"
+version = "0.1.0"
+description = "Browser-based file manager and Markdown editor for Linux, limited only by each account's Linux permissions."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Jonathan Honorio" }]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "fastapi==0.141.1",
+  "uvicorn==0.53.0",
+]
+
+[project.urls]
+Source = "https://github.com/jonathanpah/hopper-files"
+Issues = "https://github.com/jonathanpah/hopper-files/issues"
+
+[project.optional-dependencies]
+test = [
+  "httpx==0.28.1",
+  "pytest==9.1.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hopper_files"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra"]

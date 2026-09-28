@@ -54,13 +54,13 @@ EXPECTED_FILES = frozenset(
         "hopper_files/static/app.css",
         "hopper_files/static/app.js",
         "hopper_files/static/frontend-bundle-manifest.json",
-        "hopper_files-0.1.1.dist-info/METADATA",
-        "hopper_files-0.1.1.dist-info/WHEEL",
-        "hopper_files-0.1.1.dist-info/RECORD",
-        "hopper_files-0.1.1.dist-info/licenses/LICENSE",
+        "hopper_files-0.1.2.dist-info/METADATA",
+        "hopper_files-0.1.2.dist-info/WHEEL",
+        "hopper_files-0.1.2.dist-info/RECORD",
+        "hopper_files-0.1.2.dist-info/licenses/LICENSE",
     }
 )
-LICENSE_MEMBER = "hopper_files-0.1.1.dist-info/licenses/LICENSE"
+LICENSE_MEMBER = "hopper_files-0.1.2.dist-info/licenses/LICENSE"
 
 
 def main() -> int:

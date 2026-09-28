@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hopper-files"
-version = "0.1.1"
+version = "0.1.2"
 description = "Browser-based file manager and Markdown editor for Linux, limited only by each account's Linux permissions."
 readme = "README.md"
 license = "MIT"

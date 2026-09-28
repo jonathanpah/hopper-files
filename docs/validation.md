@@ -1,9 +1,25 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 and 0.1.1 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.2 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.2
+
+Release 0.1.2 adds `Copiar caminho` to the context menu. It copies the absolute
+path of a file or directory, or the paths of all checked items, one per line.
+A symbolic link, an entry the account cannot open, a special file, and the `/`
+node get a menu with only this entry. On the development machine, these checks
+passed:
+
+- the frontend tests and two identical frontend builds;
+- the Python tests and the repository verifier;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the context menu and the copied paths in WebKit, with mouse, keyboard, and
+  touch, on a synthetic instance;
+- two byte-identical builds of the release archive;
+- an update from 0.1.1 with `update-release`.
 
 ## Release 0.1.1
 

@@ -123,7 +123,7 @@ it exits.
 ```sh
 env PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$LOCKED_SITE" \
   python3 -m hatchling build -t wheel -d dist
-python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.0-py3-none-any.whl
+python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.1-py3-none-any.whl
 ```
 
 `hatchling` must be the pinned `1.32.4` from the locked dependencies. The
@@ -157,12 +157,12 @@ real account's files.
 ## Release archive
 
 A release archive is built from a full Git tree ID, not from the working
-directory. For tag `v0.1.0`:
+directory. For tag `v0.1.1`:
 
 ```sh
-TREE=$(git rev-parse 'v0.1.0^{tree}')
+TREE=$(git rev-parse 'v0.1.1^{tree}')
 python3 scripts/build_release_artifact.py --tree "$TREE" \
-  --release-id hopper-files-0.1.0 --output "$HOME/hopper-files-0.1.0.tar.gz"
+  --release-id hopper-files-0.1.1 --output "$HOME/hopper-files-0.1.1.tar.gz"
 ```
 
 `--tree` takes the full hexadecimal ID of a tree object; a commit or tag ID is

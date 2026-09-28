@@ -1,9 +1,23 @@
 # Validation summary
 
-This page summarizes how release 0.1.0 was checked and what remains open. It
-does not change the [specification](specification.md). A check listed here
+This page summarizes how releases 0.1.0 and 0.1.1 were checked and what
+remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.1
+
+Release 0.1.1 changes one text of the interface: the trash hint now says that
+an item can be permanently deleted after 30 days, since nothing empties the
+trash on its own. On the development machine, these checks passed:
+
+- the frontend tests and two identical frontend builds;
+- the Python tests and the repository verifier;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- two byte-identical builds of the release archive;
+- an update from 0.1.0 with `update-release`.
+
+The sections below describe the checks of 0.1.0, which still apply.
 
 ## Automated checks
 

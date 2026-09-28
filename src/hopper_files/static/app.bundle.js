@@ -56,4 +56,4 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 `).map(e=>e.replace(/[ \t]+$/g,"")).join(`
 `).replace(/\n{3,}/g,`
 
-`).replace(/^\n+/,"").replace(/[ \t\n]+$/g,"")}window.HFEditorRuntime=eu;await import("./assets/app-YKT75OVV.js");
+`).replace(/^\n+/,"").replace(/[ \t\n]+$/g,"")}window.HFEditorRuntime=eu;await import("./assets/app-P5PLVT4O.js");

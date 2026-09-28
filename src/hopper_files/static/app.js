@@ -3036,7 +3036,7 @@
       if (deleted) line.title = `Na lixeira desde ${formatFullDate(entry.deletedAt)}`;
       if (daysLeft !== null) {
         const due = el("span", daysLeft === 0 ? "sai hoje" : `sai em ${daysLeft} ${daysLeft === 1 ? "dia" : "dias"}`, "lx-prazo");
-        due.title = "Itens ficam 30 dias na lixeira e depois são apagados de vez.";
+        due.title = "Depois de 30 dias na lixeira, o item pode ser apagado de vez.";
         line.append(" ", due);
       }
       body.append(el("strong", title, "res-nome"), line);

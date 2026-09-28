@@ -2181,8 +2181,9 @@
       name.title = usable ? entryLabel(entry) : `${entryLabel(entry)} — ${entryReason(entry)}`;
       if (!usable) name.setAttribute("aria-disabled", "true");
       row.onclick = event => { if (event.target === row) activate(); };
-      if (usable && ["file", "directory"].includes(entry.type) && entry.addressable !== false) {
-        row.addEventListener("contextmenu", event => showItemMenu(event, rootId, path, entry.type === "file", entry.type));
+      if (entry.addressable !== false) {
+        const full = usable && ["file", "directory"].includes(entry.type);
+        row.addEventListener("contextmenu", event => showItemMenu(event, rootId, path, entry.type === "file", entry.type, {pathOnly: !full}));
       }
       if (directory) {
         const expanded = treeExpandedFor(treeId).has(path);
@@ -2258,6 +2259,7 @@
     rootName.append(rootIcon, el("span", "/", "nome")); rootName.title = "/";
     rootRow.append(treeChevron(rootExpanded, "/", () => toggleTreeBranch(BASE_ID, "")), rootName);
     rootRow.onclick = event => { if (event.target === rootRow) activateTreeFolder(BASE_ID, ""); };
+    rootRow.addEventListener("contextmenu", event => showItemMenu(event, BASE_ID, "", false, "directory", {pathOnly: true}));
     const rootChildren = el("div", undefined, "node-filhos"); rootChildren.hidden = !rootExpanded; rootChildren.setAttribute("role", "group");
     if (rootExpanded) renderTreeChildren(rootChildren, BASE_ID, "");
     rootNode.append(rootRow, rootChildren); tree.append(rootNode);
@@ -3272,12 +3274,9 @@
     // LRM marks: with direction rtl (truncation at the start), the path keeps its normal left-to-right order.
     doc.pathNode = el("span", `\u200e${absolutePath(path)}\u200e`, "nota-caminho-txt");
     doc.pathNode.title = absolutePath(path);
-    const copyPath = button("", async () => {
-      try { await navigator.clipboard.writeText(absolutePath(path)); toast("Caminho copiado"); }
-      catch (_error) { status("Não foi possível copiar o caminho.", true); }
     // tip-dir: the tooltip grows to the left; centered, it would overflow the right edge and add
     // unwanted horizontal scroll to the document area.
-    }, "nota-copiar-caminho tip-dir");
+    const copyPath = button("", () => void copyPaths([doc.path]), "nota-copiar-caminho tip-dir");
     copyPath.dataset.tip = "Copiar caminho"; copyPath.setAttribute("aria-label", "Copiar caminho"); copyPath.append(controlIcon("copiar-caminho"));
     pathLine.append(doc.pathNode, copyPath); noteHeader.append(pathLine);
     const meta = el("div", undefined, "nota-meta");
@@ -4275,7 +4274,7 @@
         }
         else if (event.key === " ") { event.preventDefault(); if (!check.disabled) check.click(); }
       });
-      if (operable) row.addEventListener("contextmenu", event => showItemMenu(event, listRoot, path, entry.type === "file", entry.type));
+      if (entry.addressable !== false) row.addEventListener("contextmenu", event => showItemMenu(event, listRoot, path, entry.type === "file", entry.type, {pathOnly: !operable}));
       if (operable && state.view === "files") makeDraggable(row, path);
       if (entry.type === "directory" && usable && state.view === "files") makeFolderDropTarget(row, path);
       body.append(row);
@@ -4373,14 +4372,16 @@
     const rect = anchor.getBoundingClientRect();
     showItemMenu({preventDefault() {}, stopPropagation() {}, type: "click", detail: 0, clientX: rect.left, clientY: rect.bottom + 4, anchor}, rootId, path, kind === "file", kind);
   }
-  function showItemMenu(event, rootId, path, file, kind) {
+  // pathOnly: an entry with an address that accepts no other action (link, no permission, special
+  // file) gets a menu with only "Copiar caminho", and does not become the selected item.
+  function showItemMenu(event, rootId, path, file, kind, {pathOnly = false} = {}) {
     event.preventDefault(); event.stopPropagation();
     closeItemMenu();
-    state.selectedItem = {rootId, path, type: kind};
+    if (!pathOnly) state.selectedItem = {rootId, path, type: kind};
     const origin = document.activeElement;
     const anchor = event.anchor || null;
     const menu = $("#menu-ctx");
-    menu.replaceChildren(itemActions(rootId, path, file, kind));
+    menu.replaceChildren(itemActions(rootId, path, file, kind, {pathOnly}));
     for (const row of app.querySelectorAll("tr.menu-alvo")) row.classList.remove("menu-alvo");
     const targetRow = [...app.querySelectorAll("#results tr.item")].find(row => row.dataset.path === path);
     targetRow?.classList.add("menu-alvo");
@@ -4459,9 +4460,25 @@
   function rawLink(rootId, path) {
     return endpoint("api/raw", { rootId, path }).toString();
   }
+  // Absolute paths to the clipboard, one per line. writeText runs inside the click that asked
+  // for it, which Safari requires.
+  async function copyPaths(paths) {
+    const many = paths.length > 1;
+    try {
+      await navigator.clipboard.writeText(paths.map(absolutePath).join("\n"));
+      toast(many ? `${paths.length} caminhos copiados` : "Caminho copiado");
+    } catch (_error) { status(many ? "Não foi possível copiar os caminhos." : "Não foi possível copiar o caminho.", true); }
+  }
+  // Checked items in the order the listing shows them; any other checked item follows by path.
+  function selectedPaths() {
+    const shown = new Map([...app.querySelectorAll("#results tr.item")].map((row, index) => [row.dataset.path, index]));
+    const position = path => shown.get(path) ?? shown.size;
+    return [...state.selectedForZip].map(key => key.split("\u0000")[1])
+      .sort((left, right) => position(left) - position(right) || left.localeCompare(right, "pt-BR"));
+  }
   // Context menu: 13px .ctx-item entries, .ctx-sep separators, and the destructive action last,
   // styled .perigo.
-  function itemActions(rootId, path, file = false, kind = file ? "file" : "directory") {
+  function itemActions(rootId, path, file = false, kind = file ? "file" : "directory", {pathOnly = false} = {}) {
     const actions = el("div", undefined, "item-actions");
     actions.setAttribute("role", "menu");
     const item = itemState(rootId, path);
@@ -4469,10 +4486,12 @@
     // Choosing an item closes the menu and returns focus to its origin (the row) before the action
     // runs, so a dialog opened right after keeps the correct origin and restores it on close.
     const entry = (label, action) => { const node = button(label, () => { closeItemMenu({restoreFocus: true}); action(); }, "ctx-item"); node.setAttribute("role", "menuitem"); return node; };
+    if (pathOnly) { actions.append(entry("Copiar caminho", () => void copyPaths([path]))); return actions; }
     const count = state.selectedForZip.size;
     if (count > 1 && state.selectedForZip.has(`${rootId}\u0000${path}`)) {
       const head = el("div", `${count} itens marcados`, "ctx-titulo"); head.setAttribute("role", "presentation");
-      actions.append(head);
+      const rule = el("div", undefined, "ctx-sep"); rule.setAttribute("role", "separator");
+      actions.append(head, entry(`Copiar os ${count} caminhos`, () => void copyPaths(selectedPaths())), rule);
       const batch = [];
       if (canWrite(rootId)) batch.push(entry(`Mover ${count} itens…`, () => void moveOrCopySelection("move")));
       batch.push(entry(`Copiar ${count} itens…`, () => void moveOrCopySelection("copy")));
@@ -4493,6 +4512,7 @@
     if (kind === "directory") first.push(entry("Abrir em nova aba", () => openFolderTab({rootId, path}, {reuse: true})));
     if (kind === "directory") first.push(entry("Calcular tamanho", () => showDirectorySize(rootId, path)));
     if (file && /\.zip$/i.test(path)) first.push(entry("Extrair aqui", () => extractZip(rootId, path)));
+    first.push(entry("Copiar caminho", () => void copyPaths([path])));
     groups.push(first);
     if (kind === "directory") groups.push(tagFolderMenu(path, entry));
     const operations = [];
@@ -4701,7 +4721,8 @@
     row.onclick = event => { if (event.target === row) void open(); };
     row.addEventListener("contextmenu", event => {
       const known = knownEntry(item.rootId, item.path);
-      if (known && entryUsable(known) && ["file", "directory"].includes(known.type)) showItemMenu(event, item.rootId, item.path, known.type === "file", known.type);
+      const full = known && entryUsable(known) && ["file", "directory"].includes(known.type);
+      showItemMenu(event, item.rootId, item.path, known?.type === "file", known?.type || "file", {pathOnly: !full});
     });
     if (!folder) {
       const spacer = el("span", undefined, "chev vazio"); spacer.setAttribute("aria-hidden", "true");
@@ -4820,9 +4841,14 @@
         try {
           const parent = item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : "";
           const listing = await request("api/list", {}, {rootId: item.rootId, path: parent});
-          const type = listing.entries.find(entry => entry.name === item.path.split("/").at(-1))?.type || "file";
-          showItemMenu(event, item.rootId, item.path, type === "file", type);
-        } catch (_error) { status("Este item não está mais disponível neste caminho.", true); }
+          const found = listing.entries.find(entry => entry.name === item.path.split("/").at(-1));
+          const type = found?.type || "file";
+          const full = !found || (entryUsable(found) && ["file", "directory"].includes(type));
+          showItemMenu(event, item.rootId, item.path, type === "file", type, {pathOnly: !full});
+        } catch (_error) {
+          status("Este item não está mais disponível neste caminho.", true);
+          showItemMenu(event, item.rootId, item.path, false, "file", {pathOnly: true});
+        }
       });
       row.addEventListener("click", event => {
         if (event.target.closest("button, a, select, input")) return;
@@ -4995,9 +5021,14 @@
           try {
             const parent = item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : "";
             const listing = await request("api/list", {}, {rootId: item.rootId, path: parent});
-            const type = listing.entries.find(entry => entry.name === item.path.split("/").at(-1))?.type || "file";
-            showItemMenu(event, item.rootId, item.path, type === "file", type);
-          } catch (_error) { status("Este item não está mais disponível neste caminho.", true); }
+            const found = listing.entries.find(entry => entry.name === item.path.split("/").at(-1));
+            const type = found?.type || "file";
+            const full = !found || (entryUsable(found) && ["file", "directory"].includes(type));
+            showItemMenu(event, item.rootId, item.path, type === "file", type, {pathOnly: !full});
+          } catch (_error) {
+            status("Este item não está mais disponível neste caminho.", true);
+            showItemMenu(event, item.rootId, item.path, false, "file", {pathOnly: true});
+          }
         });
         panel.append(row);
       }
@@ -5074,7 +5105,7 @@
       if (item.line) body.append(el("div", `Linha ${item.line}`, "res-cam"));
       if (item.snippet) body.append(searchSnippet(item.snippet, state.searchText));
       row.append(body);
-        row.addEventListener("contextmenu", event => showItemMenu(event, item.rootId, item.path, item.type === "file", item.type));
+        row.addEventListener("contextmenu", event => showItemMenu(event, item.rootId, item.path, item.type === "file", item.type, {pathOnly: !["file", "directory"].includes(item.type)}));
         row.addEventListener("click", event => {
           if (event.target.closest("button, a, select, input")) return;
           openEntry(item.rootId, item.path, item.type);

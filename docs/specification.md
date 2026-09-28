@@ -808,7 +808,14 @@ listing go to the Trash through a toolbar button, the Delete key
 selection.
 Checked items form the selection: a checkbox, Cmd/Ctrl+click, Shift+click for a
 range, Cmd/Ctrl+A for all, and Esc to clear. The toolbar and the context menu
-act on the whole selection. In the listing, the arrow keys move between rows
+act on the whole selection. The context menu of every item with an address
+offers `Copiar caminho`, which copies the item's absolute path to the
+clipboard. Opened on one of several checked items, the menu offers `Copiar os
+N caminhos` instead, which copies their paths, one per line, in listing order.
+The `/` node, a symbolic link, a special file, an entry that a listing reports
+the account cannot open, and an item whose parent directory cannot be listed
+have a context menu with only `Copiar caminho`. An entry without an address
+has no context menu. In the listing, the arrow keys move between rows
 (one Tab stop for the list), Enter opens, Space checks, F2 renames, and Delete
 or Cmd/Ctrl+Backspace sends to the Trash. Redrawing the listing keeps keyboard
 focus on the same row or column header, and a folder opened with Enter takes

@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RELEASE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 TREE_ID = re.compile(r"^[0-9a-f]{40,64}$")
-SPECIFICATION_SHA256 = "047d85594de6a592bb176d29e6a1416f391d8b5c20adbf73887de3bf3bcb07df"
+SPECIFICATION_SHA256 = "2993db6f2eae538b24a98b99401e1635804a9013f047a34c16375f1644606603"
 
 
 def main() -> int:

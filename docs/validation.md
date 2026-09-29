@@ -1,9 +1,26 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.3 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.4 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.4
+
+Release 0.1.4 fixes the refresh of 0.1.3 when the open folder is deleted and
+created again outside the application: the listing now drops the deleted
+entries and shows the new content when the folder returns, also when its
+parent is deleted and when the folder returns after more than one change
+request. On the development machine, these checks passed:
+
+- the frontend tests and two identical frontend builds;
+- the Python tests and the repository verifier;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- in WebKit on a synthetic instance, the checks of 0.1.3 again and the open
+  folder deleted and created again after 1 and 25 seconds, and its parent
+  deleted and created again; the same folder check fails on 0.1.3;
+- two byte-identical builds of the release archive;
+- an update from 0.1.3 with `update-release`.
 
 ## Release 0.1.3
 

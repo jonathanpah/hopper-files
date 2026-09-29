@@ -344,6 +344,47 @@ and offers an explicit reload or merge. Tabs store only the path and mode,
 never document contents. The interface includes a trash view backed by the
 trash routes below.
 
+### Changes made outside the application
+
+While its browser tab is visible, the interface keeps one `POST api/changes`
+request open with the CSRF token and the body
+`{"rootId": "fs", "paths": [...], "epoch": ..., "seq": ...}`. `paths` names the
+directories on screen: the open folder, the open branches of the `/` tree and
+of favorite trees, and the folders of open documents and previews, at most 256.
+The server watches only those directories through Linux inotify, validating
+each one as `GET api/list` does, and answers about 200 ms after the first
+notice in one of them, or with an empty `changes` list after 20 seconds. The
+response is `{"supported", "epoch", "seq", "resync", "changes", "rejected"}`;
+each change is `{"path", "name"}`, with `name` set to `null` when the directory
+itself changed, the name is not UTF-8, or more than 64 names changed there. The
+interface asks again at once with the returned `epoch` and `seq`, and cancels
+and repeats the request when the set of directories changes.
+
+The first request, a new server process (another `epoch`), a `seq` the server
+no longer keeps, or an inotify queue overflow answers at once with
+`"resync": true`; the interface then reads again everything it shows. A
+directory is released after 60 seconds without being named. One instance
+watches at most 4,096 directories and keeps at most 8,192 notices; a directory
+it cannot watch is listed in `rejected` and is read again when the tab returns
+to view. When inotify is not available, the answer is `"supported": false` and
+the interface stops asking. Once notices are in use, `GET api/list` and
+`GET api/file` start watching the directory they read before reading it.
+
+On a notice, the listing and the tree read the folder again and redraw only
+when entries differ, keeping scroll, focus, and marked items; a redraw waits
+for an open context menu, dialog, drag, or pointer press. A folder that starts
+being watched is read once more after its first answer. An open text document
+without local edits takes the new content and shows `Arquivo atualizado fora
+do app`; with unsaved edits it keeps the buffer and shows `Mudou fora do app`
+with the conflict choices; the user's own save produces no notice. A removed or
+renamed document shows `Removido fora do app` and stays open. Image and PDF
+previews reload. While the tab is hidden, the interface requests nothing; on
+return it reads again the open folder, the open branches, and the open
+documents. After a network or server error it retries after 1, 2, 4, and up to
+30 seconds; after `401` it stops. Changes that another machine makes on a
+network filesystem produce no inotify notice and appear only when the view is
+read again.
+
 ## Base file operations
 
 `GET api/list` returns the entries described above and an opaque listing

@@ -93,7 +93,7 @@ env PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:"$LOCKED_SITE" \
 | --- | --- |
 | `scripts/verify_files_integration.py` | Login, CSRF, interface-state revisions, create, streamed upload and download, copy, ZIP, extraction, and the absence of the retired root route. |
 | `scripts/verify_trash_integration.py` | The same flow, then the trash: delete with marks, list, a restore conflict, and a restore under another name. |
-| `scripts/verify_navigation_integration.py` | Navigation, search, tags of a monitored folder, and interface-state conflicts. |
+| `scripts/verify_navigation_integration.py` | Navigation, search, tags of a monitored folder, interface-state conflicts, and change notices. |
 | `scripts/verify_editor_integration.py` | The editor and viewers: module loading, file versions, `428` and `409`, invalid UTF-8, inert SVG, and image and PDF previews. |
 | `scripts/verify_images_integration.py` | Image upload, pending images, collection after a save, joint restore of a note and its images, and moves that rewrite references, across filesystems when a second writable filesystem is available. |
 

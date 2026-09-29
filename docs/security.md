@@ -121,6 +121,10 @@ user meets.
   Linux writers.
 - The service unit does not restart the process after a crash; an
   administrator restarts it.
+- Change notices (`POST api/changes`) come from Linux inotify. Changes that
+  another machine makes on a network filesystem are not reported and appear
+  only when the view is read again. One instance watches at most 4,096
+  directories, within the account's `fs.inotify.max_user_watches`.
 - Version 1 does not define an additional byte ceiling for `PUT api/state`.
   This release does not add one. Login and logout bodies remain limited to
   64 KiB, and the file-operation JSON body remains limited to 1 MiB, as

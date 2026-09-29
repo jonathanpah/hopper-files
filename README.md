@@ -286,6 +286,10 @@ command, a second instance, updates, backups, and recovery.
   incomplete result or refuse until the derived note index is complete; later
   requests continue the work.
 - The service does not restart by itself after a crash.
+- The open folder, open tree branches, and open documents follow changes made
+  outside the app within about 2 seconds, while the browser tab is visible.
+  Changes made by another machine on a network share appear only after the
+  view is read again, for example when the tab returns to view.
 - With a base path such as `/files/`, the address without its final `/`
   answers `401` with a JSON body, or `404` when a session is open, instead of
   redirecting to the login page.

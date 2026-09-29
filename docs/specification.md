@@ -502,8 +502,8 @@ contract includes `GET/POST login`, `GET/POST password`, `POST logout`,
 `GET app`, `GET api/list`, `GET api/file`, `PUT api/file`, `GET api/raw`,
 `POST api/files`, subordinate
 operation-token issue and status routes, `GET api/search`, `GET/PUT api/state`,
-`GET api/tags`, `GET/POST api/tag-folders`, `GET/POST api/trash`, and
-`GET api/dir-size`. Route subdivision may change if the same typed inputs,
+`GET api/tags`, `GET/POST api/tag-folders`, `GET/POST api/trash`,
+`GET api/dir-size`, and `POST api/changes` (HF-API-008). Route subdivision may change if the same typed inputs,
 authorization, outcomes, and error semantics remain.
 
 `GET api/tag-folders` returns the monitored folders of HF-META-002, each with
@@ -646,6 +646,31 @@ operation time; there is no root or protected-namespace boundary to enforce
 (HF-NAV-009). A lexical prefix or an earlier `realpath` result alone does not
 establish what an address names.
 
+**HF-API-008 — Change notices.** `POST api/changes` tells a client which of the
+directories it shows changed on disk, by any writer. It requires a session
+(`401` otherwise) and the CSRF token (`403` otherwise). The JSON body, at most
+64 KiB (`413` otherwise), is `{rootId,paths,epoch,seq}`: `paths` names at most
+256 directories in the transport form of `GET api/list`, and `epoch` and `seq`
+repeat the previous response, or are `null` and `0` on the first request.
+Another shape returns `422`. The server watches only named directories, through
+the kernel's file notices, never by scanning the filesystem; it validates each
+one as a listing does (HF-API-007) and reports in `rejected` the ones it cannot
+watch, including ones beyond its watch limit. A response is
+`{supported,epoch,seq,resync,changes,rejected}`. `changes` lists `{path,name}`
+for each changed entry of a named directory; `name` is `null` when the
+directory itself changed, the name is not UTF-8, or too many names changed. The
+server answers about 200 ms after the first notice in a named directory, or
+with no change after at most 20 seconds. A first request, a different `epoch`
+(the server restarted), a `seq` the server no longer holds, or a lost notice
+queue returns at once with `resync: true`, and the client reads again what it
+shows. `supported: false` means that no notice is available; the client then
+stops asking. A directory that no request names for 60 seconds stops being
+watched. Once change notices are in use, `GET api/list` and `GET api/file` start
+watching the directory they read before reading it, so a change between the
+read and the client's next request is reported. The kernel does not report
+changes that another machine makes on a network filesystem; those appear when
+the view is read again (HF-FILE-006).
+
 ## 6. Navigation and filesystem operations
 
 **HF-FILE-001 — Navigation.** The UI shows the filesystem tree from `/`
@@ -730,6 +755,36 @@ truncated.
 **HF-FILE-005 — Office files.** Office documents use normal file operations,
 download, and external opening. The UI exposes no internal conversion or office
 suite preview.
+
+**HF-FILE-006 — Changes made outside the application.** While the browser tab
+is visible, the interface asks `POST api/changes` (HF-API-008) about the
+directories it shows: the open folder, the open branches of the `/` tree and of
+favorite trees, and the folders of open documents and image or PDF previews.
+It asks again after each answer, and at once when that set changes. A folder
+that starts being watched is read once more after its first answer, so a change
+made just before its watch began is not lost. A change reported in one of them
+is shown within about 2 seconds, without any action:
+
+- the listing and the tree read the folder again and redraw only when entries
+  differ, keeping the list scroll position, keyboard focus, and marked items
+  that still exist; a redraw waits while a context menu, a dialog, a drag, or a
+  pointer press is in progress, and folder sizes already measured are kept;
+- a burst of changes costs a few reads per folder, not one per changed entry;
+- an open text document without local edits shows the new content, keeps its
+  view position, and shows a short notice; one with unsaved edits keeps the
+  buffer and at once shows `Mudou fora do app` with the conflict choices of
+  HF-SAVE-006 (copy or reload the server version);
+- the user's own save produces no notice; a content-identical change updates
+  only the stored version;
+- a document removed or renamed outside the application shows
+  `Removido fora do app` and stays open for copy or download;
+- an open image or PDF shows its new version.
+
+While the tab is hidden, the interface makes no change request and reads
+nothing. On return it reads again the open folder, open branches, and open
+documents, then resumes asking. After a network or server failure it waits
+longer before each retry; after `401` it stops. An answer with `resync` reads
+again everything shown.
 
 ## 7. Names and creation
 
@@ -1675,6 +1730,19 @@ with move, delete, restore, and recovery state updates and verify each internal
 commit increments the durable revision and cannot be reintroduced or erased by
 the stale full-state payload. The schema remains at `version: 2`, and tabs never
 acquire dirty document content.
+
+**HF-ACC-028.** With synthetic files changed by another process, create, rename,
+delete, and modify entries in the open folder, in an open tree branch, and next
+to open documents; write a file through a temporary name and a rename; and write
+100 files at once. The listing and the tree follow within 2 seconds with scroll,
+focus, and still-existing marked items unchanged and a few reads per burst.
+Verify HF-FILE-006 for a document without edits, with unsaved edits, after the
+user's own save, and after removal and rename, and for an image and a PDF.
+Verify that a hidden tab makes no change request and that its return reads
+again what it shows. Verify HF-API-008 for a missing session, a wrong CSRF
+token, invalid bodies, the answer within 1 second after a change, the empty
+answer within 25 seconds, the release of unnamed directories, the watch limit, a
+server restart, and a notice queue overflow.
 
 **HF-ACC-025.** Open a readable Markdown file the service account does not own
 and cannot write: it is reported as not editable with a reason, shows `Somente leitura` without `Salvo`, has no formatting commands

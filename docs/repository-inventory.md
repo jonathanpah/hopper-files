@@ -34,7 +34,7 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `scripts/build_release_artifact.py` | Reproducible release archive builder for one Git tree. |
 | `scripts/verify_files_integration.py` | Loopback check of login, CSRF, interface-state revisions, create, upload, download, copy, ZIP, and extraction. |
 | `scripts/verify_trash_integration.py` | The same loopback flow, then trash delete, restore conflict, and restore under another name. |
-| `scripts/verify_navigation_integration.py` | Loopback check of navigation, search, tags, and interface-state conflicts, with an optional browser fixture. |
+| `scripts/verify_navigation_integration.py` | Loopback check of navigation, search, tags, interface-state conflicts, and change notices, with an optional browser fixture. |
 | `scripts/verify_editor_integration.py` | Loopback check of the editor and viewer routes, with an optional browser fixture. |
 | `scripts/verify_images_integration.py` | Loopback check of image upload, collection, joint restore, and reference-preserving moves. |
 | `scripts/build_frontend.mjs` | Reproducible browser bundling and license-notice generation. |
@@ -75,6 +75,7 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `src/hopper_files/trash.py` | Per-instance trash, durable delete and restore, and purge. |
 | `src/hopper_files/editor.py` | Strong file versions, metadata-safe atomic editor saves, and cooperative locks. |
 | `src/hopper_files/buffers.py` | Connected editor buffers, clean acknowledgements, and journaled move holds. |
+| `src/hopper_files/changes.py` | Change notices: inotify watches of the directories clients name, numbered notices, and release of unnamed directories. |
 | `src/hopper_files/image_refs.py` | Streaming Markdown image-reference parsing, identity resolution, and move rewrites. |
 | `src/hopper_files/images.py` | Managed uploads, conservative image collection, and journaled image-aware moves. |
 | `src/hopper_files/api/__init__.py` | API package marker. |
@@ -87,9 +88,10 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `src/hopper_files/api/ui_state.py` | Authenticated interface-state read and revision-checked replacement. |
 | `src/hopper_files/api/editor.py` | Authenticated file read/save and inert raster/PDF preview routes. |
 | `src/hopper_files/api/buffers.py` | Authenticated editor-buffer registration, acknowledgements, and move events. |
+| `src/hopper_files/api/changes.py` | Authenticated long-poll route that reports changes in named directories. |
 | `src/hopper_files/api/images.py` | Authenticated image gallery, upload, preview, and pending-state routes. |
 | `src/hopper_files/static/app.css` | Responsive Portuguese navigation and collection styles, served as written. |
-| `src/hopper_files/static/app.js` | Interface code: navigation, collections, editor tabs, save state, and preview client. An input of the generated bundle; not served directly. |
+| `src/hopper_files/static/app.js` | Interface code: navigation, collections, editor tabs, save state, preview client, and refresh after outside changes. An input of the generated bundle; not served directly. |
 | `src/hopper_files/static/app.bundle.js` | Generated frontend entry bundle; the server answers `/app.js` with it. |
 | `src/hopper_files/static/assets/` | Generated frontend chunks and PDF.js data; exact paths and hashes are in `frontend-bundle-manifest.json`. |
 | `src/hopper_files/static/frontend-bundle-manifest.json` | SHA-256 inventory for generated frontend files. |
@@ -113,4 +115,5 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `tests/test_images.py` | Image references, upload, collection, joint restoration, and move checks. |
 | `tests/test_image_collection_failures.py` | Scanner uncertainty, reference-size, and save-race preservation checks. |
 | `tests/test_ui_state.py` | Schema, revision checks, process lock, persistence, and recovery checks. |
+| `tests/test_changes.py` | Change notices: watched directories, create, delete, rename, modify, replace by rename, overflow, release, limits, and route errors. |
 | `tests/test_http_regressions.py` | Regressions through the HTTP routes: ZIP temporary names, save conflicts and access metadata, stale interface state against moves and trash, reference rewrites with open buffers, and collection after a save. |

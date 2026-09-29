@@ -151,7 +151,7 @@
     trashEntries: [], trashLoad: null, selectedForZip: new Set(), splitEnabled: false, splitDocument: null,
     documentOperations: new Set(), selectedItem: null, dirSizes: new Map(), sizeCells: new Map(), sizeController: null, sessionEnded: false,
     listScroll: new Map(), restoreListScroll: false, focusListOnRender: false, historySeq: 0, saveRetryTimer: null, saveFailures: 0,
-    bufferRegistered: true, conflictDeferred: false,
+    bufferRegistered: true, conflictDeferred: false, listingMissingPath: null,
     logoutPhase: "idle", logoutNavigationApproved: false, logoutPostSnapshot: null, logoutCancelHandler: null,
   };
 
@@ -2457,6 +2457,7 @@
       if (requestId !== state.listRequestId || state.view !== "files" || state.rootId !== rootId || state.path !== path) return;
       state.entries = result.entries;
       state.listingVersion = result.listingVersion;
+      state.listingMissingPath = null;
       resetFolderSizes();
       const writableChanged = state.listingWritable !== (result.writable !== false);
       state.listingWritable = result.writable !== false;
@@ -4088,6 +4089,8 @@
     const folders = [];
     const add = path => { if (typeof path === "string" && folders.length < LIVE_MAX_FOLDERS && !folders.includes(path)) folders.push(path); };
     if (state.view === "files" && state.listingRootId === BASE_ID) add(state.listingPath);
+    // While the open folder is gone, its ancestors are watched too, so its return is noticed.
+    if (listingMissing()) for (let path = state.listingPath; path;) { path = parentOf(path); add(path); }
     for (const doc of state.documents.values()) if (doc.rootId === BASE_ID) add(parentOf(doc.path));
     if (live.visual) add(parentOf(live.visual.path));
     if (state.treeSectionOpen !== false) shownBranches(BASE_ID, "", add);
@@ -4154,6 +4157,8 @@
     const first = live.epoch === null;
     live.epoch = result.epoch; live.seq = Number(result.seq) || 0;
     live.rejected = new Set(Array.isArray(result.rejected) ? result.rejected : []);
+    // A folder the server cannot watch now is checked again once it can be watched.
+    for (const path of live.rejected) live.confirmed.delete(path);
     if (result.resync) {
       // Restart or overflow: changes may have been missed, and every folder is watched anew.
       live.confirmed.clear();
@@ -4190,8 +4195,9 @@
   function applyChanges(changed, {verify = false} = {}) {
     for (const [path, names] of changed) {
       const touches = name => names === null || names.has(name);
-      if (listingShown() && state.listingPath === path) queueLiveJob("list", refreshListing);
-      else if (state.treeEntries.has(treeBranchKey(BASE_ID, path))) queueLiveJob(`tree\u0000${path}`, () => refreshTreeBranch(path));
+      const openFolder = listingShown() && state.listingPath === path;
+      if (openFolder || (listingShown() && holdsListing(path, names))) queueLiveJob("list", refreshListing);
+      if (!openFolder && state.treeEntries.has(treeBranchKey(BASE_ID, path))) queueLiveJob(`tree\u0000${path}`, () => refreshTreeBranch(path));
       for (const doc of state.documents.values()) {
         if (doc.rootId === BASE_ID && parentOf(doc.path) === path && touches(doc.path.split("/").pop())) queueLiveJob(doc, () => checkDocument(doc));
       }
@@ -4224,10 +4230,32 @@
   async function screenSettled() {
     while (!$("#menu-ctx").hidden || app.querySelector("dialog[open]") || state.dragPaths || live.pointerDown) await liveDelay(250);
   }
-  // The list is on screen (not a preview, an error card, or search results in its place).
+  // The list is on screen (not a preview, an error card, or search results in its place), or the
+  // notice that the open folder is gone.
   function listingShown() {
     return state.view === "files" && !state.searchResult && !(state.activeDocument && !state.splitEnabled)
-      && state.listingRootId === state.rootId && state.listingPath === state.path && Boolean($("#results > table.lista"));
+      && state.listingRootId === state.rootId && state.listingPath === state.path
+      && Boolean($("#results > table.lista") || $("#results > [data-pasta-sumiu]"));
+  }
+  function listingMissing() {
+    return state.view === "files" && state.listingMissingPath !== null && state.listingMissingPath === state.listingPath;
+  }
+  // A changed entry of `path` that is the open folder or one of its ancestors.
+  function holdsListing(path, names) {
+    const listing = state.listingPath;
+    if (listing === path || !withinPath(listing, path)) return false;
+    if (names === null) return true;
+    return names.has(listing.slice(path ? path.length + 1 : 0).split("/")[0]);
+  }
+  // The open folder was deleted or can no longer be opened: its old entries leave the screen.
+  function showListingGone(path) {
+    const message = "Esta pasta não existe mais ou não pode ser aberta.";
+    state.listingMissingPath = path;
+    state.entries = []; state.selectedForZip.clear(); resetFolderSizes();
+    const notice = emptyState(message, "pasta"); notice.dataset.pastaSumiu = "1";
+    $("#results").replaceChildren(notice);
+    status(message, true); syncSelectionButtons(); refreshInfoPanel();
+    scheduleWatch();
   }
   const sameEntries = (left, right) => JSON.stringify(left) === JSON.stringify(right);
   async function refreshListing() {
@@ -4239,9 +4267,7 @@
       result = await listDirectory(rootId, path, {join: false});
     } catch (error) {
       if (error.status === 409) { queueLiveJob("list", refreshListing); return; }
-      if (listingShown() && state.listingPath === path && [403, 404].includes(error.status)) {
-        status(error.status === 404 ? "Esta pasta não existe mais." : "Sem permissão para abrir esta pasta.", true);
-      }
+      if (listingShown() && state.listingPath === path && [403, 404].includes(error.status)) showListingGone(path);
       return;
     }
     await screenSettled();
@@ -4251,7 +4277,9 @@
     state.treeEntries.set(treeKey, result.entries); state.treeErrors.delete(treeKey);
     state.listingVersion = result.listingVersion;
     const writable = result.writable !== false;
-    if (sameEntries(state.entries, result.entries) && writable === state.listingWritable) {
+    const returned = listingMissing();
+    if (returned) { state.listingMissingPath = null; scheduleWatch(); }
+    if (!returned && sameEntries(state.entries, result.entries) && writable === state.listingWritable) {
       if (treeChanged) renderNavigation();
       return;
     }
@@ -4267,7 +4295,7 @@
     const panel = $("#results"); const top = panel.scrollTop;
     renderResults(state.entries);
     panel.scrollTop = top;
-    if ($("#app-status").textContent === countText) status(filterStatus());
+    if (returned || $("#app-status").textContent === countText) status(filterStatus());
     if (treeChanged) renderNavigation();
     refreshInfoPanel();
   }

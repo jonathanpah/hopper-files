@@ -769,6 +769,9 @@ is shown within about 2 seconds, without any action:
   differ, keeping the list scroll position, keyboard focus, and marked items
   that still exist; a redraw waits while a context menu, a dialog, a drag, or a
   pointer press is in progress, and folder sizes already measured are kept;
+- when the open folder is deleted or can no longer be opened, the listing
+  drops its entries and says so; the interface also watches the folder's
+  ancestors, and when the folder exists again, its new content is shown;
 - a burst of changes costs a few reads per folder, not one per changed entry;
 - an open text document without local edits shows the new content, keeps its
   view position, and shows a short notice; one with unsaved edits keeps the
@@ -1734,8 +1737,10 @@ acquire dirty document content.
 **HF-ACC-028.** With synthetic files changed by another process, create, rename,
 delete, and modify entries in the open folder, in an open tree branch, and next
 to open documents; write a file through a temporary name and a rename; and write
-100 files at once. The listing and the tree follow within 2 seconds with scroll,
-focus, and still-existing marked items unchanged and a few reads per burst.
+100 files at once; delete the open folder, and its parent, and create them again
+after 1 second and after more than one change request. The listing and the tree
+follow within 2 seconds with scroll, focus, and still-existing marked items
+unchanged and a few reads per burst.
 Verify HF-FILE-006 for a document without edits, with unsaved edits, after the
 user's own save, and after removal and rename, and for an image and a PDF.
 Verify that a hidden tab makes no change request and that its return reads

@@ -373,7 +373,10 @@ the interface stops asking. Once notices are in use, `GET api/list` and
 On a notice, the listing and the tree read the folder again and redraw only
 when entries differ, keeping scroll, focus, and marked items; a redraw waits
 for an open context menu, dialog, drag, or pointer press. A folder that starts
-being watched is read once more after its first answer. An open text document
+being watched is read once more after its first answer. When the open folder
+is deleted or can no longer be opened, the listing is replaced by a notice and
+the interface also watches the folder's ancestors; when the folder exists
+again, the listing shows its content. An open text document
 without local edits takes the new content and shows `Arquivo atualizado fora
 do app`; with unsaved edits it keeps the buffer and shows `Mudou fora do app`
 with the conflict choices; the user's own save produces no notice. A removed or

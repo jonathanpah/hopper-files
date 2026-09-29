@@ -1,9 +1,34 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.2 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.3 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.3
+
+Release 0.1.3 follows changes made outside the application. The open folder,
+open tree branches, open documents, and image and PDF previews update within
+about 2 seconds while the browser tab is visible, through the new
+`POST api/changes` route and Linux inotify (`HF-API-008`, `HF-FILE-006`). On
+the development machine, these checks passed:
+
+- the frontend tests and two identical frontend builds;
+- the Python tests, including the change-notice tests, and the repository
+  verifier;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- in WebKit on a synthetic instance, with files changed by another process:
+  create, rename, delete, and modify in the open folder and in an open tree
+  branch, keeping scroll, focus, and marked items; a burst of 100 files; a
+  document without edits, with unsaved edits, after its own save, and after
+  removal and rename; an image and a PDF; a hidden tab that makes no request
+  and reads again on return; a server restart; and an ended session;
+- two byte-identical builds of the release archive;
+- an update from 0.1.2 with `update-release`.
+
+The hidden tab was simulated by the test, since the headless browser has no
+real hidden tab. Changes made by another machine on a network filesystem are
+not reported (see [security](security.md#limits-that-remain-open)).
 
 ## Release 0.1.2
 

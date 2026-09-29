@@ -342,8 +342,10 @@ def test_kernel_queue_overflow_asks_for_a_reread(world, monkeypatch) -> None:
     if limit > 100_000:
         pytest.skip("kernel queue too large to overflow quickly")
     # Holding the lock stops the reader, so the kernel queue fills and overflows.
+    # The reader may already hold one 64 KiB read, at most 4096 notices, taken
+    # from the queue before it waits for the lock.
     with watcher._lock:
-        for index in range(limit + 10):
+        for index in range(limit + 4096 + 10):
             os.mkdir(DOCUMENTS / f"d{index}")
     started = time.monotonic()
     payload = _ask(world, [doc()], state["epoch"], state["seq"]).json()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise authenticated navigation, search, tags, and UI-state CAS over loopback."""
+"""Exercise authenticated navigation, search, tags, UI-state CAS, and change notices over loopback."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import sys
 import tempfile
 import time
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import BinaryIO
 from urllib.parse import urljoin, urlsplit
@@ -181,6 +182,8 @@ def _decode_js_hex_escapes(source: str) -> str:
 def _exercise(client: httpx.Client, origin: str) -> None:
     denied = client.get("/api/search", params={"q": "árvore", "scope": "/" + _p()})
     assert denied.status_code == 401
+    unsigned = client.post("/api/changes", json=_changes_body(None, None), headers={"origin": origin})
+    assert unsigned.status_code == 401 and unsigned.json() == {"error": "authentication_required"}
     csrf = _login(client, origin)
     headers = {"origin": origin, "x-csrf-token": csrf}
 
@@ -246,7 +249,42 @@ def _exercise(client: httpx.Client, origin: str) -> None:
     assert saved.status_code == 200 and saved.json()["stateRevision"] == 1
     assert stale.status_code == 409 and stale.json()["stateRevision"] == 1
     assert missing_revision.status_code == 428
-    print("Navigation loopback integration passed: authenticated listing, normalized search, derived tags of a monitored folder, and UI-state CAS.")
+    _exercise_changes(client, origin, headers)
+    print(
+        "Navigation loopback integration passed: authenticated listing, normalized search, "
+        "derived tags of a monitored folder, UI-state CAS, and change notices."
+    )
+
+
+def _changes_body(epoch: str | None, seq: int | None) -> dict[str, object]:
+    return {"rootId": "fs", "paths": [_p(), _p("Projetos")], "epoch": epoch, "seq": seq}
+
+
+def _exercise_changes(client: httpx.Client, origin: str, headers: dict[str, str]) -> None:
+    """A held change request answers soon after an outside write, on the real server."""
+    first = client.post("/api/changes", json=_changes_body(None, None), headers=headers)
+    assert first.status_code == 200, first.text
+    state = first.json()
+    assert state["supported"] is True and state["resync"] is True and state["rejected"] == []
+    # A client that gives up on a held request leaves the server usable.
+    try:
+        client.post("/api/changes", json=_changes_body(state["epoch"], state["seq"]), headers=headers, timeout=0.5)
+    except httpx.TimeoutException:
+        pass
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        held = pool.submit(
+            client.post, "/api/changes", json=_changes_body(state["epoch"], state["seq"]), headers=headers
+        )
+        time.sleep(0.5)
+        Path("/" + _p("Projetos/Nova nota.md")).write_text("escrita por fora\n", encoding="utf-8")
+        written = time.monotonic()
+        answer = held.result(timeout=10)
+        answered = time.monotonic()
+    assert answer.status_code == 200, answer.text
+    payload = answer.json()
+    assert answered - written < 1.0, answered - written
+    assert payload["resync"] is False and payload["seq"] > state["seq"]
+    assert {"path": _p("Projetos"), "name": "Nova nota.md"} in payload["changes"]
 
 
 def main() -> int:

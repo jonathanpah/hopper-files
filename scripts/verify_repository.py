@@ -72,6 +72,7 @@ EXPECTED_FILES = frozenset(
         "src/hopper_files/trash.py",
         "src/hopper_files/editor.py",
         "src/hopper_files/buffers.py",
+        "src/hopper_files/changes.py",
         "src/hopper_files/image_refs.py",
         "src/hopper_files/images.py",
         "src/hopper_files/api/__init__.py",
@@ -84,6 +85,7 @@ EXPECTED_FILES = frozenset(
         "src/hopper_files/api/ui_state.py",
         "src/hopper_files/api/editor.py",
         "src/hopper_files/api/buffers.py",
+        "src/hopper_files/api/changes.py",
         "src/hopper_files/api/images.py",
         "src/hopper_files/static/app.css",
         "src/hopper_files/static/app.js",
@@ -118,6 +120,7 @@ EXPECTED_FILES = frozenset(
         "tests/test_images.py",
         "tests/test_image_collection_failures.py",
         "tests/test_http_regressions.py",
+        "tests/test_changes.py",
     }
 )
 SPECIFICATION_SHA256 = "2993db6f2eae538b24a98b99401e1635804a9013f047a34c16375f1644606603"

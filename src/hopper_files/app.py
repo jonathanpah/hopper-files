@@ -13,6 +13,7 @@ from starlette.responses import Response
 from hopper_files.access import evaluate_access
 from hopper_files.api.auth import get_app, get_login, get_password, post_login, post_logout, post_password
 from hopper_files.api.buffers import post_buffer_sync
+from hopper_files.api.changes import post_changes
 from hopper_files.api.editor import get_file, get_preview, put_file
 from hopper_files.api.files import get_directory_size, get_list, get_operation_status, get_raw, issue_operation_token, post_files, post_upload
 from hopper_files.api.health import get_health
@@ -22,6 +23,7 @@ from hopper_files.api.search import get_search, get_tag_folders, get_tags, post_
 from hopper_files.api.ui_state import get_state, put_state
 from hopper_files.clock import SystemClock
 from hopper_files.buffers import BufferRegistry
+from hopper_files.changes import ChangeWatcher
 from hopper_files.config import InstanceConfig, validate_service_identity
 from hopper_files.credentials import current_epoch
 from hopper_files.files import OperationStore
@@ -55,6 +57,7 @@ class Runtime:
         self.buffers = BufferRegistry(config.state_directory, config.instance_id)
         self.operations.buffer_registry = self.buffers
         self.search_cursors = SearchCursorStore(config.state_directory, config.instance_id)
+        self.changes = ChangeWatcher()
 
 
 def create_app(config: InstanceConfig, clock: SystemClock | None = None) -> FastAPI:
@@ -73,7 +76,10 @@ def create_app(config: InstanceConfig, clock: SystemClock | None = None) -> Fast
         application.state.runtime.trash.recover(catalog, now)
         application.state.runtime.images.recover_moves(catalog, now, application.state.runtime.operations, application.state.runtime.buffers)
         application.state.runtime.operations.recover(catalog, now)
-        yield
+        try:
+            yield
+        finally:
+            application.state.runtime.changes.close()
 
     application = FastAPI(
         title="Hopper Files",
@@ -113,6 +119,7 @@ def create_app(config: InstanceConfig, clock: SystemClock | None = None) -> Fast
     application.add_api_route(base + "api/images/upload", post_attachment_upload, methods=["POST"])
     application.add_api_route(base + "api/images/pending", post_resolve_pending, methods=["POST"])
     application.add_api_route(base + "api/buffers", post_buffer_sync, methods=["POST"])
+    application.add_api_route(base + "api/changes", post_changes, methods=["POST"])
     application.add_api_route(base + "api/state", get_state, methods=["GET"])
     application.add_api_route(base + "api/state", put_state, methods=["PUT"])
     application.add_api_route(base + "api/trash", get_trash, methods=["GET"])

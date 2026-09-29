@@ -31,6 +31,7 @@ async def get_list(request: Request) -> Response:
     try:
         catalog = _catalog(request)
         root_id, path = _query_address(request)
+        watch_before_reading(request, catalog, root_id, path)
         before = directory_version(catalog, root_id, path)
         entries = list_directory(catalog, root_id, path)
         writable = directory_writable(catalog, root_id, path)
@@ -462,6 +463,17 @@ def _catalog(request: Request):
     if not same_service_identity(reloaded, running):
         raise ConfigError("instance identity changed")
     return build_catalog(reloaded, strict=False)
+
+
+def watch_before_reading(request: Request, catalog, root_id: str, directory: str) -> None:
+    """Keep watching a directory a view is about to read, if change notices are in use.
+
+    The watch starts before the read, so a change between the read and the
+    view's next change request is reported instead of lost.
+    """
+    watcher = request.app.state.runtime.changes
+    if watcher.active():
+        watcher.watch(catalog, root_id, [directory])
 
 
 def _store(request: Request) -> OperationStore:

@@ -899,6 +899,31 @@ def directory_version(catalog: RootCatalog, root_id: str, relative_path: str) ->
         os.close(walked.fd)
 
 
+@contextmanager
+def readable_directory(catalog: RootCatalog, root_id: str, relative_path: str) -> Iterator[tuple[str, tuple[int, int]]]:
+    """Yield a kernel path and the identity of a directory the account can read.
+
+    The address is resolved as a listing resolves it, without following
+    symbolic links. The yielded path names the opened descriptor, so a later
+    replacement of the address cannot redirect the caller.
+    """
+    _require_available(catalog, root_id)
+    parts = parse_relative_path(relative_path)
+    walked = _walk(parts)
+    try:
+        decision = _judge(walked, "read")
+        if not decision.allowed or not decision.is_directory:
+            raise AddressRejected("forbidden" if decision.code == "ok" else decision.code)
+        readable = _reopen_directory(walked.fd)
+        try:
+            info = os.fstat(readable)
+            yield f"/proc/self/fd/{readable}", (info.st_dev, info.st_ino)
+        finally:
+            os.close(readable)
+    finally:
+        os.close(walked.fd)
+
+
 def destination_capacity(catalog: RootCatalog, root_id: str, destination: str) -> tuple[int, int]:
     """Return (filesystem device, available bytes) for a validated destination parent."""
     parts = parse_relative_path(destination)

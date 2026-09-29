@@ -12,7 +12,7 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
-from hopper_files.api.files import _catalog, _mutation_authorized, _query_address
+from hopper_files.api.files import _catalog, _mutation_authorized, _query_address, watch_before_reading
 from hopper_files.config import ConfigError
 from hopper_files.editor import EditorError, MAX_TEXT_BYTES, read_document, save_document
 from hopper_files.responses import SECURITY_HEADERS, json_error
@@ -30,9 +30,11 @@ async def get_file(request: Request) -> Response:
     try:
         root_id, path = _query_address(request, nonempty=True)
         runtime = request.app.state.runtime
+        catalog = _catalog(request)
+        await run_in_threadpool(watch_before_reading, request, catalog, root_id, path.rpartition("/")[0])
         result = await run_in_threadpool(
             read_document,
-            _catalog(request),
+            catalog,
             root_id,
             path,
             runtime.config.instance_id,

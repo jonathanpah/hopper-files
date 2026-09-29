@@ -886,11 +886,23 @@ export function createMarkdownEditor({parent, initial, nonce, onChange, onSave, 
       baselineRaw = text;
       baselineDoc = Text.of(normalizeLineEndings(text).split("\n"));
     },
-    replace(text) {
+    // keepView: the caret and the top visible line stay where they were, clamped to the new text.
+    replace(text, {keepView = false} = {}) {
+      const before = view.state;
+      const topLine = keepView ? before.doc.lineAt(view.lineBlockAtHeight(Math.max(0, view.scrollDOM.scrollTop)).from).number : 1;
       baselineRaw = text;
       const nextState = createState(text);
       view.setState(nextState);
       baselineDoc = nextState.doc;
+      if (keepView) {
+        const length = nextState.doc.length;
+        const {anchor, head} = before.selection.main;
+        const line = nextState.doc.line(Math.min(topLine, nextState.doc.lines));
+        view.dispatch({
+          selection: {anchor: Math.min(anchor, length), head: Math.min(head, length)},
+          effects: EditorView.scrollIntoView(line.from, {y: "start"}),
+        });
+      }
       view.contentDOM.setAttribute("aria-label", "Fonte Markdown");
       view.contentDOM.setAttribute("spellcheck", "true");
       updateKeyboard();
@@ -963,10 +975,15 @@ export function createPlainEditor({parent, initial, onChange, onSave, onTypingCh
     getValue: () => preserveLineEndings(baselineRaw, area.value),
     isDirty: () => area.value !== baselineValue,
     setBaseline(text) { baselineRaw = text; baselineValue = normalizeLineEndings(text); },
-    replace(text) {
+    replace(text, {keepView = false} = {}) {
+      const {selectionStart, selectionEnd, scrollTop} = area;
       baselineRaw = text;
       baselineValue = normalizeLineEndings(text);
       area.value = baselineValue;
+      if (keepView) {
+        if (document.activeElement === area) area.setSelectionRange(Math.min(selectionStart, area.value.length), Math.min(selectionEnd, area.value.length));
+        area.scrollTop = scrollTop;
+      }
       onChange();
     },
     focus: () => area.focus(), destroy: () => area.remove(), coarse,

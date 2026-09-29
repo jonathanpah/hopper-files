@@ -1866,6 +1866,7 @@
       status("Navegação pronta.");
       syncOpenBuffers();
       state.bufferSyncTimer = window.setInterval(syncOpenBuffers, 1500);
+      installLiveRefresh();
     } catch (error) {
       status(error.status === 401 ? "Sua sessão expirou. Entre novamente." : "Não foi possível carregar a instância.", true);
     }
@@ -2236,6 +2237,7 @@
       headingLabel.setAttribute("aria-expanded", String(open));
       // A collapsed section stays collapsed after reload, like Favorites, Tags, and Labels.
       try { localStorage.setItem("hf-secao-treeSectionOpen", open ? "aberta" : "fechada"); } catch (_error) { /* optional */ }
+      scheduleWatch();
     };
     heading.onclick = event => {
       if (event.target.closest(".sec-ferramentas")) return;
@@ -2274,6 +2276,7 @@
     }
     // Favorite trees share the same loaded branches: they redraw together with the "/" tree.
     renderFavorites();
+    scheduleWatch();
 
     const trash = $("#btn-lixeira");
     trash.classList.toggle("ativo", state.view === "trash");
@@ -2661,6 +2664,7 @@
     plus.dataset.tip = "Nova aba"; plus.setAttribute("aria-label", "Nova aba");
     strip.append(plus);
     rememberOpenDocuments();
+    scheduleWatch();
     // The active tab always stays visible, even with many tabs open.
     strip.querySelector(".aba.ativa")?.scrollIntoView({block: "nearest", inline: "nearest"});
   }
@@ -3214,7 +3218,9 @@
     status(text, isError);
     const saveError = isError && /^(Não foi possível salvar|Conflito|Não foi possível confirmar o salvamento)/.test(text);
     if (doc.errorNode && (saveError || !isError)) {
-      doc.errorNode.hidden = !saveError; doc.errorNode.textContent = saveError ? (text.startsWith("Conflito") ? "Conflito ao salvar" : "Não foi possível salvar") : ""; doc.errorNode.title = saveError ? text : "";
+      // A notice about a change made outside the app stays until it is resolved.
+      const label = saveError ? (text.startsWith("Conflito") ? "Conflito ao salvar" : "Não foi possível salvar") : doc.externalLabel || "";
+      doc.errorNode.hidden = !label; doc.errorNode.textContent = label; doc.errorNode.title = saveError ? text : doc.externalMessage || "";
     }
     const dirty = paintEditState(doc);
     doc.saveButton.disabled = doc.saving || !dirty;
@@ -3882,7 +3888,7 @@
     state.activeDocument = null;
     renderToolbar();
   }
-  async function openVisual(rootId, path, ext) {
+  async function openVisual(rootId, path, ext, {stamp} = {}) {
     clearActiveVisual();
     const visualRequestId = state.visualRequestId;
     const panel = state.splitEnabled ? $("#split-content") : $("#results"); panel.replaceChildren();
@@ -3895,6 +3901,9 @@
     state.splitDocument = null;
     if (state.splitEnabled) { $("#split-pane").hidden = false; $("#split-pane").classList.add("aberto"); redrawListing(); }
     const src = documentUrl("api/preview", rootId, path).toString();
+    const visual = {rootId, path, ext, surface, statusNode, image: null, objectUrl: null,
+      stamp: stamp === undefined ? visualStamp(knownEntry(rootId, path)) : stamp};
+    live.visual = visual; scheduleWatch();
     if (ext === "pdf") {
       try {
         const {renderPdfPreview} = await import("../../../frontend/src/pdf-viewer.js");
@@ -3915,11 +3924,12 @@
       });
       image.addEventListener("load", () => { if (visualRequestId === state.visualRequestId) { statusNode.hidden = true; status(`Aberto: ${absolutePath(path)}`); } });
       image.addEventListener("error", () => { if (visualRequestId === state.visualRequestId) { statusNode.textContent = "Não foi possível exibir esta imagem."; statusNode.classList.add("error"); } });
-      image.src = src; surface.append(image);
+      image.src = src; surface.append(image); visual.image = image;
     }
   }
   function clearActiveVisual() {
     showDocumentModeControls(null);
+    if (live.visual) { if (live.visual.objectUrl) URL.revokeObjectURL(live.visual.objectUrl); live.visual = null; scheduleWatch(); }
     state.visualRequestId++;
     const cleanup = state.visualCleanup;
     state.visualCleanup = null;
@@ -3939,6 +3949,7 @@
       if (sequence >= doc.baselineCounter) {
         doc.baselineCounter = sequence; doc.baseline = result.content; doc.version = result.savedVersion;
         doc.source.setBaseline(result.content);
+        doc.externalLabel = null; doc.externalMessage = ""; doc.externalState = null;
       }
       doc.dirty = doc.source.isDirty();
       docStatus(doc, dirtyDocument(doc) ? "Salvo; há alterações feitas depois disso." : "Salvamento confirmado.");
@@ -4024,6 +4035,7 @@
         else if (doc.source.view) doc.source.view.dispatch({changes: {from: 0, to: doc.source.view.state.doc.length, insert: doc.serverVersion.content}, selection: {anchor: 0}});
         else { doc.source.element.value = doc.serverVersion.content; doc.source.element.dispatchEvent(new Event("input", {bubbles: true})); }
         doc.baseline = doc.serverVersion.content; doc.version = doc.serverVersion.version; doc.serverVersion = null;
+        doc.externalLabel = null; doc.externalMessage = ""; setDocumentReadOnly(doc);
         updateDocumentView(doc); docStatus(doc, "Versão do servidor carregada."); toast("Versão do servidor carregada"); actions.remove();
       }, "secondary-button"));
     }
@@ -4042,6 +4054,345 @@
         ![...state.documents.values()].some(doc => dirtyDocument(doc) || doc.saving || doc.saveAgain)) return;
     event.preventDefault(); event.returnValue = "";
   });
+  // Live refresh: the server reports changes in the folders on screen (the open folder,
+  // open tree branches, and the folders of open documents and previews); the screen re-reads only
+  // what changed. Nothing is requested while the browser tab is hidden; on return, everything shown
+  // is read again.
+  const LIVE_MAX_FOLDERS = 256;
+  const LIVE_SPACING_MS = 300;
+  const live = {
+    epoch: null, seq: 0, running: false, controller: null, key: "", kickPending: false, stopped: false,
+    unsupported: false, failures: 0, wake: null, confirmed: new Set(), rejected: new Set(), jobs: new Map(),
+    visual: null, pointerDown: false,
+  };
+  const liveDelay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  function liveActive() {
+    return Boolean(state.ui) && !state.sessionEnded && state.logoutPhase === "idle" && !live.stopped && !live.unsupported
+      && document.visibilityState === "visible";
+  }
+  // A branch counts only while it is drawn: the branch and every ancestor up to its tree's root are open.
+  function shownBranches(treeId, rootPath, add) {
+    const expanded = treeExpandedFor(treeId);
+    for (const path of expanded) {
+      if (!withinPath(path, rootPath)) continue;
+      let current = path; let shown = true;
+      while (current !== rootPath) {
+        if (!current) { shown = false; break; }
+        current = parentOf(current);
+        if (!expanded.has(current)) { shown = false; break; }
+      }
+      if (shown) add(path);
+    }
+  }
+  function watchedFolders() {
+    const folders = [];
+    const add = path => { if (typeof path === "string" && folders.length < LIVE_MAX_FOLDERS && !folders.includes(path)) folders.push(path); };
+    if (state.view === "files" && state.listingRootId === BASE_ID) add(state.listingPath);
+    for (const doc of state.documents.values()) if (doc.rootId === BASE_ID) add(parentOf(doc.path));
+    if (live.visual) add(parentOf(live.visual.path));
+    if (state.treeSectionOpen !== false) shownBranches(BASE_ID, "", add);
+    if (state.favoritesOpen !== false) for (const item of favoriteItems()) shownBranches(favoriteTreeId(item.path), item.path, add);
+    return folders;
+  }
+  // Called after anything that may change what is on screen; same-tick calls are coalesced.
+  function scheduleWatch() {
+    if (live.kickPending) return;
+    live.kickPending = true;
+    queueMicrotask(() => {
+      live.kickPending = false;
+      if (!liveActive()) return;
+      if (!live.running) { void watchLoop(); return; }
+      if (live.controller && JSON.stringify(watchedFolders()) !== live.key) live.controller.abort("changed");
+    });
+  }
+  // Waits for a retry, or less when the tab comes back or the network returns.
+  function liveWait(ms) {
+    return new Promise(resolve => {
+      const timer = setTimeout(done, ms);
+      function done() { clearTimeout(timer); if (live.wake === done) live.wake = null; resolve(); }
+      live.wake = done;
+    });
+  }
+  async function watchLoop() {
+    if (live.running) return;
+    live.running = true;
+    try {
+      while (liveActive()) {
+        const paths = watchedFolders();
+        live.key = JSON.stringify(paths);
+        if (!paths.length) break;
+        const controller = new AbortController();
+        live.controller = controller;
+        // The server answers within about 20 seconds; a longer silence means a lost connection.
+        const timer = setTimeout(() => controller.abort("timeout"), 40000);
+        let result;
+        try {
+          result = await request("api/changes", {
+            method: "POST", signal: controller.signal,
+            headers: {"Content-Type": "application/json", "X-CSRF-Token": csrf},
+            body: JSON.stringify({rootId: BASE_ID, paths, epoch: live.epoch, seq: live.seq}),
+          });
+        } catch (error) {
+          if (controller.signal.aborted && controller.signal.reason !== "timeout") continue;
+          if (error.status === 401) { live.stopped = true; break; }
+          live.failures += 1;
+          await liveWait(Math.min(30000, 1000 * 2 ** Math.min(live.failures - 1, 5)));
+          continue;
+        } finally {
+          clearTimeout(timer);
+          if (live.controller === controller) live.controller = null;
+        }
+        live.failures = 0;
+        handleLiveResponse(result, paths);
+      }
+    } finally {
+      live.running = false;
+    }
+  }
+  function handleLiveResponse(result, paths) {
+    if (!result || result.supported === false) { live.unsupported = true; return; }
+    const first = live.epoch === null;
+    live.epoch = result.epoch; live.seq = Number(result.seq) || 0;
+    live.rejected = new Set(Array.isArray(result.rejected) ? result.rejected : []);
+    if (result.resync) {
+      // Restart or overflow: changes may have been missed, and every folder is watched anew.
+      live.confirmed.clear();
+      if (!first) refreshShown();
+      return;
+    }
+    const changed = new Map();
+    for (const change of Array.isArray(result.changes) ? result.changes : []) {
+      if (typeof change?.path !== "string") continue;
+      const names = changed.has(change.path) ? changed.get(change.path) : new Set();
+      if (names === null || typeof change.name !== "string") changed.set(change.path, null);
+      else { names.add(change.name); changed.set(change.path, names); }
+    }
+    if (changed.size) applyChanges(changed);
+    // A change between a folder's last read and the start of its watch is caught by one check,
+    // made once the server has answered for that folder.
+    const verify = new Map();
+    for (const path of paths) {
+      if (live.confirmed.has(path) || live.rejected.has(path)) continue;
+      live.confirmed.add(path);
+      if (!changed.has(path)) verify.set(path, null);
+    }
+    for (const path of [...live.confirmed]) if (!paths.includes(path)) live.confirmed.delete(path);
+    if (verify.size) applyChanges(verify, {verify: true});
+  }
+  // Re-reads everything shown: on return to the tab and after the server lost track of changes.
+  function refreshShown() {
+    const all = new Map();
+    for (const path of watchedFolders()) all.set(path, null);
+    applyChanges(all, {verify: true});
+  }
+  // names: the changed entries of that folder, or null when any of them may have changed.
+  // verify: a check with no known change, so previews reload only when their file differs.
+  function applyChanges(changed, {verify = false} = {}) {
+    for (const [path, names] of changed) {
+      const touches = name => names === null || names.has(name);
+      if (listingShown() && state.listingPath === path) queueLiveJob("list", refreshListing);
+      else if (state.treeEntries.has(treeBranchKey(BASE_ID, path))) queueLiveJob(`tree\u0000${path}`, () => refreshTreeBranch(path));
+      for (const doc of state.documents.values()) {
+        if (doc.rootId === BASE_ID && parentOf(doc.path) === path && touches(doc.path.split("/").pop())) queueLiveJob(doc, () => checkDocument(doc));
+      }
+      const visual = live.visual;
+      if (visual && parentOf(visual.path) === path && touches(visual.path.split("/").pop())) {
+        queueLiveJob("visual", () => reloadVisual(visual, {force: !verify}));
+      }
+    }
+  }
+  // One job per target: a request made while it runs makes it run once more, a little later, so a
+  // burst of changes costs a few reads instead of one per file.
+  function queueLiveJob(key, job) {
+    const current = live.jobs.get(key);
+    if (current) { current.again = true; current.job = job; return; }
+    const entry = {again: false, job};
+    live.jobs.set(key, entry);
+    void (async () => {
+      try {
+        do {
+          entry.again = false;
+          try { await entry.job(); } catch (_error) { /* the next change or the return to the tab tries again */ }
+          if (entry.again) await liveDelay(LIVE_SPACING_MS);
+        } while (entry.again);
+      } finally {
+        live.jobs.delete(key);
+      }
+    })();
+  }
+  // A redraw waits while a menu, a dialog, a drag, or a press on the screen is in progress.
+  async function screenSettled() {
+    while (!$("#menu-ctx").hidden || app.querySelector("dialog[open]") || state.dragPaths || live.pointerDown) await liveDelay(250);
+  }
+  // The list is on screen (not a preview, an error card, or search results in its place).
+  function listingShown() {
+    return state.view === "files" && !state.searchResult && !(state.activeDocument && !state.splitEnabled)
+      && state.listingRootId === state.rootId && state.listingPath === state.path && Boolean($("#results > table.lista"));
+  }
+  const sameEntries = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+  async function refreshListing() {
+    await screenSettled();
+    if (!listingShown() || state.busy) return;
+    const rootId = state.listingRootId; const path = state.listingPath; const requestId = state.listRequestId;
+    let result;
+    try {
+      result = await listDirectory(rootId, path, {join: false});
+    } catch (error) {
+      if (error.status === 409) { queueLiveJob("list", refreshListing); return; }
+      if (listingShown() && state.listingPath === path && [403, 404].includes(error.status)) {
+        status(error.status === 404 ? "Esta pasta não existe mais." : "Sem permissão para abrir esta pasta.", true);
+      }
+      return;
+    }
+    await screenSettled();
+    if (requestId !== state.listRequestId || state.busy || !listingShown() || state.listingRootId !== rootId || state.listingPath !== path) return;
+    const treeKey = treeBranchKey(rootId, path);
+    const treeChanged = !sameEntries(state.treeEntries.get(treeKey), result.entries);
+    state.treeEntries.set(treeKey, result.entries); state.treeErrors.delete(treeKey);
+    state.listingVersion = result.listingVersion;
+    const writable = result.writable !== false;
+    if (sameEntries(state.entries, result.entries) && writable === state.listingWritable) {
+      if (treeChanged) renderNavigation();
+      return;
+    }
+    const countText = filterStatus();
+    const names = new Set(result.entries.map(entry => entry.name));
+    state.entries = result.entries;
+    // Marked items that no longer exist leave the selection; the others stay marked.
+    for (const key of [...state.selectedForZip]) {
+      const [itemRoot, itemPath] = key.split("\u0000");
+      if (itemRoot === rootId && parentOf(itemPath) === path && !names.has(itemPath.split("/").pop())) state.selectedForZip.delete(key);
+    }
+    if (writable !== state.listingWritable) { state.listingWritable = writable; renderToolbar(); }
+    const panel = $("#results"); const top = panel.scrollTop;
+    renderResults(state.entries);
+    panel.scrollTop = top;
+    if ($("#app-status").textContent === countText) status(filterStatus());
+    if (treeChanged) renderNavigation();
+    refreshInfoPanel();
+  }
+  async function refreshTreeBranch(path) {
+    const key = treeBranchKey(BASE_ID, path);
+    if (!state.treeEntries.has(key) || state.treeLoading.has(key)) return;
+    let result;
+    try {
+      result = await listDirectory(BASE_ID, path, {join: false});
+    } catch (error) {
+      if (error.status === 409) { queueLiveJob(`tree\u0000${path}`, () => refreshTreeBranch(path)); return; }
+      if ([403, 404, 422].includes(error.status)) { await screenSettled(); await loadTreeBranch(BASE_ID, path, {force: true}); }
+      return;
+    }
+    if (sameEntries(state.treeEntries.get(key), result.entries)) return;
+    await screenSettled();
+    state.treeEntries.set(key, result.entries); state.treeErrors.delete(key);
+    renderNavigation();
+  }
+  // Open text document: without local edits, the new text replaces the old one; with local edits,
+  // the text stays and the server version is offered as in a save conflict (HF-SAVE-001).
+  function externalNotice(doc, message, label) {
+    doc.externalLabel = label; doc.externalMessage = label ? message : "";
+    doc.errorNode.hidden = !label; doc.errorNode.textContent = label || ""; doc.errorNode.title = label ? message : "";
+    if (state.activeDocument === doc || state.splitDocument === doc) status(message, Boolean(label));
+    paintEditState(doc); renderTabs();
+  }
+  async function checkDocument(doc) {
+    while (state.documents.get(`${doc.rootId}\u0000${doc.path}`) === doc && (doc.saving || doc.held || hasDocumentOperation(doc))) await liveDelay(250);
+    if (state.documents.get(`${doc.rootId}\u0000${doc.path}`) !== doc || state.logoutPhase !== "idle") return;
+    const {path, version} = doc;
+    let loaded = null; let failure = null;
+    try { loaded = await documentRequest("api/file", doc.rootId, path); } catch (error) { failure = error; }
+    if (state.documents.get(`${doc.rootId}\u0000${doc.path}`) !== doc || state.logoutPhase !== "idle") return;
+    // A save, move, or reload happened meanwhile: check again from the new state.
+    if (doc.path !== path || doc.version !== version || doc.saving || doc.held) { queueLiveJob(doc, () => checkDocument(doc)); return; }
+    if (failure) {
+      if (failure.status === 404) {
+        if (doc.externalState !== "missing") { doc.externalState = "missing"; externalNotice(doc, "O arquivo foi apagado, movido ou renomeado fora do app. O texto continua aberto aqui para copiar ou baixar.", "Removido fora do app"); }
+      } else if ([413, 422].includes(failure.status)) {
+        if (doc.externalState !== "unreadable") { doc.externalState = "unreadable"; externalNotice(doc, "O arquivo mudou fora do app e não abre mais como texto aqui. O texto anterior continua aberto.", "Mudou fora do app"); }
+      }
+      return;
+    }
+    const cleared = doc.externalState === "missing" || doc.externalState === "unreadable";
+    doc.externalState = null;
+    if (loaded.version === doc.version) { if (cleared) externalNotice(doc, "O arquivo voltou ao lugar.", null); return; }
+    if (loaded.content === doc.baseline) {
+      // Only the file's metadata changed (for example, its modification time).
+      doc.version = loaded.version;
+      if (cleared) externalNotice(doc, "O arquivo voltou ao lugar.", null);
+      return;
+    }
+    if (dirtyDocument(doc)) {
+      doc.serverVersion = {content: loaded.content, version: loaded.version};
+      externalNotice(doc, "O arquivo mudou fora do app. Seu texto foi mantido: copie ou recarregue a versão do servidor.", "Mudou fora do app");
+      showConflictActions(doc);
+      return;
+    }
+    const scroller = documentScroller(doc); const top = scroller?.scrollTop ?? 0;
+    const statusNode = $("#app-status"); const priorStatus = [statusNode.textContent, statusNode.classList.contains("error")];
+    doc.source.replace(loaded.content, {keepView: true});
+    if (state.activeDocument !== doc && state.splitDocument !== doc) status(...priorStatus);
+    doc.baseline = loaded.content; doc.version = loaded.version; doc.dirty = doc.source.isDirty();
+    doc.serverVersion = null; doc.host.querySelector(".conflict-actions")?.remove();
+    setDocumentReadOnly(doc);
+    if (doc.mode !== "markdown" && doc.mode !== "text") { updateDocumentView(doc); if (scroller) scroller.scrollTop = top; }
+    else doc.updateHeader();
+    externalNotice(doc, "O arquivo mudou fora do app; o conteúdo novo foi carregado.", null);
+    if (state.activeDocument === doc || state.splitDocument === doc) toast("Arquivo atualizado fora do app");
+    if (doc.attachmentsPane && !doc.attachmentsPane.hidden) void refreshAttachmentGallery(doc);
+  }
+  // Image or PDF preview: reloads when its file changes. A check with no known change compares the
+  // file's size and modification time from the folder listing first.
+  function visualStamp(entry) { return entry ? `${entry.size}\u0000${entry.modifiedAt}` : null; }
+  async function reloadVisual(visual, {force = false} = {}) {
+    if (live.visual !== visual) return;
+    const name = visual.path.split("/").pop();
+    let entry = null;
+    try {
+      const listing = await listDirectory(visual.rootId, parentOf(visual.path));
+      entry = listing.entries.find(item => item.name === name) || null;
+    } catch (_error) { entry = null; }
+    if (live.visual !== visual) return;
+    if (!entry) {
+      visual.statusNode.textContent = "O arquivo foi apagado, movido ou renomeado fora do app."; visual.statusNode.hidden = false; visual.statusNode.classList.add("error");
+      visual.stamp = null;
+      return;
+    }
+    const stamp = visualStamp(entry);
+    if (!force && stamp === visual.stamp) return;
+    visual.stamp = stamp;
+    if (visual.ext === "pdf") {
+      const panel = visual.surface.closest("#split-content, #results");
+      const top = panel?.scrollTop ?? 0;
+      await openVisual(visual.rootId, visual.path, visual.ext, {stamp});
+      if (panel) panel.scrollTop = top;
+      return;
+    }
+    const response = await fetch(documentUrl("api/preview", visual.rootId, visual.path), {credentials: "same-origin", cache: "no-store"});
+    if (live.visual !== visual) return;
+    if (!response.ok) {
+      visual.statusNode.textContent = "Não foi possível exibir a versão nova desta imagem."; visual.statusNode.hidden = false; visual.statusNode.classList.add("error");
+      return;
+    }
+    const url = URL.createObjectURL(await response.blob());
+    if (live.visual !== visual) { URL.revokeObjectURL(url); return; }
+    if (visual.objectUrl) URL.revokeObjectURL(visual.objectUrl);
+    visual.objectUrl = url; visual.image.src = url;
+    visual.statusNode.hidden = true; visual.statusNode.classList.remove("error");
+  }
+  function installLiveRefresh() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") { live.controller?.abort("hidden"); return; }
+      if (!state.ui || state.sessionEnded || state.logoutPhase !== "idle") return;
+      refreshShown();
+      live.wake?.();
+      scheduleWatch();
+    });
+    window.addEventListener("online", () => live.wake?.());
+    document.addEventListener("pointerdown", () => { live.pointerDown = true; }, true);
+    for (const type of ["pointerup", "pointercancel"]) document.addEventListener(type, () => { live.pointerDown = false; }, true);
+    window.addEventListener("blur", () => { live.pointerDown = false; });
+    scheduleWatch();
+  }
   function displayEntries() {
     const query = state.localFilter.trim().normalize("NFC").toLocaleLowerCase();
     // "here" (HF-API-004): only immediate files and folders of the open folder.
@@ -4638,6 +4989,7 @@
   function drawFavorites() {
     const favorites = $("#favoritos");
     if (!state.ui) return;
+    scheduleWatch();
     if (!favorites.dataset.alvo) {
       favorites.dataset.alvo = "1";
       // Dropping onto Favorites only favorites the item (HF-FILE-001). With no favorites, the drop zone

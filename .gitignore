@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+frontend/node_modules/
+build/
+dist/
+*.egg-info/
+.coverage

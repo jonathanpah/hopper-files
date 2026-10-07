@@ -1,0 +1,2184 @@
+/* Hopper Files theme tokens (CSS custom properties). The theme follows the
+   OS setting by default, or can be pinned with the data-tema attribute on
+   :root ("claro" or "escuro"). */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* The `hidden` attribute always wins: layout rules like display:grid/flex
+   cannot re-show an element the code has hidden. */
+[hidden] { display: none !important; }
+:root {
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --text: #1d1d1f;
+  --text2: #86868b;
+  --accent: #0071e3;
+  --sel: rgba(0,113,227,.09);
+  --selecao-texto: rgba(0,113,227,.22);
+  --hover: rgba(0,0,0,.035);
+  --hair: rgba(0,0,0,.08);
+  --hair2: rgba(0,0,0,.05);
+  --borda-forte: rgba(0,0,0,.16);
+  --flutuante: rgba(255,255,255,.9);
+  --circ: rgba(0,0,0,.06);
+  --circ-hover: rgba(0,0,0,.10);
+  --check-bd: rgba(0,0,0,.25);
+  --perigo-bg: #fdeceb;
+  --perigo-fg: #d70015;
+  --perigo-bd: #f5c6c3;
+  --conflito-bg: #fff3e6;
+  --conflito-fg: #b25000;
+  --mark-bg: rgba(255,214,10,.45);
+  --sombra: rgba(0,0,0,.16);
+  --tip-bg: rgba(30,30,32,.92);
+  --tip-fg: #ffffff;
+  --hl-com: #9098a3;
+  --hl-str: #3f7d54;
+  --hl-num: #986a3c;
+  --hl-kw: #7a57c9;
+  --on-accent: #ffffff;
+  --overlay: rgba(0,0,0,.28);
+  --toast-bg: rgba(30,30,32,.92);
+  --toast-fg: #ffffff;
+  --toast-acao: #66b2ff;
+  --drop-veu: rgba(0,113,227,.08);
+  --link-sublinhado: rgba(0,113,227,.35);
+  --pagina-doc: #ffffff;
+  --git-novo-fg: #2f8f4e;
+  --git-novo-bg: rgba(52,199,89,.16);
+  --tag-vermelho: #ff3b30;
+  --tag-laranja: #ff9500;
+  --tag-amarelo: #ffcc00;
+  --tag-verde: #34c759;
+  --tag-azul: #0a84ff;
+  --tag-roxo: #af52de;
+  --tag-cinza: #8e8e93;
+  --tipo-pasta: #54a3f2;
+  --tipo-documento: #9a9aa0;
+  --tipo-imagem: #68b268;
+  --tipo-codigo: #a06bd6;
+  --tipo-midia: #d06a8a;
+  --tipo-compactado: #c79a3a;
+  --tipo-markdown: #4a90d9;
+  --tipo-pdf: #d0554e;
+  --tipo-word: #3a6ea5;
+  --tipo-planilha: #3a8a4a;
+  --sombra-baixo: 0 2px 12px rgba(0,0,0,.16);
+  --sombra-segmento: 0 1px 2px rgba(0,0,0,.08);
+  --sombra-menu: 0 6px 26px rgba(0,0,0,.16);
+  --sombra-dialogo: 0 12px 40px rgba(0,0,0,.16);
+  --sombra-sheet: 0 -6px 30px rgba(0,0,0,.16);
+  --foco-campo: 0 0 0 3px rgba(0,113,227,.09);
+  --foco-linha: inset 0 0 0 1.5px #0071e3;
+  --gutter: 16px;
+  --sidebar-w: 250px;
+  --sidebar-pad: 8px;
+  --info-w: 300px;
+  --dialogo-w: 380px;
+  --dialogo-pad: 22px;
+  --topo-h: 50px;
+  --trilha-h: 30px;
+  --aba-h: 31px;
+  --status-h: 26px;
+  --botao-h: 30px;
+  --linha-lista: 36px;
+  --linha-arvore: 28px;
+  --alvo-toque: 44px;
+  --campo-h: 40px;
+  --recuo-arvore: 17px;
+  --hf-list-indent: 2em;
+  --leitura-pad-x: 32px;
+  --gap-topo: 8px;
+  --gap-acoes: 6px;
+  --r-mark: 3px;
+  --r-code: 4px;
+  --r-xs: 5px;
+  --r-sm: 6px;
+  --r-md: 7px;
+  --r-lg: 8px;
+  --r-campo: 9px;
+  --r-caixa: 10px;
+  --r-menu: 11px;
+  --r-flutuante: 14px;
+  --r-dialogo: 14px;
+  --r-sheet: 16px;
+  --r-pilula: 999px;
+  --z-resizer: 4;
+  --z-divisor-split: 5;
+  --z-busca-hist: 25;
+  --z-info-movel: 30;
+  --z-aviso: 35;
+  --z-barra-acoes: 40;
+  --z-marquee: 45;
+  --z-drop: 50;
+  --z-overlay: 70;
+  --z-tooltip: 80;
+  --z-banner: 90;
+  --z-menu: 100;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --text-body: 400 13px/1.45 var(--font-sans);
+  --text-body-forte: 590 13px/1.45 var(--font-sans);
+  --text-secao: 600 11px/1.45 var(--font-sans);
+  --text-cabecalho-coluna: 600 11px/1.45 var(--font-sans);
+  --text-meta: 400 12px/1.45 var(--font-sans);
+  --text-legenda: 500 11.5px/1.3 var(--font-sans);
+  --text-aba: 400 12px/1.45 var(--font-sans);
+  --text-badge: 600 10.5px/1.45 var(--font-sans);
+  --text-rotulo-toque: 500 10px/1 var(--font-sans);
+  --text-toast: 400 12.5px/1.45 var(--font-sans);
+  --text-texto-dialogo: 400 13.5px/1.45 var(--font-sans);
+  --text-titulo-painel: 650 16px/1.45 var(--font-sans);
+  --text-titulo-dialogo: 650 16px/1.45 var(--font-sans);
+  --text-titulo-login: 650 19px/1.45 var(--font-sans);
+  --text-item-sheet: 400 16px/1.45 var(--font-sans);
+  --text-leitura: 400 15px/1.65 var(--font-sans);
+  --text-md-h1: 650 26px/1.65 var(--font-sans);
+  --text-md-h2: 650 20px/1.65 var(--font-sans);
+  --text-md-h3: 650 16px/1.65 var(--font-sans);
+  --text-md-h4: 650 14px/1.65 var(--font-sans);
+  --text-md-h5: 650 13px/1.65 var(--font-sans);
+  --text-editor: 400 12.5px/1.65 var(--font-sans);
+  --text-codigo: 400 12.5px/1.65 var(--font-mono);
+  --text-codigo-pequeno: 400 11.5px/1.45 var(--font-mono);
+}
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark;
+  --bg: #1c1c1e;
+  --panel: #2a2a2d;
+  --text: #f5f5f7;
+  --text2: #98989d;
+  --accent: #0a84ff;
+  --sel: rgba(10,132,255,.20);
+  --selecao-texto: rgba(10,132,255,.40);
+  --hover: rgba(255,255,255,.05);
+  --hair: rgba(255,255,255,.10);
+  --hair2: rgba(255,255,255,.055);
+  --borda-forte: rgba(255,255,255,.22);
+  --flutuante: rgba(44,44,48,.92);
+  --circ: rgba(255,255,255,.10);
+  --circ-hover: rgba(255,255,255,.16);
+  --check-bd: rgba(255,255,255,.28);
+  --perigo-bg: #3a1a1a;
+  --perigo-fg: #ff6b60;
+  --perigo-bd: #5a2420;
+  --conflito-bg: #3a2a12;
+  --conflito-fg: #f0a860;
+  --mark-bg: rgba(255,214,10,.28);
+  --sombra: rgba(0,0,0,.5);
+  --tip-bg: rgba(244,244,246,.95);
+  --tip-fg: #1d1d1f;
+  --hl-com: #6a7078;
+  --hl-str: #82c894;
+  --hl-num: #d7a86a;
+  --hl-kw: #b891e6;
+  --toast-bg: rgba(244,244,246,.95);
+  --toast-fg: #1d1d1f;
+  --toast-acao: #0062c4;
+  --drop-veu: rgba(10,132,255,.12);
+  --link-sublinhado: rgba(10,132,255,.35);
+  --git-novo-fg: #7bd694;
+  --sombra-baixo: 0 2px 12px rgba(0,0,0,.5);
+  --sombra-menu: 0 6px 26px rgba(0,0,0,.5);
+  --sombra-dialogo: 0 12px 40px rgba(0,0,0,.5);
+  --sombra-sheet: 0 -6px 30px rgba(0,0,0,.5);
+  --foco-campo: 0 0 0 3px rgba(10,132,255,.20);
+  --foco-linha: inset 0 0 0 1.5px #0a84ff;
+} }
+:root[data-tema="claro"] { color-scheme: light;
+  --bg: #f5f5f7;
+  --panel: #ffffff;
+  --text: #1d1d1f;
+  --text2: #86868b;
+  --accent: #0071e3;
+  --sel: rgba(0,113,227,.09);
+  --selecao-texto: rgba(0,113,227,.22);
+  --hover: rgba(0,0,0,.035);
+  --hair: rgba(0,0,0,.08);
+  --hair2: rgba(0,0,0,.05);
+  --borda-forte: rgba(0,0,0,.16);
+  --flutuante: rgba(255,255,255,.9);
+  --circ: rgba(0,0,0,.06);
+  --circ-hover: rgba(0,0,0,.10);
+  --check-bd: rgba(0,0,0,.25);
+  --perigo-bg: #fdeceb;
+  --perigo-fg: #d70015;
+  --perigo-bd: #f5c6c3;
+  --conflito-bg: #fff3e6;
+  --conflito-fg: #b25000;
+  --mark-bg: rgba(255,214,10,.45);
+  --sombra: rgba(0,0,0,.16);
+  --tip-bg: rgba(30,30,32,.92);
+  --tip-fg: #ffffff;
+  --hl-com: #9098a3;
+  --hl-str: #3f7d54;
+  --hl-num: #986a3c;
+  --hl-kw: #7a57c9;
+  --toast-bg: rgba(30,30,32,.92);
+  --toast-fg: #ffffff;
+  --toast-acao: #66b2ff;
+  --drop-veu: rgba(0,113,227,.08);
+  --link-sublinhado: rgba(0,113,227,.35);
+  --git-novo-fg: #2f8f4e;
+  --sombra-baixo: 0 2px 12px rgba(0,0,0,.16);
+  --sombra-menu: 0 6px 26px rgba(0,0,0,.16);
+  --sombra-dialogo: 0 12px 40px rgba(0,0,0,.16);
+  --sombra-sheet: 0 -6px 30px rgba(0,0,0,.16);
+  --foco-campo: 0 0 0 3px rgba(0,113,227,.09);
+  --foco-linha: inset 0 0 0 1.5px #0071e3;
+}
+:root[data-tema="escuro"] { color-scheme: dark;
+  --bg: #1c1c1e;
+  --panel: #2a2a2d;
+  --text: #f5f5f7;
+  --text2: #98989d;
+  --accent: #0a84ff;
+  --sel: rgba(10,132,255,.20);
+  --selecao-texto: rgba(10,132,255,.40);
+  --hover: rgba(255,255,255,.05);
+  --hair: rgba(255,255,255,.10);
+  --hair2: rgba(255,255,255,.055);
+  --borda-forte: rgba(255,255,255,.22);
+  --flutuante: rgba(44,44,48,.92);
+  --circ: rgba(255,255,255,.10);
+  --circ-hover: rgba(255,255,255,.16);
+  --check-bd: rgba(255,255,255,.28);
+  --perigo-bg: #3a1a1a;
+  --perigo-fg: #ff6b60;
+  --perigo-bd: #5a2420;
+  --conflito-bg: #3a2a12;
+  --conflito-fg: #f0a860;
+  --mark-bg: rgba(255,214,10,.28);
+  --sombra: rgba(0,0,0,.5);
+  --tip-bg: rgba(244,244,246,.95);
+  --tip-fg: #1d1d1f;
+  --hl-com: #6a7078;
+  --hl-str: #82c894;
+  --hl-num: #d7a86a;
+  --hl-kw: #b891e6;
+  --toast-bg: rgba(244,244,246,.95);
+  --toast-fg: #1d1d1f;
+  --toast-acao: #0062c4;
+  --drop-veu: rgba(10,132,255,.12);
+  --link-sublinhado: rgba(10,132,255,.35);
+  --git-novo-fg: #7bd694;
+  --sombra-baixo: 0 2px 12px rgba(0,0,0,.5);
+  --sombra-menu: 0 6px 26px rgba(0,0,0,.5);
+  --sombra-dialogo: 0 12px 40px rgba(0,0,0,.5);
+  --sombra-sheet: 0 -6px 30px rgba(0,0,0,.5);
+  --foco-campo: 0 0 0 3px rgba(10,132,255,.20);
+  --foco-linha: inset 0 0 0 1.5px #0a84ff;
+}
+html, body { height: 100%; }
+body {
+  font: 13px/1.45 var(--font-sans);
+  color: var(--text); background: var(--bg);
+  -webkit-font-smoothing: antialiased; letter-spacing: -.01em;
+  overflow: hidden;
+}
+/* Doubled height: `dvh` avoids Safari on iPhone/iPad clipping content under
+   the dynamic toolbar; `100vh` is the fallback for browsers without dvh. */
+.layout { display: flex; height: 100vh; height: 100dvh; }
+
+/* ---------- sidebar ---------- */
+aside {
+  width: var(--sidebar-w, 250px); min-width: var(--sidebar-w, 250px); background: var(--bg);
+  border-right: 1px solid var(--hair); overflow-y: auto; padding: 10px 8px 24px;
+  transition: width .2s ease, min-width .2s ease, padding .2s ease;
+}
+body.resizing-side aside { transition: none; }   /* no lag while dragging */
+/* Draggable divider between the sidebar and the content area (width is
+   free-form and persisted). */
+.side-resizer {
+  flex: none; width: 8px; margin: 0 -4px; z-index: 4; cursor: col-resize; background: transparent;
+  touch-action: none;   /* Lets the divider be dragged on touch without scrolling the page. */
+}
+.side-resizer:hover, body.resizing-side .side-resizer { background: var(--sel); }
+body.resizing-side { cursor: col-resize; user-select: none; -webkit-user-select: none; }
+@media (min-width: 721px) { :root.sidebar-colapsada .side-resizer { display: none; } }
+@media (max-width: 720px) { .side-resizer { display: none; } }
+/* Collapsible sidebar on desktop/iPad, toggled via the ☰ button.
+   Scoped above 720px so it never conflicts with the mobile drawer. */
+@media (min-width: 721px) {
+  :root.sidebar-colapsada aside {
+    width: 0; min-width: 0; padding-left: 0; padding-right: 0;
+    border-right-width: 0; overflow: hidden;
+  }
+}
+.side-title {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px 6px;
+}
+.node, .raiz-vault { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* Root row above the tree, styled like a folder row but emphasized, with
+   spacing below it. */
+.raiz-vault { font-weight: 590; margin-bottom: 2px; }
+.node-row {
+  display: flex; align-items: center; gap: 6px; height: 28px;
+  padding: 0 6px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+}
+.node-row:hover { background: var(--hover); }
+.node-row.ativo { background: var(--sel); color: var(--accent); }
+.node-row .chev {
+  width: 16px; height: 16px; display: flex; align-items: center;
+  justify-content: center; color: var(--text2); flex: none;
+  transition: transform .15s ease;
+  /* The chevron is a <button> with no native appearance, just the glyph. */
+  appearance: none; -webkit-appearance: none; background: transparent; border: 0;
+  padding: 0; margin: 0; border-radius: 4px; font: inherit; cursor: pointer;
+}
+.node-row .chev:hover { color: var(--text); }
+.node-row.aberto .chev { transform: rotate(90deg); }
+.node-row .chev.vazio { visibility: hidden; }
+.node-row svg.icone { flex: none; }
+.node-row .nome { overflow: hidden; text-overflow: ellipsis; }
+.node-filhos { padding-left: 17px; }
+
+/* ---------- main area ---------- */
+main { flex: 1; display: flex; flex-direction: column; background: var(--panel); min-width: 0; }
+.topo {
+  height: 50px; display: flex; align-items: center; gap: 8px;
+  padding: 0 16px; border-bottom: 1px solid var(--hair); flex: none;
+}
+/* Below this width, button labels are hidden so the toolbar fits as
+   icon-only buttons with tooltips. */
+@media (max-width: 1279.98px) { .rotulo-btn { display: none; } }
+#btn-mais { display: none; }
+/* Below 720px, split view is disabled: it would only show two unusable
+   half-columns. */
+@media (max-width: 720px) { #btn-split { display: none; } }
+/* The breadcrumb trail always has its own row; the row scrolls internally
+   so the path is never cut off. */
+.trilha-barra {
+  flex: none; display: flex; align-items: center; height: 30px; padding: 0 16px;
+  border-bottom: 1px solid var(--hair); overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.trilha-barra::-webkit-scrollbar { display: none; }
+.migalhas { display: flex; align-items: center; gap: 2px; flex: none; min-width: 0; }
+.migalhas span.seg {
+  color: var(--text2); cursor: pointer; padding: 3px 6px; border-radius: 5px; white-space: nowrap;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
+}
+.migalhas span.seg:hover { background: var(--hover); color: var(--text); }
+.migalhas span.seg:last-child { color: var(--text); font-weight: 590; }
+.migalhas .sep { color: var(--text2); }
+/* Actions are pushed right by the automatic margin, since nothing else in
+   this bar is flexible. */
+.acoes { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+button.acao {
+  display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px;
+  font: inherit; color: var(--text); background: transparent;
+  border: 1px solid var(--hair); border-radius: 7px; cursor: pointer;
+}
+button.acao:hover { background: var(--bg); }
+button.acao:active { transform: scale(.97); }
+.segmentado { display: flex; background: var(--circ); border-radius: 8px; padding: 2px; }
+.segmentado { min-height: 30px; }  
+.segmentado button {
+  font: inherit; font-size: 12px; border: 0; background: transparent;
+  padding: 0 12px; border-radius: 6px; cursor: pointer; color: var(--text2);
+}
+.segmentado button.ativo { background: var(--panel); color: var(--text); box-shadow: var(--sombra-segmento); }
+
+.conteudo { flex: 1; overflow: auto; }
+
+/* ---------- list view ---------- */
+table.lista { width: 100%; border-collapse: collapse; }
+table.lista th {
+  position: sticky; top: 0; background: var(--panel); text-align: left;
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: 10px 16px 8px; border-bottom: 1px solid var(--hair);
+}
+table.lista td { padding: 0 16px; height: 36px; border-bottom: 1px solid var(--hair2); }
+table.lista tr.item { cursor: pointer; }
+table.lista tr.item:hover td { background: var(--hover); }
+td.c-nome { height: 36px; }
+td.c-nome .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.c-tam, td.c-mod, td.c-criado { color: var(--text2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+td.c-tam { text-align: right; }
+/* The table's colgroup sets the column widths. */
+.c-nome .nome { min-width: 0; }
+
+/* compact density */
+table.lista.compacta td,
+table.lista.compacta td.c-nome { height: 26px; }
+
+/* Group header row: not a tr.item, so it's excluded from keyboard focus
+   and selection. */
+tr.grupo-cab td.c-grupo {
+  padding: 14px 16px 5px; font-size: 11px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .06em; background: var(--panel);
+  border-bottom: 1px solid var(--hair2); cursor: default;
+}
+tr.grupo-cab:first-child td.c-grupo { padding-top: 8px; }
+tr.grupo-cab:hover td { background: var(--panel); }
+.grupo-n { color: var(--text2); font-weight: 500; margin-left: 5px; }
+
+/* ---------- viewer ---------- */
+/* text viewer with line numbers; wrap can be toggled */
+.viewer-codigo {
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65;
+  padding: 18px 0 44px; tab-size: 4;
+}
+/* Clean view: plain text without line numbers or highlighting, at the
+   editor's 12.5px size. Selection stays native, and the width matches the
+   Formatted view (no max-width). */
+.viewer-limpo {
+  padding: 34px 32px 60px;
+  white-space: pre-wrap; word-break: break-word;
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; color: var(--text);
+}
+.viewer-codigo .ln { display: flex; width: max-content; min-width: 100%; }
+.viewer-codigo .n {
+  flex: none; width: 3em; padding: 0 14px 0 10px; text-align: right;
+  color: var(--text2);
+  user-select: none; -webkit-user-select: none;
+}
+.viewer-codigo .t { white-space: pre; padding-right: 24px; }
+.viewer-codigo.wrap .ln { width: auto; }
+.viewer-codigo.wrap .t { white-space: pre-wrap; word-break: break-word; flex: 1; min-width: 0; }
+
+.hl-com { color: var(--hl-com); font-style: italic; }
+.hl-str { color: var(--hl-str); }
+.hl-num { color: var(--hl-num); }
+.hl-kw  { color: var(--hl-kw); font-weight: 600; }
+
+.dialogo.ql { width: min(880px, 94vw); max-width: 94vw; padding: 0; overflow: hidden; }
+.ql-cab { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--hair); }
+.ql-nome { font-weight: 590; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.ql-x { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; color: var(--text2); cursor: pointer; }
+.ql-x { padding: 0; line-height: 1; font-size: 13px; }  
+.ql-x:hover { background: var(--circ-hover); color: var(--text); }
+.ql-corpo { max-height: 74vh; overflow: auto; }
+.ql-corpo .viewer-codigo { padding-top: 14px; }
+.ql-img { display: flex; align-items: center; justify-content: center; padding: 22px; }
+.ql-img img { max-width: 100%; max-height: 68vh; border-radius: 8px; box-shadow: 0 2px 12px var(--sombra); }
+.ql-corpo .aviso-central { height: auto; padding: 46px 20px; }
+/* The Formatted view spans the full width, with no centering or max-width.
+   Long lines wrap with `break-word` (not `anywhere`) so table columns aren't
+   squeezed narrower. */
+.viewer-md { padding: 34px 32px 60px; font-size: 15px; line-height: 1.65; overflow-wrap: break-word; }
+/* The editor's active-line heading style must match the rendered heading
+   exactly, so text doesn't resize when the cursor enters or leaves it. */
+.viewer-md h1, .viewer-md h2, .viewer-md h3,
+.lp-doc .lp-ln-h1, .lp-doc .lp-ln-h2, .lp-doc .lp-ln-h3 { font-weight: 650; letter-spacing: -.02em; }
+.viewer-md h1, .viewer-md h2, .viewer-md h3 { margin: 1.3em 0 .5em; }
+.viewer-md h1, .lp-doc .lp-ln-h1 { font-size: 26px; }
+.viewer-md h2, .lp-doc .lp-ln-h2 { font-size: 20px; }
+.viewer-md h3, .lp-doc .lp-ln-h3 { font-size: 16px; }
+.viewer-md p, .viewer-md ul, .viewer-md ol { margin: .65em 0; }
+/* Per-level indent lives on <ul>/<ol>, not <li>, so bullet and number text
+   always align in the same column. */
+.viewer-md ul, .viewer-md ol { padding-left: var(--hf-list-indent); }
+.viewer-md li { margin: .25em 0; }
+.viewer-md code { font-family: var(--font-mono); font-size: .86em; background: var(--bg); padding: .15em .4em; border-radius: 4px; }
+/* Long lines wrap inside the block instead of scrolling sideways, so a
+   touch drag doesn't get captured by an inner scroll box. */
+.viewer-md pre { background: var(--bg); border: 1px solid var(--hair2); border-radius: 8px; padding: 14px 16px; white-space: pre-wrap; overflow-wrap: anywhere; margin: .8em 0; }
+.viewer-md pre code { background: none; padding: 0; }
+.viewer-md blockquote { border-left: 3px solid var(--hair); padding-left: 14px; color: var(--text2); margin: .8em 0; }
+.viewer-md table { border-collapse: collapse; margin: .8em 0; }
+.viewer-md th, .viewer-md td { border: 1px solid var(--hair); padding: 6px 10px; }
+/* The wrapper renderPreviewHtml adds around each table lets a wide table
+   scroll sideways without moving the surrounding text. */
+.viewer-md .tab-rolagem { overflow-x: auto; max-width: 100%; margin: .8em 0; }
+.viewer-md .tab-rolagem table { margin: 0; }
+.viewer-md mark { background: var(--mark-bg); color: inherit; padding: .05em .18em; border-radius: 3px; }
+
+/* The markdown marker controls bullet style, not nesting depth. */
+.viewer-md ul { list-style-type: disc; }
+.viewer-md ul[data-marcador="traco"] { list-style-type: disc; }
+.viewer-md ul[data-marcador="asterisco"] { list-style-type: circle; }
+.viewer-md ul[data-marcador="mais"] { list-style-type: square; }
+/* Task items (- [ ] / - [x]): the ☐/☑ glyph is the text itself, so the
+   list doesn't add its own bullet too. */
+.viewer-md li[data-tarefa] { list-style: none; }
+.viewer-md li[data-tarefa="feita"] { color: var(--text2); }
+
+.viewer-md ol[class*="hf-ol"] { list-style: none; }
+.viewer-md ol[class*="hf-ol"] > li { position: relative; }
+.viewer-md ol[class*="hf-ol"] > li::before { position: absolute; right: 100%; padding-right: .45em; white-space: nowrap; }
+.viewer-md ol.hf-ol1 { counter-reset: hf-ol1; }
+.viewer-md ol.hf-ol1 > li { counter-increment: hf-ol1; }
+.viewer-md ol.hf-ol1 > li::before { content: counter(hf-ol1) "."; }
+.viewer-md ol.hf-ol2 { counter-reset: hf-ol2; }
+.viewer-md ol.hf-ol2 > li { counter-increment: hf-ol2; }
+.viewer-md ol.hf-ol2 > li::before { content: counter(hf-ol1) "." counter(hf-ol2) "."; }
+.viewer-md ol.hf-ol3 { counter-reset: hf-ol3; }
+.viewer-md ol.hf-ol3 > li { counter-increment: hf-ol3; }
+.viewer-md ol.hf-ol3 > li::before { content: counter(hf-ol1) "." counter(hf-ol2) "." counter(hf-ol3) "."; }
+.viewer-md ol.hf-ol4 { counter-reset: hf-ol4; }
+.viewer-md ol.hf-ol4 > li { counter-increment: hf-ol4; }
+.viewer-md ol.hf-ol4 > li::before { content: counter(hf-ol1) "." counter(hf-ol2) "." counter(hf-ol3) "." counter(hf-ol4) "."; }
+.viewer-md ol.hf-ol5 { counter-reset: hf-ol5; }
+.viewer-md ol.hf-ol5 > li { counter-increment: hf-ol5; }
+.viewer-md ol.hf-ol5 > li::before { content: counter(hf-ol1) "." counter(hf-ol2) "." counter(hf-ol3) "." counter(hf-ol4) "." counter(hf-ol5) "."; }
+.viewer-md ol.hf-ol6 { counter-reset: hf-ol6; }
+.viewer-md ol.hf-ol6 > li { counter-increment: hf-ol6; }
+.viewer-md ol.hf-ol6 > li::before { content: counter(hf-ol1) "." counter(hf-ol2) "." counter(hf-ol3) "." counter(hf-ol4) "." counter(hf-ol5) "." counter(hf-ol6) "."; }
+.viewer-img { display: flex; align-items: center; justify-content: center; height: 100%; padding: 30px; }
+.viewer-img img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 2px 12px var(--sombra); }
+.aviso-central { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; height: 60%; color: var(--text2); }
+
+/* ---------- document viewer (PDF.js) ---------- */
+.doc-status { display: flex; align-items: center; justify-content: center; height: 60%; color: var(--text2); font-size: 13px; }
+.doc-barra {
+  position: sticky; top: 0; z-index: 2;
+  padding: 0 16px; font-size: 12px; color: var(--text2); text-align: center;
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  border-bottom: 1px solid var(--hair);
+}
+.doc-barra { display: flex; align-items: center; justify-content: center; height: 30px; }  
+.doc-lista { padding: 18px 0 44px; }
+.doc-pagina {
+  max-width: 900px; margin: 0 auto 16px;
+  background: var(--pagina-doc); border-radius: 4px;
+  box-shadow: 0 2px 12px var(--sombra);
+  overflow: hidden;
+}
+.doc-pagina canvas { display: block; width: 100%; height: auto; }
+
+/* ---------- info panel ---------- */
+.info {
+  width: 0; min-width: 0; overflow: hidden; background: var(--bg);
+  border-left: 1px solid var(--hair); transition: width .2s ease, min-width .2s ease;
+}
+.info.aberto { width: 300px; min-width: 300px; overflow-y: auto; }
+.info-inner { padding: 18px 18px 30px; width: 300px; }
+.info h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em; margin-bottom: 14px; word-break: break-word; padding-right: 28px; }
+.info .fechar {
+  position: absolute; top: 16px; right: 16px; width: 20px; height: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: transparent;
+  color: var(--text2); cursor: pointer;
+}
+.info .fechar { padding: 0; line-height: 1; font-size: 13px; }  
+.info .fechar:hover { background: var(--circ-hover); }
+.info .fechar:hover { color: var(--text); }  
+.info-inner { position: relative; }
+table.lista th.ordenavel { cursor: pointer; user-select: none; }
+table.lista th.ordenavel:hover { color: var(--text); }
+.info .campo { padding: 9px 0; border-bottom: 1px solid var(--hair2); }
+.info .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-bottom: 3px; }
+.info .rotulo { font-weight: 600; }  
+.info .valor { font-size: 12.5px; word-break: break-all; }
+.info .valor.mono { font-family: var(--font-mono); font-size: 11.5px; }
+.info button.mini {
+  font: inherit; font-size: 12px; color: var(--accent); background: none;
+  border: 0; padding: 4px 0 0; cursor: pointer;
+}
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(12px);
+  background: var(--toast-bg); color: var(--toast-fg); font-size: 12.5px;
+  padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+#toast.mostra { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- quick tooltip ---------- */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  z-index: 80; padding: 4px 9px; border-radius: 6px;
+  font-size: 11.5px; font-weight: 500; line-height: 1.3; letter-spacing: -.01em;
+  white-space: nowrap; color: var(--tip-fg); background: var(--tip-bg);
+  box-shadow: 0 6px 26px var(--sombra);
+  pointer-events: none; opacity: 0;
+  transition: opacity .12s ease;               /* exit: immediate */
+}
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  transition: opacity .12s ease .35s;          /* enter: ~350ms delay */
+}
+/* Alignment for buttons flush against the screen or panel edges. */
+.tip-dir[data-tip]::after  { left: auto; right: 0; transform: none; }   /* tooltip on the right, grows left */
+.tip-esq[data-tip]::after  { left: 0; right: auto; transform: none; }   /* tooltip on the left, grows right */
+.tip-cima[data-tip]::after { top: auto; bottom: calc(100% + 6px); }     /* tooltip above, for bottom bars */
+/* In the top bar, the tooltip uses a fixed layer so it isn't clipped by a
+   container's overflow. */
+.topo [data-tip]::after { content: none; }
+.tip-flutuante {
+  position: fixed; top: 0; left: 0; z-index: 90; padding: 4px 9px; border-radius: 6px;
+  font-size: 11.5px; font-weight: 500; line-height: 1.3; letter-spacing: -.01em;
+  white-space: nowrap; color: var(--tip-fg); background: var(--tip-bg);
+  box-shadow: 0 6px 26px var(--sombra); pointer-events: none; opacity: 0;
+  transition: opacity .12s ease;
+}
+.tip-flutuante.mostra { opacity: 1; }
+
+/* ---------- checkbox / selection ---------- */
+td.c-check, th.c-check { width: 34px; padding-left: 14px; }
+.check {
+  width: 17px; height: 17px; border: 1.5px solid var(--check-bd); border-radius: 5px;
+  display: inline-block; cursor: pointer; vertical-align: middle; transition: all .12s;
+}
+tr.item:hover .check { border-color: var(--accent); }
+tr.item.marcado td { background: var(--sel) !important; }
+tr.item.marcado .check { background: var(--accent); border-color: var(--accent); position: relative; }
+tr.item.marcado .check::after { content: ""; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px; border: solid var(--on-accent); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+tr.item.inacessivel { opacity: .4; }
+.badge-link { color: var(--text2); font-size: 12px; margin-left: 5px; }
+.badge-conflito { color: var(--conflito-fg); background: var(--conflito-bg); font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 5px; margin-left: 7px; }
+/* In the trash, each row shows where the item came from and the time left
+   before it's purged. */
+.badge-orig { color: var(--text2); font-size: 11px; margin-left: 8px;
+  max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: inline-block; vertical-align: bottom; }
+tr.item .lx-prazo { margin-left: 7px; }
+
+/* ---------- upload drop zone ---------- */
+.drop-alvo { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 50; background: var(--drop-veu); pointer-events: none; }
+.drop-alvo.ativo { display: flex; }
+.drop-caixa { border: 2.5px dashed var(--accent); color: var(--accent); font-weight: 600; font-size: 15px; padding: 30px 46px; border-radius: 16px; background: var(--panel); }
+
+/* ---------- top bar buttons ---------- */
+button.acao.primaria { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+button.acao.perigo { background: var(--perigo-bg); color: var(--perigo-fg); border-color: var(--perigo-bd); }
+button.acao.so-icone { padding: 0; width: 30px; justify-content: center; }
+button.acao.ativa { background: var(--sel); color: var(--accent); border-color: transparent; }
+button.acao svg { flex: none; }
+
+/* ---------- context menu ---------- */
+/* The context menu is the topmost layer, above dialog overlays, since it
+   can also open from inside a dialog. Order: overlay 70, banner 90, menu
+   100. */
+.menu-ctx {
+  position: fixed; display: none; z-index: 100; min-width: 176px; padding: 5px;
+  background: var(--panel); border: 1px solid var(--hair); border-radius: 11px;
+  box-shadow: 0 6px 26px var(--sombra);
+  /* Caps the menu height and allows scrolling, so a long menu is never
+   clipped off-screen. */
+  max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain;
+}
+.ctx-item {
+  display: block; width: 100%; text-align: left; font: inherit; font-size: 13px;
+  padding: 8px 10px; border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: var(--text);
+}
+.ctx-item:hover { background: var(--sel); color: var(--accent); }
+.ctx-item.perigo { color: var(--perigo-fg); }
+.ctx-item.perigo:hover { background: var(--perigo-bg); color: var(--perigo-fg); }
+.ctx-sep { height: 1px; background: var(--hair); margin: 5px 8px; }
+
+/* ---------- action bar (touch) ---------- */
+.barra-acoes {
+  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(120%);
+  display: flex; gap: 7px; align-items: center; padding: 8px 10px; max-width: 94%;
+  overflow-x: auto; background: var(--flutuante);
+  border: 1px solid var(--hair); border-radius: 14px; box-shadow: 0 6px 26px var(--sombra);
+  transition: transform .2s ease; z-index: 40;
+  /* Even hidden, this stays a small box in the stacking order, so
+   pointer-events must be disabled to avoid intercepting clicks. */
+  pointer-events: none;
+}
+.barra-acoes.mostra { transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.ba-cont { font-size: 12px; color: var(--text2); padding: 0 6px; white-space: nowrap; }
+.ba-btn { font: inherit; font-size: 13px; border: 1px solid var(--hair); background: transparent; color: var(--text); padding: 0 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.ba-btn { display: inline-flex; align-items: center; height: 30px; }  
+.ba-btn:active { transform: scale(.96); }
+.ba-btn.perigo { color: var(--perigo-fg); }
+
+/* ---------- dialogs ---------- */
+.overlay { position: fixed; inset: 0; background: var(--overlay); display: flex; align-items: center; justify-content: center; z-index: 70; padding: 16px; }
+.dialogo { width: 380px; max-width: 100%; background: var(--panel); border-radius: 14px; padding: 22px; box-shadow: 0 12px 40px var(--sombra); }
+.dialogo h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em; margin-bottom: 14px; }
+.dlg-texto { color: var(--text2); font-size: 13.5px; margin-bottom: 16px; word-break: break-word; }
+.dlg-input { width: 100%; height: 40px; padding: 0 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: 9px; outline: none; margin-bottom: 16px; }
+.dlg-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--sel); }
+.dlg-botoes { display: flex; justify-content: flex-end; gap: 8px; }
+.dlg-area { width: 100%; min-height: 92px; padding: 10px 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: 9px; outline: none; resize: vertical; margin-bottom: 10px; }
+.dlg-area:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--sel); }
+/* full-width button inside the Settings dialog */
+.opt-larga { width: 100%; justify-content: center; margin-bottom: 6px; }
+.dlg-botoes.coluna { flex-direction: column; }
+.dlg-botoes.coluna .acao { width: 100%; justify-content: center; }
+.dlg-migalhas { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 8px; font-size: 12px; }
+.dlg-migalhas .seg { cursor: pointer; color: var(--text2); padding: 2px 4px; }
+.dlg-migalhas .seg { border-radius: 5px; }  
+.dlg-migalhas .sep { color: var(--text2); }
+.dlg-lista { height: 210px; overflow-y: auto; border: 1px solid var(--hair); border-radius: 11px; padding: 5px; margin-bottom: 16px; }
+.pk-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+.pk-item:hover { background: var(--sel); }
+.pk-item:hover { color: var(--accent); }  
+.pk-vazio { color: var(--text2); font-size: 12.5px; padding: 14px; text-align: center; }
+
+/* ---------- editor ---------- */
+.editor-wrap { display: flex; flex-direction: column; height: 100%; }
+.editor { flex: 1; width: 100%; border: 0; outline: none; resize: none; padding: 24px 30px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; tab-size: 4; color: var(--text); background: var(--panel); }
+/* Bar pinned to the top, so it stays visible while the virtual keyboard is
+   open: name on the left, status and buttons on the right. */
+.editor-barra { display: flex; align-items: center; gap: 8px; flex: none; padding: 3px 16px; border-bottom: 1px solid var(--hair); }
+.editor-barra { min-height: 36px; }  
+.ed-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 590; color: var(--text); }
+.ed-estado { flex: none; white-space: nowrap; font-size: 11.5px; color: var(--text2); }
+.ed-estado.sujo { color: var(--accent); }
+/* HF-NAV-008: edit hint matches the status text style; "Markdown" is a
+   link that switches views. */
+.ed-dica { flex: none; white-space: nowrap; font-size: 11.5px; color: var(--text2); }
+.ed-dica-link { border: 0; padding: 0; background: none; font: inherit; color: var(--accent); cursor: pointer; }
+.ed-dica-link:hover { text-decoration: underline; }
+button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
+
+/* ---------- Live Preview ---------- */
+/* Keeps the system's native context menu enabled here, so Paste and text
+   selection still work while writing. */
+.lp-paleta {
+  display: flex; align-items: center; gap: 2px; flex: none;
+  padding: 6px 16px; border-bottom: 1px solid var(--hair);
+  overflow-x: auto; scrollbar-width: none;
+}
+.lp-paleta::-webkit-scrollbar { display: none; }
+.lp-btn {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  min-width: 24px; height: 24px; padding: 0 6px;
+  font: inherit; font-size: 12px; color: var(--text2);
+  background: transparent; border: 0; border-radius: 6px; cursor: pointer;
+}
+.lp-btn:hover { background: var(--bg); color: var(--text); }
+.lp-btn:active { transform: scale(.94); }
+/* The button lights up when the cursor is inside what it produced, using
+   the syntax tree rather than guessing. */
+.lp-btn.ativo { background: var(--sel); color: var(--accent); }
+.lp-btn .lp-i { line-height: 1; font-size: 12.5px; }
+.lp-i-mark { background: var(--mark-bg); border-radius: 3px; padding: 1px 3px; color: var(--text); }
+.lp-sep { flex: none; width: 1px; height: 16px; background: var(--hair); margin: 0 5px; }
+/* `overflow-x: auto` forces the Y axis to `auto` too, clipping tooltips
+   below the toolbar. A container query removes the overflow once the toolbar
+   actually fits. */
+@media (hover: hover) and (min-width: 721px) {
+  .lp-wrap { container-type: inline-size; }
+  @container (min-width: 620px) { .lp-paleta { overflow: visible; } }
+}
+/* The tooltip is centered by default; the first button in the bar needs
+   the same edge correction as .tip-esq. */
+.lp-paleta .lp-btn:first-child[data-tip]::after { left: 0; right: auto; transform: none; }
+/* On touch, a thin visible scrollbar and edge shadows hint that more
+   buttons are scrollable off-screen. */
+@media (max-width: 720px), (pointer: coarse) {
+  .lp-paleta {
+    scrollbar-width: thin;
+    background:
+      linear-gradient(to right, var(--panel), transparent) left / 22px 100% no-repeat local,
+      linear-gradient(to left, var(--panel), transparent) right / 22px 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--sombra), transparent) left / 10px 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--sombra), transparent) right / 10px 100% no-repeat scroll;
+  }
+  .lp-paleta::-webkit-scrollbar { display: block; height: 3px; }
+  .lp-paleta::-webkit-scrollbar-thumb { background: var(--borda-forte); border-radius: 999px; }
+  .lp-btn { min-width: 40px; height: 40px; }
+}
+/* ---------- CodeMirror 6 engine ---------- */
+/* One .cm-line per source line; body text is 12.5px, like the Clean view.
+   The engine sets the line classes. */
+.lp-doc { flex: 1; min-height: 0; overflow: hidden; outline: none; font-size: 12.5px; line-height: 1.65; }
+.lp-doc .cm-editor { height: 100%; background: transparent; color: var(--text); }
+.lp-doc .cm-editor.cm-focused { outline: none; }
+.lp-doc .cm-scroller { font-family: inherit; line-height: inherit; overflow: auto; }
+/* Side padding matches the Formatted view; vertical padding is smaller
+   since the bar and toolbar already sit above. */
+.lp-doc .cm-content { padding: 18px 32px 60px; caret-color: var(--accent); }
+/* One source line equals one screen line, matching CM6's default; headings
+   get extra space via padding, never margin, to preserve that mapping. */
+.lp-doc .cm-line { padding: 0; }
+.lp-doc .cm-cursor, .lp-doc .cm-dropCursor { border-left-color: var(--text); }
+/* Headings change only font size, keeping the body's uniform line height.
+   h1-h3 share size/weight with the Formatted view; h4-h6 use a fixed
+   scale. */
+.lp-doc .lp-ln-h4 { font-size: 14px; font-weight: 650; letter-spacing: -.02em; }
+.lp-doc .lp-ln-h5 { font-size: 13px; font-weight: 650; letter-spacing: -.02em; }
+.lp-doc .lp-ln-h6 { font-size: 12.5px; font-weight: 650; letter-spacing: -.02em; }
+/* Monospace applies only where the document itself is monospace: code and
+   tables. The Formatted view gets a formatted table; the editor keeps
+   plain aligned text. */
+.lp-doc .lp-ln-code { font-family: var(--font-mono); font-size: 1em; background: var(--bg); }
+.lp-doc .lp-ln-tabela { font-family: var(--font-mono); font-size: 1em; }
+.lp-doc .lp-ln-quote { border-left: 3px solid var(--hair); padding-left: 14px; color: var(--text2); }
+.lp-doc .lp-ln-hr { color: var(--text2); }
+/* The list item's hanging indent comes inline from the engine; this rule
+   only keeps the line from picking up padding elsewhere. */
+.lp-doc .lp-ln-item { padding-right: 0; }
+/* Syntax markers stay visible and dimmed regardless of cursor position, so
+   the layout never shifts. */
+.lp-doc .lp-marca { color: var(--text2); }
+/* The bullet reuses the Formatted view's glyph and the engine's
+   hanging-indent unit, so swapping glyphs never shifts the text. */
+.lp-doc .lp-bullet { display: inline-block; width: 1ch; text-indent: 0; color: transparent;
+  position: relative; }
+.lp-doc .lp-bullet::before { content: ""; position: absolute; left: 0; top: 50%;
+  transform: translateY(-50%); width: .5em; height: .5em; border-radius: 50%;
+  background: var(--text2); }
+.lp-doc .lp-bullet-circulo::before { background: none; box-sizing: border-box;
+  border: 1.5px solid var(--text2); }
+.lp-doc .lp-bullet-quadrado::before { border-radius: 1.5px; width: .46em; height: .46em; }
+.lp-doc .lp-strong { font-weight: 700; }
+.lp-doc .lp-em { font-style: italic; }
+.lp-doc .lp-strike { text-decoration: line-through; }
+.lp-doc .lp-mark { background: var(--mark-bg); border-radius: 3px; }
+/* Inline code background hugs the text tightly, so side padding doesn't
+   look like an extra space before punctuation. */
+.lp-doc .lp-code { font-family: var(--font-mono); font-size: .86em; background: var(--bg); border-radius: 4px; padding: .1em 0; }
+.lp-doc .lp-link-md { color: var(--accent); }
+.lp-doc .lp-img-md { color: var(--text2); }
+.lp-doc .lp-img-w { display: inline-block; max-width: 100%; vertical-align: top; }
+.lp-doc .lp-img-w img.hf-img { max-height: 340px; width: auto; object-fit: contain; }
+/* The tag keeps the same background and color whether its line is being
+   edited or not. */
+.lp-doc .lp-tag { color: var(--accent); }
+.lp-doc .hf-tag { background: var(--sel); border-radius: 5px; padding: .05em .2em; }
+
+/* ---------- trash ---------- */
+
+/* 30-day countdown before permanent purge; nothing is deleted
+   immediately. */
+.lx-prazo { flex: none; font-size: 10.5px; font-weight: 600; color: var(--text2); background: var(--circ); border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+
+/* ---------- upload rename on collision ---------- */
+.up-ren { margin-bottom: 4px; }
+.up-ren-de { font-size: 11.5px; color: var(--text2); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-ren .dlg-input { margin-bottom: 10px; }
+
+.toast-undo { margin-left: 14px; background: none; border: 0; color: var(--toast-acao); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+#toast.mostra .toast-undo { pointer-events: auto; }
+
+/* ---------- mobile ---------- */
+@media (max-width: 720px) {
+  
+  aside { display: none; }
+  aside.aberto { display: block; width: var(--sidebar-w, 250px); min-width: var(--sidebar-w, 250px); }
+  #sidebar-overlay { display: none !important; }
+  .info.aberto { position: fixed; right: 0; z-index: 30; height: 100%; box-shadow: 0 12px 40px var(--sombra); }
+  .rotulo-btn { display: none; }
+  .barra-acoes { bottom: calc(14px + env(safe-area-inset-bottom)); }
+  button.acao { height: 34px; }
+  td.c-nome, table.lista td { height: 44px; }   /* touch target ≥44pt */
+  /* `table-layout: fixed` lets the Name column compress; `auto` would not,
+   causing sideways scroll on narrow screens. */
+  table.lista { table-layout: fixed; width: 100%; }
+  .c-criado { display: none; }   /* Created column: desktop only, to save space. */
+  col.cg-crd { display: none; }  /* Removes the whole <col>; a zero width alone misaligns columns in
+   table-fixed layout. */
+  /* With the sidebar open, only the Name column survives the squeeze:
+   table-fixed would otherwise give all the space to the fixed-width
+   columns. */
+  aside.aberto ~ main th.c-tam, aside.aberto ~ main td.c-tam,
+  aside.aberto ~ main th.c-mod, aside.aberto ~ main td.c-mod { display: none; }
+  aside.aberto ~ main col.cg-tam, aside.aberto ~ main col.cg-mod { display: none; }
+  #btn-split { display: none !important; }   /* split view disabled on narrow screens */
+  .split-pane.aberto { display: none; }
+  .col-rz { display: none; }
+}
+
+/* ---------- list bar, status bar, search history ---------- */
+/* Group/Sort controls stay subdued at rest; the border only appears on
+   hover or focus. */
+/* Display controls are subdued icons on the right, following common file
+   manager conventions; tooltips supply the labels. */
+.lista-barra {
+  display: flex; align-items: center; justify-content: flex-end; gap: 1px; flex: none;
+  padding: 3px 16px; border-bottom: 1px solid var(--hair);
+  background: var(--panel); font-size: 11px; color: var(--text2);
+}
+.lb-dir {
+  width: 24px; height: 24px; font-size: 12px; color: var(--text2); background: transparent;
+  border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.lb-dir:hover { background: var(--hover); border-color: var(--hair); color: var(--text); }
+.lb-dir:active { transform: scale(.95); }
+
+.status-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none;
+  height: 26px; padding: 0 16px; border-top: 1px solid var(--hair);
+  background: var(--bg); font-size: 11.5px; color: var(--text2);
+}
+.sb-info { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sb-icone {
+  flex: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer;
+}
+.sb-icone:hover { background: var(--hover); color: var(--text); }
+.sb-icone.ativa { background: var(--sel); color: var(--accent); }
+
+.busca-wrap { position: relative; }
+.busca-hist {
+  position: absolute; left: 6px; right: 6px; top: calc(100% + 2px); z-index: 25;
+  background: var(--panel); border: 1px solid var(--hair); border-radius: 11px;
+  box-shadow: 0 6px 26px var(--sombra); padding: 5px;
+}
+.bh-titulo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); padding: 5px 10px 3px; }
+.bh-item {
+  padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bh-item:hover { background: var(--sel); color: var(--accent); }
+
+/* ---------- sidebar: header, search, favorites ---------- */
+/* Title on the left, both icons together on the right, aligned with the
+   search box below for visual symmetry. */
+.side-topo { display: flex; align-items: center; gap: 2px; padding-right: 6px; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--hair2); }
+.side-topo .side-title { flex: 1; }
+.side-tema { border: 0; width: 30px; height: 30px; color: var(--text2); background: transparent; }
+.side-tema:hover { background: var(--hover); color: var(--text); }
+.vault-sel { margin: 4px 6px 10px; }
+.vault-sel[hidden] { display: none; }
+.vault-seg { width: 100%; background: var(--circ); border-radius: 8px; height: 30px; }
+.vault-seg button {
+  flex: 1 1 0; min-width: 0; height: 100%; padding: 0; font-size: 12px; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.busca-box {
+  display: flex; align-items: center; gap: 6px; margin: 4px 6px 10px;
+  padding: 0 8px; height: 30px; background: var(--panel); border: 1px solid var(--hair);
+  border-radius: 8px;
+}
+.busca-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--sel); }
+.busca-lupa { color: var(--text2); flex: none; }
+#busca-input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; color: var(--text); }
+#busca-input::placeholder { color: var(--text2); }
+.busca-modo {
+  /* Minimal style: no box, just small text that lights up on hover. */
+  flex: none; font: inherit; font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text2); background: none; border: 0;
+  border-radius: 5px; padding: 3px 4px; cursor: pointer;
+}
+.busca-modo:hover { color: var(--accent); }
+/* option row in the Settings dialog */
+.opt-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; cursor: pointer; }
+/* Settings/Administration screen */
+.opt-secao { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin: 14px 0 8px; }
+.opt-secao:first-of-type { margin-top: 0; }
+.opt-vaults { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; max-height: 260px; overflow-y: auto; }
+.opt-vault { border: 1px solid var(--hair); border-radius: 11px; padding: 9px 11px; }
+.opt-vault-titulo { font-size: 13px; font-weight: 590; margin-bottom: 3px; }
+.opt-vault-linha { font-size: 11.5px; color: var(--text2); word-break: break-all; }
+/* pills for ignored tags in Settings */
+.opt-tags-ign { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.opt-tag-ign { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text); border: 1px solid var(--hair); border-radius: 999px; padding: 0 3px 0 11px; }
+.opt-tag-ign { height: 26px; }  
+.opt-tag-x { border: 0; background: transparent; color: var(--text2); font-size: 13px; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
+.opt-tag-x { flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; }  
+.opt-tag-x:hover { background: var(--circ-hover); color: var(--text); }
+.opt-tags-ign .vazio { font-size: 12.5px; color: var(--text2); }
+.opt-tag-add { display: flex; align-items: center; gap: 8px; }
+.opt-tag-add .dlg-input { margin-bottom: 0; }
+.opt-tag-add .dlg-input::-webkit-calendar-picker-indicator { display: none !important; }
+.opt-tag-aviso { font-size: 12px; color: var(--perigo-fg); min-height: 0; margin: 0; }
+.opt-tag-aviso:empty { display: none; }
+.vn-passos { font-size: 11.5px; line-height: 1.5; background: var(--bg); border: 1px solid var(--hair); border-radius: 11px; padding: 10px 12px; margin-bottom: 14px; overflow-x: auto; white-space: pre; }
+.vn-passos { font-family: var(--font-mono); }  
+/* One shared typography style for every sidebar section title. */
+/* A separator line above each section title; it persists while a section
+   is collapsed, and disappears only when the section itself is empty. */
+.sec-titulo, .fav-titulo, .et-titulo, .tg-titulo { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; padding: 10px 10px 4px; margin-top: 4px; border-top: 1px solid var(--hair2); }
+/* Collapsible sections: the title is the click target, and the chevron
+   rotates to show state. */
+.sec-recolhe { cursor: pointer; display: flex; align-items: center; gap: 4px;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sec-recolhe { white-space: nowrap; }  
+.sec-recolhe:hover { color: var(--text); }
+.sec-chev::before { content: "▸"; font-size: 9px; display: inline-block; transform: rotate(90deg); transition: transform .12s; }
+.sec-recolhe.fechada .sec-chev::before { transform: none; }
+#favoritos.sec-fechada > :not(.fav-titulo), #etiquetas.sec-fechada > :not(.et-titulo),
+#tags-nav.sec-fechada > :not(.tg-titulo) { display: none; }
+#tree.sec-fechada { display: none; }
+.fav-row {
+  display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 6px;
+  border-radius: 6px; cursor: pointer; white-space: nowrap;
+  /* long-press opens the menu; otherwise iOS starts text selection */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.fav-row:hover { background: var(--hover); }
+.fav-row.ativo { background: var(--sel); color: var(--accent); }
+.fav-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.fav-row .fav-x { opacity: 0; color: var(--text2); border: 0; background: transparent; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; border-radius: 50%; }
+.fav-row .fav-x { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }  
+.fav-row:hover .fav-x { opacity: 1; }
+.fav-row .fav-x:hover { background: var(--circ-hover); color: var(--text); }
+/* Trash is a place in the sidebar, like Favorites, not a top-bar action. */
+/* Trash is the last node in the tree, styled like a folder row, and stays
+   a focusable button with an aria-label. */
+.side-lixeira {
+  width: 100%; border: 0; background: transparent; color: var(--text2);
+  font: inherit; text-align: left; margin-bottom: 2px;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.side-lixeira:hover { background: var(--hover); color: var(--text); }
+/* While browsing inside the trash, its sidebar entry lights up like the
+   active tree node. */
+.side-lixeira.ativo { background: var(--sel); color: var(--accent); }
+/* HF-NAV-006: Trash sits in its own block, separated from the tree by a
+   hairline. */
+#btn-lixeira { margin-top: 6px; border-top: 1px solid var(--hair2); border-radius: 0; }
+.busca-escopo { font-size: 11px; color: var(--text2); padding: 3px 10px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#favoritos { margin-bottom: 2px; }   /* The next section's top border provides the separation. */
+#favoritos:empty { display: none; }
+/* HF-NAV-006: each favorite folder is its own mini tree, using the same
+   row style as the main tree. */
+.fav-arvore { min-width: 0; }
+/* A favorite with no type yet: empty icon space, no icon. */
+.icone-vazio { display: inline-block; width: 15px; height: 15px; flex: none; }
+/* The remove (×) stays hidden until hover or keyboard focus. */
+.fav-row .fav-x:focus-visible { opacity: 1; }
+button.acao.ativa#btn-fav svg { fill: currentColor; }   /* filled star = already a favorite */
+
+/* ---------- sidebar tree controls (compact) ---------- */
+/* Sort controls are icons in the panel header, not a labeled row,
+   following the same pattern as apps like Obsidian. */
+/* Icons are taller than the title row; a negative vertical margin keeps
+   the section's height consistent with the others. */
+.sec-ferramentas { margin: -7px -4px -7px auto; display: inline-flex; align-items: center; gap: 1px; flex: none; }
+/* Narrow sidebar: the title shrinks with an ellipsis; the tools stay full
+   size. */
+.sec-rotulo { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-sel {
+  position: relative; width: 24px; height: 24px; display: inline-flex;
+  align-items: center; justify-content: center; color: var(--text2); border-radius: 6px;
+}
+.sf-sel:hover { background: var(--hover); color: var(--text); }
+.sf-sel select {
+  position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+  appearance: none; -webkit-appearance: none; border: 0; padding: 0; margin: 0;
+}
+.sec-ferramentas .lb-dir { width: 24px; height: 24px; font-size: 12px; color: var(--text2); border-radius: 6px; }
+.sec-ferramentas .lb-dir:hover { background: var(--hover); color: var(--text); }
+
+.arv-grupo {
+  font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .06em; padding: 7px 6px 2px;
+}
+
+/* ---------- current folder's favorites, top of the list ---------- */
+.fav-pasta { padding: 10px 16px 8px; border-bottom: 1px solid var(--hair2); }
+.fp-titulo {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.fp-linha { display: flex; flex-wrap: wrap; gap: 6px; }
+.fp-chip {
+  display: flex; align-items: center; gap: 6px; max-width: 240px;
+  font: inherit; font-size: 12.5px; color: var(--text); background: var(--panel);
+  border: 1px solid var(--hair); border-radius: 999px; padding: 0 11px 0 8px; cursor: pointer;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
+}
+.fp-chip { height: 26px; }  
+.fp-chip:hover { background: var(--sel); border-color: transparent; color: var(--accent); }
+.fp-chip .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- search results ---------- */
+.busca-cab { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; border-bottom: 1px solid var(--hair2); }
+.busca-cab .conta { font-size: 12px; color: var(--text2); }
+.busca-cab .limpar { margin-left: auto; font: inherit; font-size: 12px; color: var(--accent); background: none; border: 0; cursor: pointer; }
+/* long-press opens the menu on both search results and the label view */
+.res-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 16px;
+  border-bottom: 1px solid var(--hair2); cursor: pointer;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.res-item:hover { background: var(--hover); }
+.res-corpo { min-width: 0; flex: 1; }
+.res-nome { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.res-cam { font-size: 11.5px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The matched snippet exists to be copied, so selection is re-enabled
+   here even though the row itself disables it. */
+.res-trecho { font-family: var(--font-mono); font-size: 11.5px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; cursor: text; }
+.res-trecho mark { background: var(--sel); color: var(--accent); padding: 0 1px; border-radius: 3px; }
+.busca-carregando { padding: 30px; text-align: center; color: var(--text2); }
+
+/* ---------- keyboard focus / inline rename / marquee / palette ---------- */
+tr.item.foco td { box-shadow: inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }
+tr.item.foco td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+tr.item.foco td:first-child { box-shadow: inset 1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }  
+tr.item.foco td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+tr.item.foco td:last-child { box-shadow: inset -1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }  
+.rename-inline {
+  font: inherit; color: var(--text); background: var(--panel);
+  border: 1px solid var(--accent); border-radius: 5px; padding: 2px 6px;
+  outline: none; box-shadow: 0 0 0 3px var(--sel); width: min(60vw, 420px);
+  /* The inline rename field keeps native selection and the iOS callout, so
+   a long press can still paste without a keyboard. */
+  user-select: text; -webkit-user-select: text; -webkit-touch-callout: default;
+}
+.marquee {
+  position: fixed; z-index: 45; pointer-events: none;
+  border: 1px solid var(--accent); background: var(--sel);
+}
+.pal-lista { max-height: 320px; overflow-y: auto; margin-top: 6px; }
+.pal-item { padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+.pal-item:hover, .pal-item.ativo { background: var(--sel); color: var(--accent); }
+
+/* ---------- swipe-to-delete (touch) ---------- */
+tr.item.arrastando td { transition: none; }
+
+/* ---------- update notice (auto-refresh) ---------- */
+.aviso-refresh {
+  position: absolute; top: 58px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+  background: var(--flutuante);
+  border: 1px solid var(--hair); border-radius: 999px; box-shadow: 0 6px 26px var(--sombra);
+  font-size: 12.5px; color: var(--text); cursor: pointer; z-index: 35;
+  animation: sobe .2s ease;
+  /* A clickable control, not plain text, so long-press doesn't trigger
+   native selection on it. */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+@keyframes sobe { from { opacity: 0; transform: translateX(-50%) translateY(-6px); } }
+.aviso-refresh .ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+
+
+/* ---------- skeleton / loading (subtle shimmer) ---------- */
+.skeleton { padding: 8px 0; }
+.sk-linha { display: flex; align-items: center; gap: 14px; height: 36px; padding: 0 16px; }
+.sk-cod { padding: 3px 30px; }
+.skeleton.sk-arq { padding: 20px 0; }
+.sk-bloco {
+  display: inline-block; height: 11px; border-radius: 5px;
+  background: linear-gradient(90deg, var(--hair2) 25%, var(--hover) 37%, var(--hair2) 63%);
+  background-size: 400% 100%; animation: sk-brilho 1.4s ease infinite;
+}
+.sk-nome { flex: 1; max-width: 42%; }
+.sk-tam { width: 54px; } .sk-data { width: 96px; }
+@keyframes sk-brilho { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .sk-bloco { animation: none; } }
+
+/* ---------- offline banner ---------- */
+.banner-offline {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 7px 16px; font-size: 12.5px; font-weight: 500;
+  background: var(--conflito-bg); color: var(--conflito-fg);
+  border-bottom: 1px solid var(--hair); box-shadow: 0 2px 12px var(--sombra);
+  /* Same reasoning as .aviso-refresh: a status strip with nothing to select. */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.banner-offline .off-ponto {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--conflito-fg);
+  animation: off-pisca 1.1s ease-in-out infinite;
+}
+@keyframes off-pisca { 50% { opacity: .3; } }
+
+.home { max-width: 940px; margin: 0 auto; padding: 40px 28px 60px; }
+.home-busca-wrap { margin: 8px 0 34px; }
+.home-busca-box {
+  display: flex; align-items: center; gap: 10px; max-width: 620px; margin: 0 auto;
+  padding: 0 16px; height: 46px; background: var(--panel); border: 1px solid var(--hair);
+  border-radius: 11px; box-shadow: 0 2px 12px var(--sombra);
+}
+.home-busca-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--sel); }
+.home-busca-box .busca-lupa { color: var(--text2); flex: none; }
+#home-busca { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 15px; color: var(--text); }
+#home-busca::placeholder { color: var(--text2); }
+.home-sec { margin-bottom: 30px; }
+.home-sec h2 { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.home-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.home-card {
+  display: flex; align-items: center; gap: 11px; padding: 13px 14px;
+  background: var(--panel); border: 1px solid var(--hair); border-radius: 11px; cursor: pointer;
+  transition: background .12s, transform .08s, box-shadow .12s;
+}
+.home-card:hover { background: var(--bg); box-shadow: 0 2px 12px var(--sombra); }
+.home-card:active { transform: scale(.985); }
+.home-card svg.icone { flex: none; width: 18px; height: 18px; }
+.hc-txt { min-width: 0; }
+.hc-nome { font-size: 13px; font-weight: 590; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hc-sub { font-size: 11.5px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home .pk-vazio { text-align: left; padding: 8px 2px; }
+
+/* ---------- tab bar ---------- */
+.abas-barra {
+  display: flex; align-items: stretch; gap: 3px; flex: none; min-height: 37px;
+  padding: 5px 8px 0; background: var(--bg);
+  /* `overflow-y: hidden` is required alongside `overflow-x: auto`, or the Y
+   axis defaults to `auto` and touch scrolling gets stuck mid-bar. */
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.abas-barra::-webkit-scrollbar { display: none; }
+.abas-barra:empty { display: none; }
+.aba {
+  display: flex; align-items: center; gap: 7px; max-width: 240px; min-width: 92px;
+  padding: 0 6px 0 12px; height: 31px; border-radius: 8px 8px 0 0; cursor: pointer;
+  color: var(--text2); background: transparent; border: 1px solid transparent; border-bottom: 0;
+  /* Tabs use a 12px font so more of a long file name fits before
+   truncation. */
+  font-size: 12px; white-space: nowrap;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
+}
+.aba:hover { background: var(--hover); color: var(--text); }
+.aba.ativa { background: var(--panel); color: var(--text); border-color: var(--hair); }
+.aba-nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.aba-x {
+  flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: transparent; color: var(--text2);
+  font-size: 13px; line-height: 1; cursor: pointer;
+}
+.aba-x { padding: 0; }  
+.aba:hover .aba-x { color: var(--text); }
+.aba-x:hover { background: var(--circ-hover); color: var(--text); }
+.aba-mais {
+  flex: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; color: var(--text2); font-size: 18px; cursor: pointer; border-radius: 6px;
+}
+.aba-mais { align-self: center; }  
+.aba-mais:hover { background: var(--hover); color: var(--text); }
+
+/* ---------- split view (second pane) ---------- */
+.split-pane {
+  position: relative; width: 0; min-width: 0; overflow: hidden;
+  background: var(--panel); transition: width .2s ease;
+}
+/* No leftover inline style can reopen a closed split pane. */
+.split-pane:not(.aberto) { width: 0 !important; min-width: 0 !important; }
+.split-pane.aberto { width: 46%; min-width: 320px; border-left: 1px solid var(--hair); }
+.split-pane iframe { width: 100%; height: 100%; border: 0; display: block; }
+.split-divisor {
+  position: absolute; top: 0; left: 0; width: 8px; height: 100%; z-index: 5;
+  cursor: col-resize; margin-left: -4px;
+}
+.split-divisor:hover { background: var(--sel); }
+body.resizing-col { cursor: col-resize; user-select: none; }
+body.resizing-col iframe { pointer-events: none; }
+
+.col-rz {
+  position: absolute; top: 0; right: -4px; width: 8px; height: 100%;
+  cursor: col-resize; z-index: 3; user-select: none;
+}
+
+.col-rz:hover { background: var(--sel); }  
+#side-title { cursor: pointer; }
+#side-title:hover { color: var(--text); }
+
+
+
+/* ---------- custom folder emoji + colored labels ---------- */
+.emoji-icone { font-size: 14px; width: 15px; height: 15px; flex: none; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; }
+.tags { display: inline-flex; align-items: center; gap: 3px; margin-left: 7px; flex: none; }
+.tag-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.10); }
+
+/* labels dialog */
+.et-rot { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin: 6px 0 8px; }
+.et-rot { font-weight: 600; }  
+.tag-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* Tri-state chip: on, partial, or off; toggle and rename are separate
+   click targets. */
+.tag-chip {
+  display: inline-flex; align-items: center; font: inherit; font-size: 12.5px;
+  padding: 0; overflow: hidden; border-radius: 999px; color: var(--text);
+  background: var(--bg); border: 1px solid var(--hair);
+}
+.tag-chip { height: 26px; }  
+.tag-chip .tag-dot { width: 10px; height: 10px; box-shadow: none; }
+.tag-chip.on { border-color: var(--accent); background: var(--sel); color: var(--accent); font-weight: 600; }
+.tag-chip.parcial { border-color: var(--borda-forte); }
+.tag-chip.parcial .tc-nome::after { content: "–"; margin-left: 5px; color: var(--text2); font-weight: 600; }
+.et-emoji { margin-top: 2px; }
+.tag-chip .tc-tog {
+  display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px;
+  color: inherit; background: none; border: 0; cursor: pointer; padding: 0 4px 0 11px;
+}
+.tag-chip .tc-tog { height: 100%; }  
+.tag-chip .tc-ren { font: inherit; font-size: 11px; color: var(--text2); background: none; border: 0; cursor: pointer; padding: 0 9px 0 4px; }
+.tag-chip .tc-ren { height: 100%; }  
+.tag-chip .tc-ren:hover { color: var(--accent); }
+.tag-chip .tc-input { font: inherit; font-size: 12.5px; width: 118px; margin: 3px 6px; padding: 2px 6px; color: var(--text); background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; outline: none; }
+.tag-chip .tc-input { box-shadow: 0 0 0 3px var(--sel); }  
+
+/* ---------- Labels section (#etiquetas): sidebar and center view ---------- */
+#etiquetas { margin-bottom: 2px; }
+#etiquetas:empty { display: none; }
+/* .et-titulo styling is unified into .sec-titulo. */
+.et-row {
+  display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 6px;
+  border-radius: 6px; cursor: pointer; white-space: nowrap;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
+}
+.et-row:hover { background: var(--hover); }
+.et-row.ativo { background: var(--sel); color: var(--accent); }
+.et-row.drop-alvo-item { background: var(--sel); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.et-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.et-row .et-n { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.et-row .et-ren { opacity: 0; color: var(--text2); border: 0; background: transparent; cursor: pointer; font-size: 11px; line-height: 1; padding: 0; border-radius: 50%; }
+.et-row .et-ren { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }  
+.et-row:hover .et-ren { opacity: 1; }
+.et-row .et-ren:hover { background: var(--circ-hover); color: var(--text); }
+.et-bola { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.10); }
+.et-bola { margin: 0 2.5px; }  
+.et-cab { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 590; }
+
+/* ---------- tags (#): sidebar section + clickable tag ---------- */
+#tags-nav { margin-bottom: 2px; }
+#tags-nav:empty { display: none; }
+/* .tg-titulo styling is unified into .sec-titulo. */
+.tg-row {
+  display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 6px;
+  border-radius: 6px; cursor: pointer; white-space: nowrap;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
+}
+.tg-row:hover { background: var(--hover); }
+.tg-row.ativo { background: var(--sel); color: var(--accent); }
+.tg-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.tg-row .tg-n { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.tg-hash { color: var(--accent); font-weight: 600; flex: none; }
+.tg-hash { width: 15px; text-align: center; }  
+/* Tag as rendered in the Formatted view and inactive Live Preview blocks. */
+.hf-tag {
+  color: var(--accent); background: var(--sel); border-radius: 5px;
+  padding: .05em .2em; cursor: pointer; white-space: nowrap;
+}
+.hf-tag:hover { text-decoration: underline; }
+@media (max-width: 720px) { .tg-row { height: 40px; } }
+.res-item .et-x {
+  opacity: 0; margin-left: auto; flex: none; color: var(--text2); border: 0; background: transparent;
+  cursor: pointer; font-size: 13px; line-height: 1; padding: 0; border-radius: 50%;
+}
+.res-item .et-x { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }  
+.res-item:hover .et-x { opacity: 1; }
+.res-item .et-x:hover { background: var(--circ-hover); color: var(--text); }
+@media (max-width: 720px) { .et-row { height: 40px; } .res-item .et-x { opacity: 1; } }
+
+/* ---------- note header ---------- */
+/* Header for .md files: the full path with a copy button, then a
+   metadata line. */
+.nota-cab { padding: 14px 32px 0; }
+/* `flex: none`, like .editor-barra: the header must not shrink, since
+   .lp-doc is the element that scrolls. */
+.lp-wrap .nota-cab { flex: none; padding: 10px 16px 0; }
+/* With the header present, top padding effectively doubles. */
+.nota-cab + .viewer-md { padding-top: 12px; }
+/* First card line: full path (truncated, full value in the title
+   attribute) plus a copy button; second line: metadata in a muted
+   color. */
+.nota-caminho { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 4px; }
+.nota-caminho-txt {
+  font-size: 11.5px; color: var(--text2); font-family: var(--font-mono);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl;   /* keeps the end of the path visible */
+  unicode-bidi: plaintext; min-width: 0;
+}
+/* The copy button stays borderless and dimmed at rest and lights up on
+   hover or focus. */
+.nota-copiar-caminho {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--text2);
+  font: inherit; font-size: 10.5px; line-height: 1; min-width: 24px; height: 24px;
+  transition: background .12s ease, color .12s ease;
+}
+.nota-copiar-caminho { border-radius: 6px; }  
+
+.nota-copiar-caminho:focus-visible { background: var(--hover); color: var(--text); }  
+.nota-copiar-caminho:hover { background: var(--hover); color: var(--text); }  
+.nota-copiar-caminho.copiou { color: var(--accent); }
+/* Metadata line lists name, character/word/line counts, and labels; each
+   separator disappears along with its own empty field. */
+.nota-meta { font-size: 12px; color: var(--text2); overflow-wrap: anywhere; }
+.nota-meta-resto > span:empty { display: none; }
+/* A field never breaks mid-way; the line wraps between fields instead
+   (labels are the exception). */
+.nota-meta-resto > span { white-space: nowrap; }
+.nota-meta-labels { white-space: normal; }
+/* Every field is prefixed with "|"; whichever field starts a line has its
+   separator hidden. */
+.nota-meta { overflow: hidden; }
+.nota-meta-resto { display: flex; flex-wrap: wrap; margin-left: -15px; }
+.nota-meta-resto > span::before { content: "|"; content: "|" / ""; display: inline-block; width: 15px; text-align: center; }
+.nota-nome { color: var(--text); font-weight: 590; }
+/* Each label is one unit: its color dot never separates from its name. */
+.nota-label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow-wrap: normal; }
+.nota-label .tag-dot { flex: none; }
+/* The plain-textarea editor gets the same header card as .lp-wrap. */
+.editor-wrap > .nota-cab { flex: none; padding: 10px 16px 0; }
+.nn-id { font-size: 11.5px; color: var(--text2); font-family: var(--font-mono); min-height: 15px; margin: -10px 0 14px; overflow-wrap: anywhere; }
+
+/* ---------- images in notes ---------- */
+.viewer-md img.hf-img, .lp-doc img.hf-img {
+  max-width: 100%; height: auto; border-radius: 8px; margin: .4em 0; display: block;
+}
+.viewer-md img.hf-img-fora, .lp-doc img.hf-img-fora {
+  min-width: 120px; min-height: 34px; border: 1px dashed var(--perigo-fg);
+  background: var(--bg); border-radius: 6px;
+}
+
+/* ---------- internal drag-and-drop targets ---------- */
+body.arrastando-itens { cursor: grabbing; }
+tr.item.drop-alvo-item td { background: var(--sel) !important; box-shadow: inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }
+.node-row.drop-alvo-item, .fav-row.drop-alvo-item { background: var(--sel); box-shadow: inset 0 0 0 1.5px var(--accent); }
+#favoritos.fav-drop { outline: 1.5px dashed var(--accent); outline-offset: -2px; border-radius: 8px; background: var(--sel); }
+/* With no favorites yet, the drop zone appears below Trash instead of
+   pushing the tree during the drag. */
+#favoritos-soltar { display: none; }
+body.arrastando-itens #favoritos:empty ~ #favoritos-soltar { display: block; padding: 4px 6px; }
+body.arrastando-itens #favoritos:empty ~ #favoritos-soltar::before {
+  content: "Soltar aqui para favoritar pasta"; display: block; text-align: center;
+  color: var(--text2); font-size: 11px; border: 1.5px dashed var(--hair);
+  border-radius: 8px; padding: 12px 6px;
+}
+body.arrastando-itens #favoritos:empty ~ #favoritos-soltar.drop-alvo-item::before { border-color: var(--accent); color: var(--accent); }
+
+.ptr-ind {
+  position: absolute; top: calc(6px + env(safe-area-inset-top)); left: 50%; z-index: 36;
+  transform: translate(-50%, -160%); opacity: 0; pointer-events: none;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--flutuante);
+  border: 1px solid var(--hair); box-shadow: 0 6px 26px var(--sombra);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .15s ease;
+}
+.ptr-ind.ativo { opacity: 1; }
+.ptr-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--text2); border-top-color: transparent; }
+.ptr-ind.pronto .ptr-spin { border-color: var(--accent); border-top-color: transparent; animation: ptr-gira .7s linear infinite; }
+@keyframes ptr-gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ptr-ind.pronto .ptr-spin { animation: none; } }
+
+.bs-overlay { align-items: flex-end; padding: 0; z-index: 100; }
+.bottom-sheet {
+  width: 100%; background: var(--panel); border-radius: 16px 16px 0 0;
+  padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -6px 30px var(--sombra); max-height: 80vh; overflow-y: auto;
+  transform: translateY(100%); transition: transform .22s cubic-bezier(.32,.72,0,1);
+}
+.bottom-sheet.aberto { transform: none; }
+.bs-alca { width: 38px; height: 5px; border-radius: 3px; background: var(--borda-forte); opacity: .5; margin: 4px auto 10px; }
+.bs-item {
+  display: block; width: 100%; text-align: left; font: inherit; font-size: 16px;
+  padding: 15px 14px; border: 0; background: transparent; border-radius: 10px;
+  color: var(--text); cursor: pointer; min-height: 52px;
+}
+.bs-item:active { background: var(--sel); }
+.bs-item.perigo { color: var(--perigo-fg); }
+.bs-cancelar { text-align: center; font-weight: 600; color: var(--accent); margin-top: 4px; }
+.bs-sep { height: 1px; background: var(--hair); margin: 4px 10px; }
+@media (prefers-reduced-motion: reduce) { .bottom-sheet { transition: none; } }
+
+/* ---------- safe areas + touch targets ≥44pt ---------- */
+@supports (padding: env(safe-area-inset-top)) {
+  .abas-barra { padding-left: calc(8px + env(safe-area-inset-left)); padding-top: calc(5px + env(safe-area-inset-top)); }
+  @media (max-width: 720px) {
+    aside { padding-left: calc(8px + env(safe-area-inset-left)); }
+    .info.aberto { padding-right: env(safe-area-inset-right); }
+    .status-bar { height: calc(26px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
+  }
+}
+@media (max-width: 720px) {
+  /* larger touch targets in sidebar lists and actions */
+  .node-row, .fav-row { height: 40px; }
+  .bh-item { padding: 12px 10px; }
+  .ba-btn { padding: 0 15px; }
+  .ba-btn { height: auto; min-height: 44px; }  
+  button.acao.so-icone { width: 40px; }
+  button.acao { min-height: 40px; }
+  .check { width: 22px; height: 22px; }
+  tr.item.marcado .check::after { left: 7px; top: 4px; width: 5px; height: 10px; }
+  .pk-item { padding: 12px 10px; }
+    }
+
+/* ---------- files in the sidebar tree ---------- */
+.node-row.arq { cursor: pointer; }
+.node-row.arq svg.icone { margin-left: 0; }
+.node-row.inacessivel { opacity: .4; cursor: default; }
+
+/* ---------- Touch-target sizing (Apple HIG: ~44pt) ----------
+   Primary targets grow to size; tiny ones get an invisible touch area via
+   ::after instead of changing how they look. */
+.layout { overflow-x: clip; }   /* The page itself never scrolls sideways; each bar scrolls independently. */
+@media (max-width: 720px), (pointer: coarse) {
+  /* Safety valve: if the top bar doesn't fit, it scrolls instead of the
+   page; `overflow-y: hidden` keeps touch scroll from getting stuck on it. */
+  .topo { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .topo::-webkit-scrollbar { display: none; }
+}
+@media (pointer: coarse) {
+  button.acao { min-height: 44px; flex: none; }
+  /* Each breadcrumb segment is a navigation target; both the bar and its
+   segments grow on touch. */
+  .trilha-barra { min-height: 44px; }
+  .migalhas span.seg { padding: 9px 8px; }
+  /* min-width, not width, so the flex layout can't shrink the ☰ button
+   below its target size. */
+  button.acao.so-icone { min-width: 44px; }
+  .side-tema { width: 44px; height: 44px; }
+  .side-topo { padding-right: 0; }   /* The 44px box already includes its margin's spacing. */
+  .busca-box { height: 36px; }
+  .vault-seg { height: 36px; }       /* The search box and the segmented control grow together, for symmetry. */
+  .node-row { height: 40px; }        /* Tree rows match the same touch scale as tags. */
+  .segmentado button { min-height: 36px; }
+    .side-lixeira { min-height: 40px; }
+  .status-bar { min-height: calc(44px + env(safe-area-inset-bottom, 0px)); }  /* Extra bottom padding keeps the density icon from overflowing. */
+  /* These already carry a tooltip via ::after, so they can't double as a hit
+   area; the real target is 40px. */
+  .lb-dir, .sb-icone { width: 40px; height: 40px; }
+  .sec-ferramentas .lb-dir, .sec-ferramentas .sf-sel { width: 40px; height: 40px; }
+  .busca-modo { padding: 12px 6px; }
+  /* Tiny targets without a tooltip get an invisible ~44px hit area. */
+  .aba-x, .aba-mais, .opt-tag-x, button.mini, button.limpar {
+    position: relative;
+  }
+  .aba-x::after, .aba-mais::after, .opt-tag-x::after, button.mini::after,
+  button.limpar::after {
+    content: ""; position: absolute; inset: -10px;
+  }
+  /* The invisible <select> itself receives the touch, so it must be the
+   element that's expanded, not an overlay on top of it. */
+  .sf-sel select { inset: -10px; width: auto; height: auto; }
+  /* Mobile Safari auto-zooms when focusing a field with computed font-size
+   under 16px; touch-only fields use 16px to avoid that jump. */
+  .lp-doc, .lp-doc .cm-content, .editor, #busca-input, #home-busca,
+  .dlg-input, .tc-input, .rename-inline { font-size: 16px; }
+}
+
+/* ---------- More touch-target refinements ---------- */
+
+/* `main` is the positioned container for `.barra-acoes` and `.drop-alvo`,
+   so they center on the panel and can't overflow into the page. */
+main { position: relative; overflow: hidden; }
+
+/* Prevents scroll chaining into the document; only the vertical axis is
+   affected at the root. */
+html, body { overscroll-behavior-y: none; }
+aside, .conteudo, .abas-barra, .topo, .trilha-barra, .lp-doc .cm-scroller, .lp-paleta, .bottom-sheet, .busca-hist, .ql-corpo, .info, .barra-acoes,
+.markdown-preview, .document-surface, #split-content { overscroll-behavior: contain; }  /* Formatted and Clean views too */
+.abas-barra { box-shadow: inset 0 -1px 0 var(--hair); }  
+
+/* Scroll-anchor padding accounts for the sticky header, so a row never
+   lands underneath it. */
+.conteudo { scroll-padding-top: 38px; }
+
+/* Removes double-tap-zoom and the native tap flash; `:active` supplies
+   the feedback instead. */
+html { -webkit-tap-highlight-color: transparent; }
+button, a, select, label, tr.item, .node-row, .seg, .aba, .ctx-item, .bs-item, .check,
+.chev, .sf-sel, .home-card, .bh-item { touch-action: manipulation; }
+
+@media (pointer: coarse) {
+  /* Tooltips are mouse-only: on touch, their invisible box would stretch
+   the bars and cause accidental scrolling. */
+  [data-tip]::after { content: none; }
+  /* Without a hover tooltip, controls need a visible caption; `data-curto`
+   supplies a short label in normal flow, never `absolute`. */
+  /* Caption visibility is decided by the presence of `data-curto`, not a
+   class list, which is fragile and easy to leave incomplete. */
+  [data-curto] {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; width: auto; min-width: 54px;
+    height: auto; min-height: 44px; padding: 5px 7px;
+    /* `line-height: 1` plus `font-size: 0` keeps an inline SVG icon from
+   expanding the button via inherited text-line height. */
+    line-height: 1; font-size: 0;
+  }
+  [data-curto] > svg { display: block; }
+  /* The ☰ is text, not SVG, so it needs its own font-size to stay visible. */
+  #btn-menu[data-curto] { font-size: 17px; }
+  [data-curto]::after {
+    content: attr(data-curto); display: block;
+    /* Resets the [data-tip]::after positioning so the caption renders in
+   normal flow instead of as an absolute floating box. */
+    position: static; top: auto; left: auto; transform: none;
+    padding: 0; border-radius: 0; background: none; box-shadow: none;
+    opacity: 1; transition: none; z-index: auto;
+    /* 10px is the smallest caption size used, so labels stay legible
+   without widening the buttons. */
+    font-size: 10px; line-height: 1; font-weight: 500; color: var(--text2);
+    letter-spacing: -.01em;
+    /* 96px is a safety margin, not a fixed width: real system fonts and iOS's
+   "Bold Text" accessibility setting render wider than the fallback font. */
+    max-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* An active/busy button's caption inherits the state color, so it doesn't
+   disappear against the accent background. */
+  .ativa[data-curto]::after { color: inherit; }
+  /* Bars use a minimum height instead of a fixed one, since the caption
+   makes buttons taller. */
+  .topo { height: auto; min-height: 56px; padding-top: 4px; padding-bottom: 4px; }
+  .acoes { flex-wrap: nowrap; }
+  .topo [data-mais] { display: none !important; }
+  #btn-mais { display: flex; }
+  /* List rows use the 44px touch scale above 720px too, on iPad. */
+  table.lista td, td.c-nome { height: 44px; }
+  table.lista.compacta td, table.lista.compacta td.c-nome { height: 36px; }
+  /* Checkbox and chevron get an invisible hit area beyond their visible size. */
+  .check, .node-row .chev { position: relative; }
+  .check { width: 22px; height: 22px; }
+  tr.item.marcado .check::after { left: 7px; top: 4px; width: 5px; height: 10px; }
+  .check::before { content: ""; position: absolute; inset: -12px; }
+  .node-row .chev::before { content: ""; position: absolute; inset: -14px -8px; }
+  /* The whole search box is the click target, not just the input, while
+   the icon stays centered. */
+  #busca-input { align-self: stretch; }
+  /* Prevents the sort-direction arrow from shrinking under flex. */
+  .lb-dir { flex: none; }
+  /* An icon-only action button keeps a minimum touch width even without a
+   visible label. */
+  button.acao { min-width: 44px; }
+  /* The selection bar also uses the touch scale above 720px, on iPad. */
+  .ba-btn { padding: 0 15px; }
+  .ba-btn { height: auto; min-height: 44px; }  
+  /* Tabs are one step taller on touch. */
+  .aba { height: 36px; }
+  .abas-barra { min-height: 42px; }
+  .aba-mais { height: 40px; align-self: center; }
+  .aba-mais { width: 40px; }  
+  /* Long-press menu items use the touch scale on iPad too. */
+  .ctx-item { padding: 12px 10px; }
+  /* The sidebar/center divider gets a wider invisible drag zone without
+   changing its visible width. */
+  .side-resizer { position: relative; }
+  .side-resizer::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -13px; }
+  /* Touch feedback: the row responds immediately, since iOS has no hover state. */
+  tr.item:active td { background: var(--hover); }
+  .node-row:active, .fav-row:active { background: var(--hover); }
+}
+
+/* Under 480px of viewport height (phone landscape), bars shrink and the
+   status bar hides, to preserve usable list space. */
+@media (max-height: 480px) {
+  /* Compacts elements without breaking the minimum touch-target rule. */
+  .topo { height: 46px; }
+  button.acao { min-height: 36px; height: 36px; }
+  button.acao.so-icone { min-width: 40px; }
+  .segmentado button { min-height: 33px; }
+  .trilha-barra { min-height: 0; height: 28px; }
+  .migalhas span.seg { padding: 5px 6px; }
+  .abas-barra { min-height: 36px; padding-top: 3px; }
+  .aba { height: 30px; }
+  .aba-mais { height: 30px; }
+  .lista-barra { padding: 1px 16px; }
+      table.lista th { padding: 6px 16px 4px; }
+  .conteudo { scroll-padding-top: 30px; }
+  .status-bar { display: none !important; }   /* hidden on short viewports */
+}
+
+/* Adapts the base UI shell to the app's actual elements below. */
+html, body { width: 100%; height: 100%; min-width: 0; }
+#hf-app { width: 100%; height: 100%; min-width: 0; min-height: 0; }
+#app-layout { width: 100%; height: 100vh; height: 100dvh; min-width: 0; min-height: 0; }
+#sidebar { flex: none; width: var(--sidebar-w, 250px); min-width: var(--sidebar-w, 250px); }
+#sidebar-splitter { flex: none; width: 8px; min-width: 8px; min-height: 100%; margin: 0 -4px; z-index: 4; cursor: col-resize; touch-action: none; }
+#sidebar-splitter::after { content: none; }
+#sidebar-splitter:hover, #sidebar-splitter:focus-visible { background: var(--sel); }
+#app-layout.sidebar-collapsed #sidebar { width: 0; min-width: 0; padding-left: 0; padding-right: 0; border-right-width: 0; overflow: hidden; }
+#app-layout.sidebar-collapsed #sidebar-splitter { display: none; }
+#vault-sel .vault-seg { display: flex; }
+#vault-sel .vault-seg button { color: var(--text2); }
+#vault-sel .vault-seg button.ativo { color: var(--text); }
+#sidebar-search { display: block; }
+#sidebar-search .busca-box { margin: 4px 6px 10px; }
+#sidebar-search .busca-lupa { flex: none; color: var(--text2); }
+#sidebar-search-query { flex: 1; width: auto; min-width: 0; min-height: 0; height: auto; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; }
+#sidebar-search-mode { min-width: 35px; }
+#sidebar-search .busca-roots { margin: -5px 6px 7px; }
+.sec-titulo { min-height: 28px; }
+#root-tree { min-width: 0; }
+#tree { min-width: 0; }
+#tree.sec-fechada { display: none; }
+.raiz-vault { display: flex; align-items: center; min-width: 0; height: 28px; padding: 0 6px; }
+.raiz-vault .tree-entry-name { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; }
+.raiz-vault .tree-entry-name .nome { flex: 1 1 auto; min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node-row { min-width: 0; }
+#tree .node-row .tree-entry-name, #favoritos .node-row .tree-entry-name { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; }
+#tree .node-row .tree-entry-name .nome, #favoritos .node-row .tree-entry-name .nome { flex: 1 1 auto; min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tree .root-branch { padding-left: 0; }
+main[aria-label="Área de arquivos"] { flex: 1 1 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+#tabs { flex: none; }
+#toolbar { flex: 1 1 auto; min-width: 0; }
+.toolbar-fixed, #toolbar-actions { display: inline-flex; flex: none; align-items: center; gap: 5px; min-width: 0; }
+#toolbar-actions { margin-left: 0; }
+#toolbar-actions .acao { flex: none; }
+#toolbar-actions .acao[hidden], #toolbar-fixed .acao[hidden] { display: none !important; }
+#document-mode-slot { flex: none; min-width: 0; }
+#document-mode-slot[hidden], #document-mode-slot [hidden] { display: none !important; }
+#document-mode-slot .document-modes { display: flex; align-items: center; gap: 4px; padding: 0; white-space: nowrap; }
+#document-mode-slot .segmentado { flex: none; padding: 2px; }
+#document-mode-slot .seg-formas { gap: 2px; }
+#document-mode-slot button[aria-pressed="true"] { color: var(--text); background: var(--panel); box-shadow: var(--sombra-segmento); }
+#lista-barra { display: flex; }
+#lista-barra[hidden] { display: none !important; }
+#results { display: block; flex: 1 1 auto; min-width: 0; min-height: 0; padding: 0; overflow: auto; }
+#results[hidden] { display: none !important; }
+#results table.lista { table-layout: fixed; }
+#results table.lista .c-nome { width: auto; }
+#results table.lista .c-tam { width: 110px; }
+#results table.lista .c-criado, #results table.lista .c-mod { width: 130px; }
+#results table.lista .c-check { width: 34px; }
+#results table.lista td.c-nome { display: table-cell; }
+#results table.lista td.c-nome .nome-wrap { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; max-width: 100%; vertical-align: middle; }
+#results table.lista td.c-nome .nome-wrap > .nome { flex: 1 1 auto; min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#results table.lista td.c-nome button.nome-link { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; vertical-align: middle; }
+#results table.lista td.c-nome button.nome-link:hover { color: var(--accent); }
+#results table.lista td.c-nome .icone-item { display: inline-flex; width: 15px; flex: none; align-items: center; justify-content: center; }
+#results table.lista td.c-data { color: var(--text2); font-size: 12px; }
+#results table.lista td.c-nao-fornecido { color: var(--text2); }
+.search-metadata { margin: 8px 16px; }
+#split-pane { position: relative; flex: none; width: 0; min-width: 0; min-height: 0; overflow: hidden; background: var(--panel); }
+#split-pane.aberto { width: var(--split-width, 46%); min-width: 320px; border-left: 1px solid var(--hair); }
+#split-pane[hidden] { display: none !important; }
+#split-content { width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: auto; }
+#workspace-splitter { position: absolute; left: 0; top: 0; width: 8px; height: 100%; z-index: 5; margin-left: -4px; cursor: col-resize; }
+#workspace-splitter[hidden] { display: none !important; }
+.document-shell { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; gap: 0; border: 0; border-radius: 0; background: var(--panel); }
+.nota-cab { flex: none; padding: 14px 32px 0; }
+.nota-cab .nota-caminho { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text2); font-size: 11.5px; }
+.nota-cab .nota-caminho-txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nota-cab .nota-meta { color: var(--text2); font-size: 12px; }
+.document-actions { display: inline-flex; flex: none; align-items: center; gap: var(--gap-acoes); }
+.document-surface { display: flex; flex: 1 1 0; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: 0; }
+.document-source, .markdown-preview, .document-raw, .document-clean { flex: 1 1 0; min-width: 0; min-height: 0; margin: 0; border: 0; border-radius: 0; background: var(--panel); }
+.document-source > .cm-editor { height: 100%; min-height: 36rem; font-size: 12.5px; }
+.document-source > .cm-editor .cm-scroller { font-family: inherit; font-size: 12.5px; line-height: 1.65; }
+.document-source > .cm-editor .cm-content { padding: 34px var(--leitura-pad-x) 60px; min-height: 100%; }
+.document-source > .cm-editor .cm-gutters { background: var(--bg); color: var(--text2); border-right: 1px solid var(--hair); }
+.plain-editor { width: 100%; height: 100%; min-height: 36rem; padding: 34px var(--leitura-pad-x) 60px; border: 0; border-radius: 0; outline: none; resize: none; color: var(--text); background: var(--panel); font: 400 12.5px/1.6 var(--font-mono); }
+.markdown-preview { overflow: auto; }
+.markdown-preview:not(.viewer-codigo) { padding: 0; }   /* The code viewer keeps its own padding (18px 0 44px). */
+.markdown-preview > .viewer-md { min-height: 100%; margin: 0; }
+.document-raw { overflow: auto; }
+.viewer-limpo { padding: 34px 32px 60px; font-size: 12.5px; line-height: 1.65; }
+
+.nota-cab + .viewer-md { padding-top: 12px; }
+.document-surface .attachments-panel { flex: none; width: 100%; max-height: 16rem; overflow: auto; border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: var(--bg); }
+#menu-ctx .item-actions { display: block; }
+a.ctx-item { text-decoration: none; }
+#menu-ctx[hidden] { display: none !important; }
+#painel-info { flex: none; padding: 0; }   /* Padding belongs to .info-inner; otherwise aside's own rule leaves a gap
+   visible when the panel is closed. */
+#operation-dialog { inset: 0; margin: auto; height: fit-content; width: min(var(--dialogo-w), calc(100vw - 32px)); max-height: min(85vh, 48rem); padding: var(--dialogo-pad); border: 0; border-radius: var(--r-dialogo); color: var(--text); background: var(--panel); box-shadow: var(--sombra-dialogo); overflow: auto; }
+#operation-dialog.dlg-largo { width: min(520px, calc(100vw - 32px)); }
+#operation-dialog::backdrop { background: var(--overlay); }
+/* Login uses the same centered card, tokens, and dark theme as the rest of the app. */
+body[data-session="anonymous"] { min-width: 320px; overflow: auto; }
+main.login { display: flex; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: 24px 16px; }
+.login-cartao { width: 320px; max-width: 100%; background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-flutuante); padding: 34px 30px; box-shadow: var(--sombra-baixo); text-align: center; }
+.login-cartao h1 { font: var(--text-titulo-login); letter-spacing: -.02em; margin-bottom: 4px; }
+.login-sub { color: var(--text2); font-size: 13px; margin-bottom: 22px; }
+.login-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.login-cartao input[type="password"] { width: 100%; height: var(--campo-h); padding: 0 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: var(--r-campo); outline: none; margin-bottom: 12px; text-align: center; }
+.login-cartao input[type="password"]:focus { border-color: var(--accent); box-shadow: var(--foco-campo); }
+.login-cartao button { width: 100%; height: var(--campo-h); font: inherit; font-weight: 590; color: var(--on-accent); background: var(--accent); border: 0; border-radius: var(--r-campo); cursor: pointer; }
+.login-cartao button:active { transform: scale(.97); }
+.login-cartao button:disabled { opacity: .4; cursor: default; }
+.login-erro, .login-status.erro { color: var(--perigo-fg); font-size: 12.5px; margin-top: 10px; }
+.login-status { color: var(--text2); font-size: 12.5px; min-height: 18px; margin-top: 10px; }
+
+.login-trocar { margin-top: 14px; font-size: 12.5px; }
+.login-trocar a { color: var(--accent); text-decoration: none; }
+.login-trocar a:hover, .login-trocar a:focus-visible { text-decoration: underline; }
+@media (pointer: coarse) { .login-trocar a { display: inline-block; padding: 12px 10px; margin: -12px 0; } }
+@media (pointer: coarse) { .login-cartao input[type="password"] { font-size: 16px; } }
+@media (min-width: 721px) { #sidebar.sidebar-collapsed { width: 0; min-width: 0; padding-left: 0; padding-right: 0; border-right-width: 0; overflow: hidden; } }
+
+/* Maps the running app's element IDs onto the styles defined above. */
+.migalhas button.seg { flex: none; min-height: 24px; padding: 3px 6px; border: 0; border-radius: 5px; background: transparent; color: var(--text2); font: inherit; font-size: 12px; white-space: nowrap; }
+.migalhas button.seg:hover { background: var(--hover); color: var(--text); }
+.migalhas button.seg:last-of-type { color: var(--text); font-weight: 590; }
+.migalhas .seg.atual { color: var(--text); font-weight: 590; }
+/* Only the last segment is emphasized; with a document open, that is the
+   document name, not the last folder. */
+.migalhas.com-documento button.seg:last-of-type { font-weight: inherit; }
+.migalhas.com-documento button.seg:last-of-type:not(:hover) { color: var(--text2); }
+.aba { min-width: 92px; }
+.aba { align-self: flex-end; }  
+.aba-nome { min-width: 0; width: 100%; height: 30px; overflow: hidden; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.aba-nome:hover { color: var(--text); }
+#toolbar-actions { gap: var(--gap-acoes); }
+#toolbar-actions .document-actions { flex: none; padding: 0; border: 0; }
+#menu-ctx:not([hidden]) { display: block; }
+#painel-info.aberto { width: 300px; min-width: 300px; overflow-y: auto; }
+.info-inner { width: 300px; }
+.info .campo .valor { overflow-wrap: anywhere; }
+.raiz-vault .tree-entry-name { min-height: 28px; cursor: pointer; }
+.raiz-vault .tree-entry-name:hover { color: var(--text); }
+#tree .node-row.arq .tree-entry-name, #favoritos .node-row.arq .tree-entry-name { color: var(--text); }
+#tree .node-row.ativo .tree-entry-name, #favoritos .node-row.ativo .tree-entry-name { color: var(--accent); }
+#tree .tree-entry-name:disabled, #favoritos .tree-entry-name:disabled { opacity: .4; }
+#sidebar-search .busca-box { gap: 6px; }
+#sidebar-search .busca-box { position: relative; overflow: visible; }
+#sidebar-search .busca-lupa { flex: none; color: var(--text2); }
+#sidebar-search-mode { border: 0; background: transparent; font: inherit; font-size: 9.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+#sidebar-search .busca-roots { position: relative; flex: none; margin: 0; }
+#sidebar-search .busca-roots summary { display: flex; width: 20px; height: 22px; align-items: center; justify-content: center; list-style: none; color: var(--text2); cursor: pointer; font-size: 12px; }
+#sidebar-search .busca-roots summary::-webkit-details-marker { display: none; }
+#sidebar-search .busca-roots summary:hover { color: var(--accent); }
+#sidebar-search .busca-raizes { position: absolute; top: calc(100% + 7px); right: -8px; z-index: 50; display: grid; gap: 3px; width: 208px; max-height: 240px; overflow: auto; padding: 5px; border: 1px solid var(--hair); border-radius: var(--r-menu); background: var(--panel); box-shadow: var(--sombra-menu); }
+.busca-raiz { display: flex; align-items: center; gap: 6px; min-height: 22px; color: var(--text); }
+.sec-count { margin-left: auto; color: var(--text2); font-size: 11px; font-variant-numeric: tabular-nums; }
+#results .lista th.ordenavel { cursor: pointer; }
+#results .lista th.ordenavel:hover { color: var(--text); }
+#favoritos .fav-row > svg { width: 15px; height: 15px; flex: none; }
+#favoritos .fav-row .emoji-icone { flex: none; width: 15px; text-align: center; }
+#tags-nav .tg-row, #etiquetas .et-cab { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; text-align: left; }
+#tags-nav .tg-row { width: 100%; }
+#etiquetas .et-cab { cursor: pointer; }
+#results .busca-proxima { padding-top: 6px; padding-bottom: 6px; }
+#results .busca-proxima > svg { color: var(--text2); }
+#toolbar { overflow-x: auto; overflow-y: visible; scrollbar-width: none; }
+#toolbar::-webkit-scrollbar { display: none; }
+#toolbar .toolbar-fixed, #toolbar #document-mode-slot, #toolbar #toolbar-actions { white-space: nowrap; }
+.sec-titulo { cursor: pointer; }
+#btn-lixeira.ativo { background: var(--sel); color: var(--accent); }
+#results .busca-cab { min-height: 38px; }
+#results .res-nome { border: 0; padding: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; }
+#results .res-nome:hover { color: var(--accent); }
+#results .res-item > svg { flex: none; }
+/* List checkbox keeps a real, accessible input, styled to look like .check. */
+#results .check { appearance: none; -webkit-appearance: none; margin: 0; flex: none; }
+#results .check:checked { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M4.5 8.7l2.6 2.6 5.4-5.6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat; border-color: var(--accent); }
+#results .check:disabled { opacity: .4; cursor: default; }
+#results .check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Keyboard-focused row: a continuous 1.5px outline with rounded corners. */
+#results tr.item[tabindex]:focus-visible { outline: none; }
+#results tr.item[tabindex]:focus-visible td { box-shadow: inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }
+#results tr.item[tabindex]:focus-visible td:first-child { box-shadow: inset 1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+#results tr.item[tabindex]:focus-visible td:last-child { box-shadow: inset -1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+#results .c-criado, #results .c-mod { text-align: left; }
+#results .visual-preview { flex: 1; min-height: 0; overflow: auto; }
+#results .raster-preview { display: block; max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; border-radius: 8px; box-shadow: var(--sombra-baixo); }
+#results .document-shell.visual-document { min-height: 100%; }
+/* Dialog content reuses titulo-dialogo, dlg-texto, dlg-input, and .acao. */
+#operation-dialog form { display: grid; gap: 12px; }
+#operation-dialog h2 { font: var(--text-titulo-dialogo); letter-spacing: -.02em; margin: 0 0 2px; }
+#operation-dialog p { color: var(--text2); font-size: 13.5px; margin: 0 0 4px; word-break: break-word; }
+#operation-dialog label { display: grid; gap: 5px; color: var(--text2); font-size: 12px; }
+#operation-dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), #operation-dialog select, #operation-dialog textarea {
+  width: 100%; min-height: var(--campo-h); padding: 0 13px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel);
+  border: 1px solid var(--borda-forte); border-radius: var(--r-campo); outline: none;
+}
+#operation-dialog textarea { min-height: 92px; padding: 10px 13px; resize: vertical; }
+#operation-dialog input:focus, #operation-dialog select:focus, #operation-dialog textarea:focus { border-color: var(--accent); box-shadow: var(--foco-campo); }
+#operation-dialog input[type="checkbox"], #operation-dialog input[type="radio"] { accent-color: var(--accent); }
+#operation-dialog menu { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--gap-topo); margin: 0; padding: 8px 0 0; }
+#operation-dialog .tag-chips { margin: 0; }
+#operation-dialog .dlg-lista-curta { height: auto; max-height: 210px; margin: 0; }
+.pk-item { width: 100%; font: inherit; font-size: 13px; color: var(--text); background: transparent; border: 0; text-align: left; }
+.pk-item.escolhido { background: var(--sel); color: var(--accent); }
+.opt-linha .segmentado { margin-left: auto; }
+#operation-dialog .opt-secao { margin: 6px 0 -4px; }
+#operation-dialog .opt-linha { margin: 0; }
+.opt-larga { display: flex; }
+/* Dialog and document-action buttons share the .acao button shape. */
+.secondary-button, .primary-button, .danger-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--botao-h); padding: 0 11px;
+  font: inherit; color: var(--text); background: transparent; border: 1px solid var(--hair); border-radius: var(--r-md);
+  cursor: pointer; white-space: nowrap; text-decoration: none; transition: background .12s ease, color .12s ease;
+}
+.secondary-button:hover { background: var(--bg); }
+.secondary-button:active, .primary-button:active, .danger-button:active { transform: scale(.97); }
+.primary-button { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.danger-button { background: var(--perigo-bg); color: var(--perigo-fg); border-color: var(--perigo-bd); }
+.secondary-button:disabled, .primary-button:disabled, .danger-button:disabled { opacity: .4; cursor: default; }
+.conflict-actions { display: flex; flex-wrap: wrap; gap: var(--gap-topo); padding: 8px var(--gutter); border-top: 1px solid var(--hair2); }
+.doc-status.error, .document-status.error { color: var(--perigo-fg); }
+.document-status { color: var(--text2); font-size: 12.5px; }
+.editor-barra[hidden], .lp-paleta[hidden], .doc-status[hidden] { display: none; }
+.lp-btn.digitar-button { padding: 0 8px; }
+.lp-btn.digitar-button[aria-pressed="true"] { background: var(--sel); color: var(--accent); }
+.badge-fav { display: inline-flex; flex: none; color: var(--accent); }
+.tree-empty { color: var(--text2); font-size: 12.5px; padding: 4px 8px; }
+/* Color of file-type icons (tokens --tipo-*). */
+.tipo-pasta { color: var(--tipo-pasta); } .tipo-documento { color: var(--tipo-documento); }
+.tipo-imagem { color: var(--tipo-imagem); } .tipo-codigo { color: var(--tipo-codigo); }
+.tipo-midia { color: var(--tipo-midia); } .tipo-compactado { color: var(--tipo-compactado); }
+.tipo-markdown { color: var(--tipo-markdown); } .tipo-pdf { color: var(--tipo-pdf); }
+.tipo-word { color: var(--tipo-word); } .tipo-planilha { color: var(--tipo-planilha); }
+@media (pointer: coarse) {
+  .secondary-button, .primary-button, .danger-button { height: auto; min-height: var(--alvo-toque); }
+}
+@media (max-width: 720px) {
+  #painel-info.aberto { width: 0; min-width: 0; }
+}
+
+/* ---------- Additional component styles ---------- */
+svg.icone, .emoji-icone { flex: none; }
+.aviso-central > svg { width: 32px; height: 32px; flex: none; color: var(--text2); }
+.opt-linha input { accent-color: var(--accent); }
+.dlg-migalhas .seg:hover { background: var(--hover); color: var(--text); }
+.dlg-migalhas .seg:last-child { color: var(--text); font-weight: 590; }
+tr.item.foco td:first-child, tr.item.drop-alvo-item td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+tr.item.foco td:last-child, tr.item.drop-alvo-item td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+.info .fechar svg, .ql-x svg, .aba-x svg, .opt-tag-x svg, .fav-row .fav-x svg, .res-item .et-x svg, .et-row .et-ren svg { width: 10px; height: 10px; }
+.nota-copiar-caminho svg { width: 14px; height: 14px; }
+.viewer-md ::selection, .viewer-limpo::selection, .viewer-codigo ::selection,
+.lp-doc ::selection, .editor::selection, .res-trecho::selection,
+.document-source ::selection, .plain-editor::selection { background: var(--selecao-texto); }
+@media (pointer: coarse) {
+  .nota-copiar-caminho { min-width: 40px; height: 40px; margin: -8px 0; }
+  .node-row, .fav-row, .tg-row, .et-row { height: 40px; }
+  .dlg-input, .dlg-area, .tc-input, .rename-inline, #sidebar-search-query,
+  #operation-dialog input, #operation-dialog textarea { font-size: 16px; }
+  .side-resizer, .split-divisor, .col-rz { position: relative; }
+  .side-resizer::before, .split-divisor::before, .col-rz::before, #workspace-splitter::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -13px; }
+}
+@media (max-width: 720px), (pointer: coarse) {
+  .ctx-item, .bh-item, .pk-item, .pal-item { padding: 12px 10px; }
+  .fav-row .fav-x, .et-row .et-ren, .res-item .et-x { opacity: 1; }
+  .ql-x, .fav-row .fav-x, .res-item .et-x, .et-row .et-ren { position: relative; }
+  .ql-x::after, .info .fechar::after, .fav-row .fav-x::after, .res-item .et-x::after,
+  .et-row .et-ren::after { content: ""; position: absolute; inset: -12px; }
+}
+@media (max-width: 720px) {
+  table.lista.compacta td, table.lista.compacta td.c-nome { height: 36px; }
+}
+tr.item.drop-alvo-item td:first-child { box-shadow: inset 1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }
+tr.item.drop-alvo-item td:last-child { box-shadow: inset -1.5px 0 0 var(--accent), inset 0 1.5px 0 var(--accent), inset 0 -1.5px 0 var(--accent); }
+
+/* Dialog mode picker: a segmented control with accessible radio inputs
+   underneath. */
+#operation-dialog .seg-escolha { display: flex; width: 100%; min-height: 30px; background: var(--circ); border-radius: 8px; padding: 2px; gap: 0; }
+#operation-dialog .seg-escolha label {
+  flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; position: relative;
+  padding: 0 10px; border-radius: 6px; font-size: 12px; color: var(--text2); cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#operation-dialog .seg-escolha input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+#operation-dialog .seg-escolha label:hover { color: var(--text); }
+#operation-dialog .seg-escolha label:has(input:checked) { background: var(--panel); color: var(--text); box-shadow: var(--sombra-segmento); }
+#operation-dialog .seg-escolha label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+#operation-dialog .name-preview { font-size: 12.5px; color: var(--text2); }
+#operation-dialog .name-preview strong { color: var(--text); font-weight: 590; word-break: break-all; }
+@media (pointer: coarse) { #operation-dialog .seg-escolha { min-height: 36px; } }
+/* Folder size still being calculated. */
+td.c-tam.c-calculando { opacity: .6; }
+
+/* Palette buttons preview the actual bullet used in the Formatted view. */
+.lp-ico-ponto { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.lp-ico-ponto.vazado { background: none; border: 1.5px solid currentColor; }
+.lp-ico-ponto.quadrado { border-radius: 1.5px; }
+#operation-dialog .name-generated-fields { display: grid; gap: 12px; }
+/* Destination picker: Move, Copy, conflicts, and the upload's target folder. */
+#operation-dialog .dlg-rotulo { color: var(--text2); font-size: 12px; margin-bottom: -6px; }
+#operation-dialog .dlg-migalhas { margin: 0; overflow-wrap: anywhere; }
+#operation-dialog .dlg-migalhas .seg { border: 0; background: transparent; font: inherit; }
+#operation-dialog .dlg-migalhas .seg:hover { background: var(--hover); color: var(--text); }
+#operation-dialog .dlg-lista { margin: 0; }
+.pk-item .icone { width: 15px; height: 15px; flex: none; }
+.pk-item span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-acima { color: var(--text2); }
+.pk-seta { width: 15px; text-align: center; flex: none; }
+.pk-vazio { padding: 10px; color: var(--text2); font-size: 12.5px; }
+/* Context menu header shown when an action applies to multiple selected
+   items. */
+.ctx-titulo { padding: 6px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text2); }
+
+/* ---------- Additional rules ---------- */
+/* Status and editor errors use the danger color. */
+#app-status.error { color: var(--perigo-fg); font-weight: 590; }
+.ed-erro { font-size: 11.5px; font-weight: 600; color: var(--perigo-fg); background: var(--perigo-bg); border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
+#operation-dialog .dialog-error { color: var(--perigo-fg); }
+#operation-dialog .dialog-motivo { color: var(--perigo-fg); font-size: 12.5px; }
+#operation-dialog .perigo-texto { color: var(--perigo-fg); }
+/* Formatted view: images never exceed the panel width, links use the
+   accent color, small headings stay legible, and tags are clickable. */
+.viewer-md img { max-width: 100%; height: auto; }
+.viewer-md a { color: var(--accent); text-decoration: none; }
+.viewer-md a:hover { text-decoration: underline; }
+.viewer-md h4 { font-size: 15px; }
+.viewer-md h5 { font-size: 14px; }
+.viewer-md h6 { font-size: 13px; color: var(--text2); }
+.viewer-md mark[data-tag] { background: var(--sel); color: var(--accent); border-radius: 5px; padding: .05em .25em; cursor: pointer; }
+.viewer-md mark[data-tag]:hover { text-decoration: underline; }
+/* Image view fits to width; a click reveals full size with scrolling. */
+.viewer-img .raster-preview { cursor: zoom-in; }
+.viewer-img.tamanho-real { overflow: auto; }
+.viewer-img.tamanho-real .raster-preview { max-width: none; max-height: none; width: auto; height: auto; cursor: zoom-out; }
+/* Note path truncates at the start, keeping the file name visible. */
+.nota-cab .nota-caminho-txt { direction: rtl; text-align: left; }
+/* Keyboard focus uses the accent-colored ring, not the browser default. */
+.nome-link:focus-visible, button.acao:focus-visible, .aba-nome:focus-visible, .seg:focus-visible,
+.ctx-item:focus-visible, .pk-item:focus-visible, .lp-btn:focus-visible, .modo-forma:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 6px;
+}
+table.lista tr.item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* An inaccessible row doesn't look like a link. */
+table.lista tr.inacessivel .nome-link, table.lista tr.inacessivel .nome-link:hover { color: inherit; cursor: default; text-decoration: none; }
+/* Note's image gallery: small thumbnails, with name and status shown
+   separately. */
+.attachments-panel { padding: 12px 16px; display: grid; gap: 8px; align-content: start; }
+.attachments-panel .attachments-title { font-size: 13px; font-weight: 600; margin: 0; }
+.attachment-row { display: grid; grid-template-columns: 64px 1fr auto auto; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--hair2); }
+.attachment-preview { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--bg); }
+.attachment-details { display: grid; gap: 2px; min-width: 0; }
+.attachment-details strong { font-weight: 590; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-details span { color: var(--text2); font-size: 12px; }
+/* Sidebar header stays fixed while the tree scrolls; the bar itself never
+   scrolls horizontally. */
+aside#sidebar { overflow-x: hidden; }
+.side-fixo { position: sticky; top: -10px; z-index: 4; background: var(--bg); margin-top: -10px; padding-top: 10px; }
+/* Tabs scroll to reveal the active tab when there are many. */
+#tabs { overflow-x: auto; scrollbar-width: none; }
+#tabs::-webkit-scrollbar { display: none; }
+/* The list's sticky header stays above the rows. */
+table.lista th { z-index: 3; }
+table.lista th .ordem-seta { color: var(--accent); }
+/* Labels share the tags' grid layout. */
+#etiquetas .et-cab { flex: 1; min-width: 0; display: flex; }
+#etiquetas .et-cab .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+#etiquetas .et-bola { margin: 0 2.5px 0 2.5px; }
+/* List columns adapt to available width; the name column never disappears. */
+#results { container-type: inline-size; }
+/* Columns drop out only once the name would have too little space left. */
+@container (max-width: 700px) { #results .c-criado { display: none; } }
+@container (max-width: 520px) { #results .c-mod { display: none; } }
+@container (max-width: 340px) { #results .c-tam { display: none; } }
+/* Marks the row a right-click menu currently refers to. */
+table.lista tr.menu-alvo td { background: var(--sel); }
+/* Notice shown when a folder doesn't accept writes. */
+.barra-somente-leitura { align-self: center; font-size: 11.5px; color: var(--text2); background: var(--circ); border-radius: 6px; padding: 2px 8px; white-space: nowrap; cursor: help; }
+#tree-heading .sec-rotulo { cursor: pointer; }
+#tree-heading .sec-rotulo:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+/* Dialog buttons stay visible even with long content. */
+#operation-dialog menu { position: sticky; bottom: calc(-1 * var(--dialogo-pad)); background: var(--panel); margin: 0 calc(-1 * var(--dialogo-pad)) calc(-1 * var(--dialogo-pad)); padding: 10px var(--dialogo-pad) var(--dialogo-pad); z-index: 2; }
+/* Split view does not apply on phones. */
+@media (max-width: 720px) { #split-choice { display: none; } }
+/* Id-based selectors match the specificity of the rules they override. */
+#results .viewer-img.tamanho-real, #split-content .viewer-img.tamanho-real { display: block; overflow: auto; }
+#results .viewer-img.tamanho-real .raster-preview, #split-content .viewer-img.tamanho-real .raster-preview { max-width: none; max-height: none; width: auto; height: auto; margin: 0; cursor: zoom-out; }
+#results table.lista tr.inacessivel td.c-nome button.nome-link:hover { color: inherit; cursor: default; }
+/* Small headings in Formatted view never render below body text size. */
+.viewer-md h4 { font-size: 16px; }
+.viewer-md h5 { font-size: 15px; }
+.viewer-md h6 { font-size: 15px; color: var(--text2); }
+/* A link with no valid address doesn't look like one. */
+.viewer-md a:not([href]) { color: inherit; cursor: text; text-decoration: none; }
+
+/* In split view, the list and the document each keep a minimum width. */
+#split-pane.aberto { width: clamp(300px, var(--split-width, 46%), calc(100% - var(--sidebar-w, 250px) - 260px)); min-width: 0; }
+#app-layout.sidebar-collapsed #split-pane.aberto { width: clamp(300px, var(--split-width, 46%), calc(100% - 260px)); }
+/* With split view open, the top bar scrolls sideways instead of hiding
+   buttons. */
+.layout:has(#split-pane.aberto) .topo { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+/* Keeps the open tag highlighted, overriding a conflicting id-based rule. */
+#tags-nav .tg-row.ativo { background: var(--sel); color: var(--accent); }
+/* On phones, key buttons don't shrink when the open sidebar narrows the
+   bar. */
+@media (max-width: 720px) { #sidebar-toggle, #btn-inicio { flex: none; min-width: 40px; } }
+/* On phones, selecting items swaps the bar's create actions for selection
+   actions. */
+@media (max-width: 720px) { #toolbar-actions.com-selecao .criar { display: none; } }
+/* The header doesn't wrap when a sort arrow is added. */
+#results table.lista th.ordenavel { white-space: nowrap; }
+/* The `.badge-link` badge disappears first when space runs out. */
+#results table.lista td.c-nome .nome-wrap > .nome { flex: 0 1 auto; }
+#results table.lista td.c-nome .nome-wrap > .badge-link, #results table.lista td.c-nome .nome-wrap > .badge-fav,
+#results table.lista td.c-nome .nome-wrap > .tag-dot { flex: none; }
+@container (max-width: 520px) { #results .badge-link { display: none; } }
+/* The sidebar title is not an interactive button. */
+#side-title { cursor: default; }
+#side-title:hover { color: var(--text2); }
+/* Sign-in prompt uses a neutral tone, not the error color. */
+.login-aviso { color: var(--text2); font-size: 12.5px; margin-top: 10px; }
+/* Each uploaded file uses the shared box style, not the browser default. */
+#operation-dialog fieldset.upload-name-item { border: 1px solid var(--hair); border-radius: 8px; padding: 6px 12px 12px; margin: 0 0 10px; min-width: 0; }
+#operation-dialog fieldset.upload-name-item legend { padding: 0 4px; font-size: 12px; font-weight: 590; color: var(--text2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Neutral tone for picker guidance text; the path wraps between folder
+   names. */
+#operation-dialog .dialog-motivo.neutro { color: var(--text2); }
+#operation-dialog .name-preview strong { word-break: normal; overflow-wrap: anywhere; }
+/* Path truncates at the start; unicode-bidi keeps it left-to-right. */
+.nota-cab .nota-caminho-txt { direction: rtl; unicode-bidi: normal; text-align: left; }
+/* Search result pages, in both directions. */
+#results .busca-proxima { display: flex; justify-content: space-between; gap: 12px; }
+/* A row already sent to trash while its batch operation finishes. */
+#results table.lista tr.item.saindo td { opacity: .4; }
+/* Trash, Favorites, Tags, and Labels share the same row grid. */
+#btn-lixeira .chev.vazio { display: none; }
+#tags-nav .tg-row { padding: 0 6px; }
+#etiquetas .et-cab { gap: 6px; }
+#etiquetas .et-row { position: relative; }
+#etiquetas .et-row .et-ren { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+#etiquetas .et-row:hover .et-n, #etiquetas .et-row:has(.et-ren:focus-visible) .et-n { visibility: hidden; }
+#etiquetas .et-row .et-ren:focus-visible { opacity: 1; }
+@media (pointer: coarse) {
+  #etiquetas .et-row .et-ren { position: static; transform: none; }
+  #etiquetas .et-row:hover .et-n { visibility: visible; }
+}
+/* A breadcrumb trail clipped on the left fades out, signaling more path
+   before it. */
+.trilha-barra.cortada { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px); mask-image: linear-gradient(to right, transparent 0, #000 28px); }
+/* On phones, disabled actions are removed from the bar entirely. */
+@media (max-width: 720px) { #toolbar-actions:not(.com-selecao) #zip-create, #toolbar-actions:not(.com-selecao) #trash-selection { display: none; } }
+/* Panel values wrap between words only, never mid-word. */
+.info .valor { word-break: normal; overflow-wrap: anywhere; }
+/* Document name truncates with an ellipsis instead of overflowing. */
+.nota-meta .nota-nome { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+/* The sidebar title doubles as the page's h1. */
+#side-title { margin: 0; }
+/* Dialog buttons use the accent focus ring, not the browser default. */
+#operation-dialog button:focus-visible, #operation-dialog .pk-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* HF-META-002: tag-monitored folders get a # badge, a menu note, a
+   sidebar summary, and a Settings list. */
+.badge-tags { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 16px; height: 15px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 1; }
+#results table.lista td.c-nome .nome-wrap > .badge-tags { flex: none; }
+#tree .node-row .tree-entry-name .badge-tags, #favoritos .node-row .tree-entry-name .badge-tags { margin-left: -2px; }
+.ctx-nota { padding: 8px 10px; font-size: 12.5px; color: var(--text2); max-width: 280px; overflow-wrap: anywhere; cursor: default; }
+#tags-nav .tg-pastas { display: block; width: 100%; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--accent); text-align: left; padding: 0 10px 6px; cursor: pointer; }
+#tags-nav .tg-pastas:hover { text-decoration: underline; }
+#tags-nav .tg-dica { margin: 0; padding: 0 10px 8px; font-size: 12px; line-height: 1.4; color: var(--text2); }
+.opt-pastas { display: flex; flex-direction: column; gap: 6px; }
+.opt-pastas .vazio { font-size: 12.5px; color: var(--text2); }
+.opt-pasta { display: flex; align-items: center; gap: 8px; border: 1px solid var(--hair); border-radius: 8px; padding: 6px 6px 6px 10px; }
+.opt-pasta-texto { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.opt-pasta-cam { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.opt-pasta-nota { font-size: 11.5px; color: var(--text2); }
+.opt-dica { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text2); }
+@media (max-width: 720px) { #tags-nav .tg-pastas { min-height: 40px; } }
+/* ---------- phone and tablet ---------- */
+/* The top bar never hides a button off-screen; it wraps onto new lines
+   instead. */
+@media (max-width: 720px), (pointer: coarse) {
+  .topo { flex-wrap: wrap; row-gap: 6px; height: auto; overflow: visible; container-type: inline-size; }
+  #toolbar, #toolbar-fixed, #toolbar-actions, #toolbar-actions .document-actions { display: contents; }
+}
+@media (max-width: 720px), (pointer: coarse) { .topo { column-gap: 6px; padding-left: 10px; padding-right: 10px; } }
+/* A narrow window with a mouse keeps the bar's fixed height; touch keeps
+   its own taller minimum instead. */
+@media (max-width: 720px) and (pointer: fine) { .topo { min-height: 50px; } }
+/* On a narrow bar, overflow buttons move to a full-width second row
+   instead of dangling alone; Tab order still follows the document. */
+@media (min-height: 481px) {
+  @container (max-width: 630px) {
+    #toolbar-actions:has(.criar)::before { content: ""; order: 1; flex-basis: 100%; height: 0; }
+    #toolbar-actions .criar { order: 2; }
+    #document-mode-slot:not([hidden]) { order: 1; flex: 1 0 100%; }
+    #document-mode-slot .document-modes, #document-mode-slot .segmentado { width: 100%; min-width: 0; }
+    /* With the sidebar open on a portrait phone, the three buttons shrink
+   equally instead of overflowing. */
+    #document-mode-slot .segmentado button { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+}
+/* Selecting items removes the create buttons (and their wrap) only below
+   720px. */
+@media (max-width: 720px) { #toolbar-actions.com-selecao::before { content: none; } }
+/* `#selection-more` reaches the item's context menu on touch, which on
+   desktop opens via right-click. */
+#selection-more { display: none; }
+@media (max-width: 720px), (pointer: coarse) { #toolbar-actions.com-selecao #selection-more { display: inline-flex; } }
+@media (pointer: coarse) {
+  /* Holding a finger on a row opens its menu instead of selecting text. */
+  #results tr.item, #tree .node-row, #favoritos .node-row, .fav-row, .res-item:not(.trash-item):not(.busca-proxima) { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  /* The whole checkbox cell is clickable, since ::before doesn't work on
+   Safari's native checkbox. */
+  #results table.lista .c-check { width: 44px !important; }
+  /* Breadcrumb segments are actual `button.seg` elements. */
+  .migalhas button.seg { min-height: 44px; padding: 0 8px; }
+  /* Fields under 16px trigger zoom on focus in Safari; this rule matches
+   the base exclusions. */
+  #operation-dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  #operation-dialog select, #operation-dialog textarea, .plain-editor { font-size: 16px; }
+  /* HF-EDIT-002: "Digitar" toggles the on-screen keyboard and stays visible
+   at the toolbar's right edge. */
+  .lp-paleta .digitar-button { position: sticky; right: 0; z-index: 1; background: var(--panel); box-shadow: -10px 0 10px -8px var(--sombra), 16px 0 0 var(--panel); }
+  .lp-paleta .lp-btn.digitar-button[aria-pressed="true"] { background: linear-gradient(var(--sel), var(--sel)), var(--panel); }
+}
+@media (pointer: coarse) and (min-height: 481px) {
+  .segmentado button { min-height: 40px; }
+}
+@media (pointer: coarse) and (max-height: 480px) {
+  .migalhas button.seg { min-height: 28px; padding: 0 6px; }
+}
+/* The button for a new tab stays visible when tabs overflow; auto-scroll
+   reserves its spot next to the active tab. */
+.aba-mais { position: sticky; right: 0; z-index: 1; background: var(--bg); box-shadow: 8px 0 0 var(--bg); }
+.abas-barra { scroll-padding-right: 36px; }
+@media (pointer: coarse) { .abas-barra { scroll-padding-right: 52px; } }
+/* A gradient signals the dialog scrolls under its fixed footer. */
+#operation-dialog form > menu::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; background: linear-gradient(transparent, var(--panel)); pointer-events: none; }

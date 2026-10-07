@@ -1,0 +1,32 @@
+name: "Change proposal"
+description: "Propose a concrete improvement to Hopper Files or its documentation."
+title: "Proposal: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem"
+      description: "Identify the current behavior and the problem it causes."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-behavior
+    attributes:
+      label: "Proposed behavior"
+      description: "Describe what should change and what observable result would show that the problem is resolved."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence-tradeoffs
+    attributes:
+      label: "Evidence and tradeoffs"
+      description: "Provide relevant observations or official sources. Distinguish evidence from assumptions and explain any effect on the security boundary, the specification, or maintenance."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives"
+      description: "Describe alternatives you considered, if relevant."
+    validations:
+      required: false

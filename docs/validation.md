@@ -1,9 +1,34 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.4 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.5 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.5
+
+Release 0.1.5 adds `Ignorar tag` to the context menu of a tag row in the
+sidebar, opened by a secondary click, a long press, or the menu key like the
+rows of the listing, and leaves `node_modules` directories out of the tag
+index below a monitored folder (`dependency_directory`). On the development
+machine, these checks passed:
+
+- the frontend tests and two identical frontend builds;
+- the Python tests, including the new `node_modules` cases for the tag index,
+  search, and the corpus, and the repository verifier;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- in WebKit on a synthetic instance, with the real server: the menu with a
+  mouse, with a keyboard event without a pointer, and with an emulated touch
+  long press; the saved state with its base revision; the tag leaving the
+  list, the counts, and the open view; a revision conflict; the limit of 256
+  ignored tags; restoring in Settings; and the tags of a `node_modules`
+  directory absent from the list. The same checks fail on 0.1.4;
+- two byte-identical builds of the release archive;
+- an update from 0.1.4 with `update-release`.
+
+The test browser does not turn the menu key or Shift+F10 into a menu event,
+for the listing either, so the keyboard check dispatches the menu event that
+browsers send for those keys (no pointer position).
 
 ## Release 0.1.4
 

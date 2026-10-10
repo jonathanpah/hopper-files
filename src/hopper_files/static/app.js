@@ -2399,7 +2399,7 @@
     // Each folder's availability is re-checked when opened.
     void loadTagFolders().then(() => { if (folderList.isConnected) paintFolders(); });
     const folderSection = el("div", "Pastas monitoradas (tags)", "opt-secao");
-    const folderHint = el("p", "Entram as notas .md dessas pastas e de todas as subpastas. Subpastas ocultas (nome começando com ponto) e temporárias só entram se forem marcadas elas mesmas. Para marcar, use o botão direito numa pasta (no toque, segure o dedo sobre ela) ou o painel Informações.", "opt-dica");
+    const folderHint = el("p", "Entram as notas .md dessas pastas e de todas as subpastas. Subpastas ocultas (nome começando com ponto), temporárias e chamadas node_modules só entram se forem marcadas elas mesmas. Para marcar, use o botão direito numa pasta (no toque, segure o dedo sobre ela) ou o painel Informações.", "opt-dica");
     const exit = button("Sair da sessão", () => {
       dialog.close();
       if (logoutForm?.requestSubmit) logoutForm.requestSubmit();
@@ -4709,7 +4709,7 @@
   // triggering touch does not also open the item, and touch rows are not draggable, to avoid
   // competing with the system's own drag gesture (mouse and trackpad remain draggable).
   function installLongPress() {
-    const rows = "#results tr.item, #tree .node-row, #favoritos .node-row, .fav-row, .res-item";
+    const rows = "#results tr.item, #tree .node-row, #favoritos .node-row, .fav-row, .res-item, #tags-nav .tg-row";
     let timer = null; let start = null; let fired = false; let swallowUntil = 0;
     const cancel = () => { clearTimeout(timer); timer = null; };
     document.addEventListener("pointerdown", event => {
@@ -4757,12 +4757,30 @@
     event.preventDefault(); event.stopPropagation();
     closeItemMenu();
     if (!pathOnly) state.selectedItem = {rootId, path, type: kind};
+    showContextMenu(event, itemActions(rootId, path, file, kind, {pathOnly}), path);
+  }
+  // The menu of a tag row in the sidebar: it only ignores the tag; restoring is in Settings.
+  function showTagMenu(event, tag) {
+    event.preventDefault(); event.stopPropagation();
+    closeItemMenu();
+    const actions = el("div", undefined, "item-actions");
+    actions.setAttribute("role", "menu");
+    const ignore = button("Ignorar tag", () => { closeItemMenu({restoreFocus: true}); ignoreTag(tag); }, "ctx-item");
+    ignore.setAttribute("role", "menuitem");
+    actions.append(ignore);
+    // The sidebar redraws its rows now and then: focus returns to the row of this tag, not to the old element.
+    const onRow = document.activeElement?.matches?.("#tags-nav .tg-row");
+    showContextMenu(event, actions, null, onRow ? () => document.querySelector(`#tags-nav .tg-row[data-tag="${CSS.escape(tag)}"]`) : null);
+  }
+  // Opens #menu-ctx with `actions` at the pointer, or below the anchor button. `path` marks the listing row
+  // the menu belongs to; `returnTo` finds the element that takes focus back when it closes.
+  function showContextMenu(event, actions, path, returnTo = null) {
     const origin = document.activeElement;
     const anchor = event.anchor || null;
     const menu = $("#menu-ctx");
-    menu.replaceChildren(itemActions(rootId, path, file, kind, {pathOnly}));
+    menu.replaceChildren(actions);
     for (const row of app.querySelectorAll("tr.menu-alvo")) row.classList.remove("menu-alvo");
-    const targetRow = [...app.querySelectorAll("#results tr.item")].find(row => row.dataset.path === path);
+    const targetRow = path === null ? null : [...app.querySelectorAll("#results tr.item")].find(row => row.dataset.path === path);
     targetRow?.classList.add("menu-alvo");
     state.returnFocusPath = targetRow ? path : null;
     menu.hidden = false; menu.style.display = "block";
@@ -4777,7 +4795,8 @@
       for (const row of app.querySelectorAll("tr.menu-alvo")) row.classList.remove("menu-alvo");
       document.removeEventListener("pointerdown", close, true); document.removeEventListener("keydown", keys, true);
       if (state.closeItemMenu === closeNow) state.closeItemMenu = null;
-      if (restoreFocus && origin?.isConnected) origin.focus();
+      const back = returnTo ? returnTo() : origin;
+      if (restoreFocus && back?.isConnected) back.focus();
     };
     const closeNow = options => close(null, options);
     const keys = keyEvent => {
@@ -5123,6 +5142,8 @@
     renderFavorites();
     const tags = $("#tags-nav");
     const labels = $("#etiquetas");
+    // Redrawing keeps keyboard focus on the same tag row.
+    const focusedTag = document.activeElement?.closest?.("#tags-nav .tg-row")?.dataset.tag;
     tags.replaceChildren(); labels.replaceChildren();
     const makeHeading = (container, title, cls, key) => sectionHeading(container, title, cls, key, renderCollections);
 
@@ -5143,10 +5164,13 @@
         const activate = () => enterView("tags", {tag: tag.tag});
         row.onclick = activate;
         row.onkeydown = event => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); activate(); } };
+        row.dataset.tag = tag.tag;
+        row.addEventListener("contextmenu", event => showTagMenu(event, tag.tag));
         row.classList.toggle("ativo", state.view === "tags" && state.selectedTag === tag.tag);
         row.append(el("span", "#", "tg-hash"), el("span", tag.tag, "nome"), el("span", String(tag.count), "tg-n"));
         row.title = `${formatCount(tag.count)} ${tag.count === 1 ? "arquivo" : "arquivos"} com #${tag.tag}`; tags.append(row);
       }
+      if (focusedTag) [...tags.querySelectorAll(".tg-row")].find(row => row.dataset.tag === focusedTag)?.focus({preventScroll: true});
     }
 
     const labelEntries = orderedLabels();
@@ -5270,7 +5294,7 @@
         panel.append(emptyState(none ? "Nenhuma pasta monitorada. Numa pasta, use o botão direito (no toque, segure o dedo sobre ela) ou o painel Informações e escolha “Monitorar tags nesta pasta”."
           : index.complete ? "Escolha uma tag para ver os arquivos" : "A indexação terminou parcialmente; consulte as omissões no painel", "busca"));
         renderMetadata(index, {tags: true});
-        status(`Encontradas ${index.tags.length} tags.`);
+        status(`Encontradas ${index.tags.filter(tag => !ignoredTags().has(tag.tag)).length} tags.`);
       }
     } catch (_error) { status("Não foi possível indexar as tags.", true); }
   }
@@ -5289,10 +5313,11 @@
   function tagFolderPaths() { return (state.tagFolders || []).map(folder => folder.path); }
   function isTagFolder(path) { return tagFolderPaths().includes(absolutePath(path)); }
   // Why a scan starting from a watched folder does not reach this folder on the path:
-  // hidden, temporary, or, per the last listing, unreadable.
+  // hidden, temporary, a node_modules, or, per the last listing, unreadable.
   function tagFolderStop(name, address) {
     if (name.startsWith(".")) return "oculta";
     if (TAG_TEMPORARY.has(address)) return "temporária";
+    if (name === "node_modules") return "node_modules";
     return knownEntry(BASE_ID, relativePath(address))?.openable === false ? "sem permissão de leitura" : "";
   }
   // Does the scan starting at `start` reach `target`?
@@ -5314,7 +5339,7 @@
       .sort((left, right) => right.length - left.length)[0] || null;
   }
   // Why a folder below a watched one was left out, starting from the nearest watched ancestor:
-  // it, or a folder in between, is hidden, temporary, or unreadable.
+  // it, or a folder in between, is hidden, temporary, a node_modules, or unreadable.
   function tagFolderGap(path) {
     const target = absolutePath(path);
     const start = tagFolderPaths().filter(value => value !== target && target.startsWith(value === "/" ? "/" : `${value}/`))
@@ -5557,6 +5582,7 @@
       unreadable_file: ["arquivo sem permissão de leitura", "arquivos sem permissão de leitura"],
       hidden_directory: ["pasta oculta", "pastas ocultas"],
       excluded_path: ["pasta temporária", "pastas temporárias"],
+      dependency_directory: ["pasta node_modules", "pastas node_modules"],
     }[key];
     return names ? names[count === 1 ? 0 : 1] : `${key}:`;
   }
@@ -5640,7 +5666,29 @@
       }
     }).finally(() => { state.saveBusy = false; });
   }
+  const MAX_IGNORED_TAGS = 256;
   function ignoredTags() { return new Set(state.ui?.preferences.ignoredTags || []); }
+  // Adds a tag to the ignored list from its sidebar menu. It leaves the list and the counts at once, and
+  // the change is saved like any other interface preference; Settings brings it back.
+  function ignoreTag(tag) {
+    const current = state.ui.preferences.ignoredTags || [];
+    if (current.includes(tag)) return;
+    if (current.length >= MAX_IGNORED_TAGS) { status(`Não é possível ignorar mais de ${MAX_IGNORED_TAGS} tags. Volte a mostrar alguma em Configurações.`, true); return; }
+    const rows = [...document.querySelectorAll("#tags-nav .tg-row")];
+    const position = rows.findIndex(row => row.dataset.tag === tag);
+    const focused = position >= 0 && rows[position] === document.activeElement;
+    state.ui.preferences.ignoredTags = [...current, tag];
+    const viewing = state.view === "tags" && state.selectedTag === tag;
+    changed();
+    if (focused) {
+      const left = [...document.querySelectorAll("#tags-nav .tg-row")];
+      (left[Math.min(position, left.length - 1)] || document.querySelector("#tags-nav button"))?.focus();
+    }
+    // The open tag leaves the screen with its row: the view goes back to the tag list, which reloads the index.
+    if (viewing) enterView("tags");
+    else void state.savePromise?.then(() => refreshTagIndex());
+    status(`A tag #${tag} deixou de ser mostrada. Para voltar a mostrá-la, use Configurações.`);
+  }
   async function saveLoop() {
     do {
       state.saveAgain = false;
@@ -5687,12 +5735,15 @@
     const useRemote = button("Usar as da outra aba", () => {
       state.ui = clone(state.conflict.remote); state.baseUi = clone(state.conflict.remote); state.conflict = null;
       applyPreferences(); renderCollections(); renderTabs(); refreshItems(); dialog.close(); status("Mudanças da outra aba aplicadas.");
+      // The index the server filtered before may lack tags that the other tab's list shows again.
+      void refreshTagIndex();
     }, "secondary-button");
     const mergeChanges = () => {
       const { base: before, remote: latest } = state.conflict;
       state.ui = mergeUi(before, state.ui, latest); state.baseUi = clone(latest); state.ui.stateRevision = latest.stateRevision; state.conflict = null;
       applyPreferences(); renderCollections(); renderTabs(); refreshItems();
       status("Mudanças juntadas com as da outra aba."); scheduleSave();
+      void state.savePromise?.then(() => refreshTagIndex());
     };
     const merge = button("Juntar as mudanças", () => { mergeChanges(); dialog.close(); }, "primary-button");
     menu.append(useRemote, merge); form.append(heading, text, menu);

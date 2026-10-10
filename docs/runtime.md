@@ -308,9 +308,11 @@ outside writers.
 regular `.md` file under a folder the account marked, under the same traversal
 limits, excluding the instance's internal trash. With no monitored folder the
 list is empty. Below a monitored folder, a subdirectory whose name starts with
-`.` and the directories `/tmp` and `/var/tmp` are left out and reported as the
-`hidden_directory` and `excluded_path` exclusions; such a directory is read only
-from a monitored folder at or below it. A note file whose own name starts with
+`.`, a subdirectory named exactly `node_modules`, and the directories `/tmp` and
+`/var/tmp` are left out and reported as the `hidden_directory`,
+`dependency_directory`, and `excluded_path` exclusions; such a directory is read
+only from a monitored folder at or below it. Search, note discovery, and
+attachment-reference scans still read `node_modules`. A note file whose own name starts with
 `.` is read, and so is a note the account can read but not write. A marked
 folder that is gone or cannot be listed is reported as `unavailable_folder`
 and an unreadable note as `unreadable_file`. The index ignores fenced or inline
@@ -321,7 +323,7 @@ each note is kept in the private derived index described in
 [State layout](#state-layout) and reused only while the note's identity and
 version are unchanged. Tags listed in the instance's `ignoredTags` preference
 are left out of the list, counts, and per-tag lookup until they are restored in
-Settings; the notes are unchanged. Tag and search requests run outside the
+Settings (the interface adds one from the context menu of its row in the sidebar); the notes are unchanged. Tag and search requests run outside the
 loop that serves requests, so a listing does not wait for them.
 
 `GET api/tag-folders` returns `{"folders": [{"path", "available"}]}`, the

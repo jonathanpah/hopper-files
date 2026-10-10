@@ -365,9 +365,11 @@ and descends from it (HF-API-004). Note discovery and attachment-reference scans
 start at `/`, consider only the note corpus of HF-NAV-004, and include `/tmp`
 and `/var/tmp` when they are writable. The tag index starts at each monitored
 folder of HF-META-002. Below a monitored folder it does not enter a subdirectory
-whose name starts with `.`, reported as the `hidden_directory` exclusion, nor
-`/tmp` or `/var/tmp`, reported as `excluded_path`; such a directory is read only
-from a monitored folder at or below it. A monitored folder that no longer
+whose name starts with `.`, reported as the `hidden_directory` exclusion, a
+subdirectory named exactly `node_modules`, reported as `dependency_directory`,
+nor `/tmp` or `/var/tmp`, reported as `excluded_path`; such a directory is read
+only from a monitored folder at or below it. Search, note discovery, and
+attachment-reference scans do enter `node_modules`. A monitored folder that no longer
 exists, is not a directory, or cannot be listed is reported as
 `unavailable_folder`, and a note the account cannot read as `unreadable_file`;
 neither makes the tag index incomplete. A directory the account cannot list is
@@ -891,7 +893,10 @@ listing's scroll position and focuses the row that was opened. Open document
 tabs and the active tab return after a reload in the same browser tab (no
 unsaved text is stored). In the tree, the
 arrow keys move between nodes and open or close folders, and a node has the
-same context menu as its listing row.
+same context menu as its listing row. A tag row in the sidebar has its own
+context menu, opened by a secondary click or the keyboard's menu key like a
+listing row's, with only `Ignorar tag` (HF-META-002); the browser's own menu
+does not open on it.
 
 **HF-NAV-006 — Sidebar.** From top to bottom, the sidebar has: the title with
 Settings and Theme; search; Favorites; the `Arquivos & Pastas` section with a
@@ -938,7 +943,8 @@ open column narrows the toolbar. While items are checked on a narrow screen,
 the toolbar shows the selection actions in place of the creation actions. On
 touch and narrow screens the toolbar wraps instead of hiding buttons past the
 edge. On a touch screen, holding a finger still on an item row for half a
-second opens that item's menu, the same menu as a secondary click, and while
+second opens that item's menu, the same menu as a secondary click (a tag row
+of the sidebar included, with its menu of HF-UI-001), and while
 items are checked a `⋯` toolbar button opens the menu for them. A tap anywhere
 in a row's selection cell toggles its checkbox. The interface honors
 reduced-motion preferences.
@@ -961,9 +967,9 @@ URL, and hexadecimal color notation is not indexed as a tag. A note has at most
 folders that the account marks as monitored, traversed under HF-NAV-011. There
 is no default: with no monitored folder the index is empty. A monitored folder
 covers itself and everything below it, and nothing above it. Below it, a
-subdirectory whose name starts with `.` and the directories `/tmp` and
-`/var/tmp` are left out; such a directory is read only from a monitored folder
-at or below it. The rule considers only directories: every regular `.md` file
+subdirectory whose name starts with `.`, a subdirectory named exactly
+`node_modules`, and the directories `/tmp` and `/var/tmp` are left out; such a
+directory is read only from a monitored folder at or below it. The rule considers only directories: every regular `.md` file
 in a directory the traversal reads is indexed, whether its own name starts with
 `.` and whether or not the account can write to it. A monitored folder that the
 traversal of another one already read is not read again; any other is read
@@ -979,8 +985,10 @@ unavailable until it exists again or is unmarked. The index is derived state: an
 indexing failure does not modify Markdown. A traversal that stops early makes
 any operation requiring a complete tag view explicitly incomplete. An instance
 may ignore normalized tags chosen in its settings: while ignored, a tag is
-absent from the tag list, its counts, and per-tag lookup. Ignoring or restoring
-a tag never modifies Markdown or other files.
+absent from the tag list, its counts, and per-tag lookup. The interface ignores
+a tag from the context menu of its row in the sidebar (`Ignorar tag`) and
+restores it in Settings. Ignoring or restoring a tag never modifies Markdown or
+other files.
 
 **HF-META-003 — Label identities.** The seven stable technical label IDs and
 colors are:
@@ -1637,7 +1645,7 @@ separation, and gives the separated file exactly the source UID, GID, mode, and
 access ACL. Search, the tag index, and attachment scans never enter `/proc`,
 `/sys`, `/dev`, or symbolic links; the tag index and attachment scans also never
 enter the internal trash, which search may list, and the tag index enters
-hidden directories, `/tmp`, and `/var/tmp` only when they are marked. Manual
+hidden directories, `node_modules` directories, `/tmp`, and `/var/tmp` only when they are marked. Manual
 navigation lists all of them. Measure traversal time and counts for each real account, including
 `/tmp` and `/var/tmp`, and verify truthful `complete` and omission reporting
 when a budget stops a traversal. While a tag index or search request is still
@@ -1656,8 +1664,12 @@ from their input. With no monitored folder, Tags is empty. After the home
 directory is marked, a note containing `#tag` in it appears in Tags, including a
 note whose file name starts with `.`, while a note in a hidden subdirectory
 does not until that subdirectory is marked. After `/var` is marked, a note in
-`/var/tmp` does not appear until `/var/tmp` is marked. A deleted note does not
-return to the index from the internal trash, even if the trash is marked.
+`/var/tmp` does not appear until `/var/tmp` is marked. A note in a `node_modules`
+subdirectory does not appear until that subdirectory, or a folder inside it, is
+marked, while search still finds it. A deleted note does not return to the index
+from the internal trash, even if the trash is marked. Choosing `Ignorar tag` in the menu of a
+tag row removes that tag from Tags and from the counts without changing any
+note, and Settings brings it back.
 
 ### 13.3 File operations and limits
 

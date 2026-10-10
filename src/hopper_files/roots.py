@@ -678,6 +678,7 @@ def scan_tree(
     counts: dict[str, int],
     skip_paths: frozenset[str] = frozenset(),
     skip_hidden: bool = False,
+    skip_names: frozenset[str] = frozenset(),
 ) -> Iterator[ScannedDirectory]:
     """Walk a directory tree depth first under HF-NAV-011.
 
@@ -686,9 +687,10 @@ def scan_tree(
     instance trash. A directory whose address relative to ``/`` is in
     ``skip_paths`` is not entered and is counted as ``excluded_path``. With
     ``skip_hidden``, a subdirectory whose name starts with ``.`` is not entered
-    and is counted as ``hidden_directory``; the starting directory itself is
-    always entered. An unlistable directory is counted as
-    ``unreadable_directory`` and skipped. Stops and races are recorded in
+    and is counted as ``hidden_directory``, and one whose name is in
+    ``skip_names`` is not entered and is counted as ``dependency_directory``; the
+    starting directory itself is always entered. An unlistable directory is
+    counted as ``unreadable_directory`` and skipped. Stops and races are recorded in
     ``counts`` as ``execution_budget``, ``depth_limit``, and ``entry_race``; a
     caller treats those as incomplete.
     """
@@ -709,7 +711,7 @@ def scan_tree(
         if start_info.st_dev in pseudo and _pseudo_mount_below(parts):
             return
         yield from _scan_directory_fd(
-            start_fd, "/".join(parts), 0, deadline, pseudo, trash_identity, counts, skip_paths, skip_hidden
+            start_fd, "/".join(parts), 0, deadline, pseudo, trash_identity, counts, skip_paths, skip_hidden, skip_names
         )
     finally:
         os.close(start_fd)
@@ -725,6 +727,7 @@ def _scan_directory_fd(
     counts: dict[str, int],
     skip_paths: frozenset[str] = frozenset(),
     skip_hidden: bool = False,
+    skip_names: frozenset[str] = frozenset(),
 ) -> Iterator[ScannedDirectory]:
     if time.monotonic() >= deadline:
         counts["execution_budget"] = counts.get("execution_budget", 0) + 1
@@ -767,6 +770,9 @@ def _scan_directory_fd(
         if skip_hidden and entry.name.startswith("."):
             counts["hidden_directory"] = counts.get("hidden_directory", 0) + 1
             continue
+        if entry.name in skip_names:
+            counts["dependency_directory"] = counts.get("dependency_directory", 0) + 1
+            continue
         child_path = f"{path}/{entry.name}" if path else entry.name
         if child_path in skip_paths:
             counts["excluded_path"] = counts.get("excluded_path", 0) + 1
@@ -792,7 +798,16 @@ def _scan_directory_fd(
                 counts["entry_race"] = counts.get("entry_race", 0) + 1
                 continue
             yield from _scan_directory_fd(
-                child_fd, child_path, depth + 1, deadline, pseudo, trash_identity, counts, skip_paths, skip_hidden
+                child_fd,
+                child_path,
+                depth + 1,
+                deadline,
+                pseudo,
+                trash_identity,
+                counts,
+                skip_paths,
+                skip_hidden,
+                skip_names,
             )
         finally:
             os.close(child_fd)

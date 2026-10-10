@@ -534,6 +534,59 @@ def test_tag_folders_skip_hidden_subfolders_unless_marked_but_read_hidden_files(
     assert all(response.json()["complete"] for response in (parent_only, with_hidden, redundant, hidden_only))
 
 
+def test_tag_folders_skip_node_modules_unless_marked_and_leave_other_readers_alone(tmp_path) -> None:
+    from hopper_files.note_index import observe_corpus
+    from hopper_files.roots import build_catalog
+
+    (DOCUMENTS / "topo.md").write_text("#topo", encoding="utf-8")
+    (DOCUMENTS / "app" / "node_modules" / "pacote" / "node_modules").mkdir(parents=True)
+    (DOCUMENTS / "app" / "nota.md").write_text("#app", encoding="utf-8")
+    (DOCUMENTS / "app" / "node_modules" / "leia.md").write_text("#dependencia needle", encoding="utf-8")
+    (DOCUMENTS / "app" / "node_modules" / "pacote" / "leia.md").write_text("#pacote", encoding="utf-8")
+    (DOCUMENTS / "app" / "node_modules" / "pacote" / "node_modules" / "funda.md").write_text("#funda", encoding="utf-8")
+    # Only the exact name is left out; a file with that name is not a directory.
+    (DOCUMENTS / "app" / "my_node_modules").mkdir()
+    (DOCUMENTS / "app" / "my_node_modules" / "parecida.md").write_text("#parecida", encoding="utf-8")
+    (DOCUMENTS / "app" / "Node_Modules").mkdir()
+    (DOCUMENTS / "app" / "Node_Modules" / "maiuscula.md").write_text("#maiuscula", encoding="utf-8")
+    with boot(tmp_path / "app", ManualClock(CLOCK_START), password=PASSWORD) as world:
+        headers = _signed(world)
+        _monitor(world, headers)
+        parent_only = world.client.get(world.config.base_path + "api/tags")
+        # Marked inside it, a folder is read, but a node_modules below that stays out.
+        _monitor(world, headers, "app/node_modules/pacote")
+        inside = world.client.get(world.config.base_path + "api/tags")
+        _monitor(world, headers, "app/node_modules/pacote", monitored=False)
+        _monitor(world, headers, "app/node_modules")
+        itself = world.client.get(world.config.base_path + "api/tags")
+        _monitor(world, headers, "app/node_modules", monitored=False)
+        _monitor(world, headers, "app/node_modules/pacote/node_modules")
+        deepest = world.client.get(world.config.base_path + "api/tags")
+        _monitor(world, headers, "", monitored=False)
+        _monitor(world, headers, "app/node_modules/pacote/node_modules", monitored=False)
+        _monitor(world, headers, "app/node_modules")
+        alone = world.client.get(world.config.base_path + "api/tags")
+        by_name = _search(world, "leia", mode="name")
+        by_text = _search(world, "needle", mode="text")
+        corpus = observe_corpus(build_catalog(world.config))
+
+    assert _tag_counts(parent_only) == {"app": 1, "maiuscula": 1, "parecida": 1, "topo": 1}
+    assert _categories(parent_only, "exclusions") == {"dependency_directory": 1}
+    assert _tag_counts(inside) == {"app": 1, "maiuscula": 1, "pacote": 1, "parecida": 1, "topo": 1}
+    assert _categories(inside, "exclusions") == {"dependency_directory": 2}
+    assert _tag_counts(itself) == {"app": 1, "dependencia": 1, "maiuscula": 1, "pacote": 1, "parecida": 1, "topo": 1}
+    assert _categories(itself, "exclusions") == {"dependency_directory": 2}
+    assert _tag_counts(deepest) == {"app": 1, "funda": 1, "maiuscula": 1, "parecida": 1, "topo": 1}
+    assert _categories(deepest, "exclusions") == {"dependency_directory": 1}
+    assert _tag_counts(alone) == {"dependencia": 1, "pacote": 1}
+    assert _categories(alone, "exclusions") == {"dependency_directory": 1}
+    assert all(response.json()["complete"] for response in (parent_only, inside, itself, deepest, alone))
+    # Search, the corpus, and so the image-reference scans still see every note.
+    assert _names(by_name) == ["app/node_modules/leia.md", "app/node_modules/pacote/leia.md"]
+    assert _names(by_text) == ["app/node_modules/leia.md"]
+    assert doc("app/node_modules/pacote/node_modules/funda.md") in corpus.notes
+
+
 def test_tag_folders_count_unreadable_notes_as_exclusions(tmp_path) -> None:
     if os.geteuid() == 0:
         import pytest

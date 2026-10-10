@@ -21,10 +21,11 @@ CORPUS_TIME_LIMIT_SECONDS = 10.0
 # The corpus is discovered from / (HF-NAV-004). Tests confine this origin to a
 # synthetic directory through the harness so they never read real notes.
 CORPUS_START = ""
-# Below a monitored folder the tag index leaves temporary directories out (HF-META-002): they
-# can be large and rarely hold notes whose tags matter. Like hidden directories, they enter only
-# when marked.
+# Below a monitored folder the tag index leaves temporary directories and directories named
+# like these out (HF-META-002): they can be large and rarely hold notes whose tags matter. Like
+# hidden directories, they enter only when marked.
 TAG_EXCLUDED_PATHS = frozenset({"tmp", "var/tmp"})
+TAG_EXCLUDED_NAMES = frozenset({"node_modules"})
 # Traversal counts that make a corpus result incomplete (HF-NAV-011).
 INCOMPLETE_CATEGORIES = frozenset({"execution_budget", "entry_race", "depth_limit", "read_error"})
 
@@ -134,9 +135,10 @@ def iter_tag_notes(
 
     Every ``.md`` file under a monitored folder is yielded, hidden or not, and a
     note in a read-only directory too: the account chose the folder. Hidden
-    subdirectories are counted as ``hidden_directory`` and temporary ones as
-    ``excluded_path``. ``visited`` receives every directory listed; a monitored
-    folder already in it was read by an ancestor's traversal and is skipped.
+    subdirectories are counted as ``hidden_directory``, temporary ones as
+    ``excluded_path``, and ``node_modules`` ones as ``dependency_directory``.
+    ``visited`` receives every directory listed; a monitored folder already in
+    it was read by an ancestor's traversal and is skipped.
     Any other monitored folder gets its own traversal, including one below a
     directory the account can pass through but not list. A monitored folder
     that is gone, is not a directory, or cannot be opened is counted as
@@ -162,6 +164,7 @@ def iter_tag_notes(
             counts=scan.counts,
             skip_paths=tag_skips(start),
             skip_hidden=True,
+            skip_names=TAG_EXCLUDED_NAMES,
         )
         try:
             for directory in directories:

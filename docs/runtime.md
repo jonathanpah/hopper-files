@@ -239,16 +239,22 @@ copy, and extraction import no owner, group, set-ID bits, ACL, or mode from
 their input. A symbolic link itself is never renamed, moved, or moved to the
 trash.
 
-`GET login` issues one pre-authentication nonce. `POST login` requires that
-nonce, the exact `Origin`, and the expected `Host`. Every attempt consumes its
+`GET login` issues one pre-authentication nonce. `POST login` takes the user
+name, which is the account the instance runs as, and the password, and
+requires that nonce, the exact `Origin`, and the expected `Host`. A wrong user
+name gets the same answer as a wrong password, after the same one KDF. Every
+attempt consumes its
 nonce, so the login page asks `GET login` for a fresh one after a failed
 attempt. Authenticated mutations also require the session and its CSRF token.
 The login page links to `GET password`, a page that changes the password
-without a session: `POST password` takes a fresh nonce, the current password,
-and the new password twice, spends the same login limits, and refuses a
+without a session: `POST password` takes a fresh nonce, the user name, the
+current password, and the new password twice, spends the same login limits, and refuses a
 mismatched confirmation before any KDF. Logout, expiry, and a password change
 from that page or from `set-password` invalidate sessions and CSRF tokens for
-that instance only. `GET app` without a valid session answers `401` with the
+that instance only. A session lasts `sessionDurationSeconds` after the last
+authenticated request: each request keeps it alive, rewriting its record at
+most once a minute and sending the cookie again with the full duration.
+`GET app` without a valid session answers `401` with the
 login page. When any API call answers `401`, the interface stops its periodic
 buffer synchronization and offers to sign in again instead of showing an
 empty folder or a generic error.

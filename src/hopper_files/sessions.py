@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 import base64
+import fcntl
 import hashlib
 import hmac
 import json
 import os
 import secrets
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterator
 
 from hopper_files.state import atomic_write, read_signing_secret
 
 NONCE_TTL_SECONDS = 600
 NONCE_LIMIT = 128
+# A session lasts its lifetime after the last authenticated request; the record is rewritten
+# at most once per this many seconds.
+RENEW_INTERVAL_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -119,6 +125,36 @@ def open_session(
     return Session(path=path, csrf_token=csrf_token, epoch=epoch, expires_at=float(expires_at))
 
 
+@contextmanager
+def _sessions_lock(state_directory: Path) -> Iterator[None]:
+    """Serialize renewal with revocation, so a renewal never brings back a revoked session."""
+    descriptor = os.open(state_directory / "sessions.lock", os.O_RDWR | os.O_CREAT | os.O_CLOEXEC, 0o600)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(descriptor)
+
+
+def renew_session(session: Session, *, lifetime: int, now: float) -> bool:
+    """Push the expiry of a valid session to ``now + lifetime``; True when it was rewritten."""
+    if session.expires_at > now + lifetime - RENEW_INTERVAL_SECONDS:
+        return False
+    with _sessions_lock(session.path.parent.parent):
+        try:
+            payload = json.loads(session.path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return False
+        if not isinstance(payload, dict) or payload.get("csrfToken") != session.csrf_token:
+            return False
+        payload["expiresAt"] = now + lifetime
+        try:
+            atomic_write(session.path, json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+        except OSError:
+            return False
+    return True
+
+
 def csrf_matches(session: Session, presented: str) -> bool:
     if presented == "":
         return False
@@ -130,16 +166,18 @@ def csrf_matches(session: Session, presented: str) -> bool:
 
 
 def revoke_session(session: Session) -> None:
-    session.path.unlink(missing_ok=True)
+    with _sessions_lock(session.path.parent.parent):
+        session.path.unlink(missing_ok=True)
 
 
 def revoke_all_sessions(state_directory: Path) -> None:
     directory = state_directory / "sessions"
     if not directory.is_dir():
         return
-    for path in directory.iterdir():
-        if path.is_file() and not path.is_symlink():
-            path.unlink()
+    with _sessions_lock(state_directory):
+        for path in directory.iterdir():
+            if path.is_file() and not path.is_symlink():
+                path.unlink()
 
 
 def seal_cookie(secret: bytes, instance_id: str, session_id: bytes) -> str:

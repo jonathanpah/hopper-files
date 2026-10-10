@@ -37,11 +37,12 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `scripts/verify_navigation_integration.py` | Loopback check of navigation, search, tags, interface-state conflicts, and change notices, with an optional browser fixture. |
 | `scripts/verify_editor_integration.py` | Loopback check of the editor and viewer routes, with an optional browser fixture. |
 | `scripts/verify_images_integration.py` | Loopback check of image upload, collection, joint restore, and reference-preserving moves. |
+| `scripts/browser_fixture.py` | Synthetic loopback instance with fixture files for the browser suite. |
 | `scripts/build_frontend.mjs` | Reproducible browser bundling and license-notice generation. |
 | `scripts/verify_built_wheel.py` | Positive wheel inventory, including the packaged MIT `LICENSE`, rejecting every other extra path. |
-| `scripts/verify_repository.py` | Inventory, specification-hash, and optional marker check. |
+| `scripts/verify_repository.py` | Inventory, specification-hash, and personal-data check of the tree or of Git history, with an optional private marker list. |
 | `frontend/README.md` | Pinned frontend build procedure, origins, and dependency-hash policy. |
-| `frontend/package.json` | Direct pinned browser dependency declarations and build/test commands. |
+| `frontend/package.json` | Direct pinned browser dependency declarations, the test-only `playwright-core`, and build and test commands. |
 | `frontend/package-lock.json` | Exact npm dependency graph, registry URLs, and integrity digests. |
 | `frontend/src/entry.js` | Browser entry point: loads the editor runtime and `static/app.js`. |
 | `frontend/src/editor-runtime.js` | Markdown editor, sanitized rendering, and clean-copy implementation. |
@@ -49,6 +50,17 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `frontend/test/clean-copy.test.mjs` | Normative clean-copy and plain-text recomposition fixtures. |
 | `frontend/test/editor-commands.test.mjs` | Editor commands: selection-based formatting, crossing pairs, headings, bullets, links, attached images, and active formats. |
 | `frontend/test/markdown-render.test.mjs` | Formatted-view rendering: tags (normalization, limits, and where they apply), task items, bullet markers, and raw HTML kept as text. |
+| `frontend/browser/harness.mjs` | Browser suite kit: a synthetic instance per test file, WebKit through `playwright-core`, device profiles, login, and the layout audit. |
+| `frontend/browser/copy-paths.test.mjs` | Browser checks of copying one or several paths from listing, tree, and touch menus, and of the path-only menus. |
+| `frontend/browser/drag.test.mjs` | Browser checks of tree folders that open while dragged items are held over them. |
+| `frontend/browser/editor-bar.test.mjs` | Browser checks of the floating formatting bar over a selection in the Markdown view. |
+| `frontend/browser/favorites.test.mjs` | Browser checks of favorites as trees in the sidebar. |
+| `frontend/browser/layout.test.mjs` | Layout audit of the main screens on desktop, laptop, iPad, and iPhone sizes in both themes. |
+| `frontend/browser/live-refresh.test.mjs` | Browser checks of the listing, tree, documents, and previews following changes made outside the application. |
+| `frontend/browser/login.test.mjs` | Browser checks of the sign-in and password change pages: user name, password, and password-manager hints. |
+| `frontend/browser/menu.test.mjs` | Browser checks of context menu placement, keyboard, focus, and highlight. |
+| `frontend/browser/tags.test.mjs` | Browser checks of the tag list and the tag menu with mouse, keyboard, and touch. |
+| `frontend/browser/viewers.test.mjs` | Browser checks of the PDF viewer with a standard, non-embedded font. |
 | `src/hopper_files/__init__.py` | Package identity and version. |
 | `src/hopper_files/access.py` | Host, origin, and trusted-proxy decision. |
 | `src/hopper_files/admin.py` | The `hopper-files-admin` commands: installation, releases, instances, password, check, and trash purge. |
@@ -116,4 +128,5 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `tests/test_image_collection_failures.py` | Scanner uncertainty, reference-size, and save-race preservation checks. |
 | `tests/test_ui_state.py` | Schema, revision checks, process lock, persistence, and recovery checks. |
 | `tests/test_changes.py` | Change notices: watched directories, create, delete, rename, modify, replace by rename, overflow, release, limits, and route errors. |
+| `tests/test_repository_verifier.py` | The repository verifier: example values pass, personal data and private markers fail, and markers are found in intermediate commits. |
 | `tests/test_http_regressions.py` | Regressions through the HTTP routes: ZIP temporary names, save conflicts and access metadata, stale interface state against moves and trash, reference rewrites with open buffers, and collection after a save. |

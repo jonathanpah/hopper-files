@@ -106,8 +106,11 @@ that running as root makes unobservable, and the verifier prints
 10-second scan budget of `HF-NAV-011` and can fail on a very slow machine,
 such as one without hardware acceleration. Also run the integration scripts listed in
 `docs/development.md` when a change touches HTTP routes, state, or file
-operations; `npm --prefix frontend test` when it touches the frontend; and
-`./scripts/verify-clean-checkout.sh` (network required) before a release.
+operations; `npm --prefix frontend test` when it touches the frontend;
+`npm --prefix frontend run test:browser` when it touches the interface (it
+needs WebKit, see `docs/development.md`), adding a test there for the new
+behavior; and `./scripts/verify-clean-checkout.sh` (network required) and the
+dependency advisory check before a release.
 
 ## Claims
 

@@ -77,19 +77,21 @@ def change_password_with_current(
     instance_id: str,
     current: str,
     new: str,
+    account_matches: bool = True,
 ) -> int | None:
     """Change the password from the login page: the current one must verify first.
 
     One KDF verifies the current password; only then the new verifier is published
     with a fresh salt and epoch, and every session of this instance is invalidated,
-    as in the local command. None means the current password did not verify.
+    as in the local command. None means the user name or the current password did
+    not verify; a wrong user name still costs the one KDF.
     """
     require_instance_binding(state_directory, instance_id)
     if password_byte_length(new) > PASSWORD_MAX_BYTES:
         raise PasswordTooLong("password exceeds 1024 bytes")
     with kdf_lock(state_directory, blocking=False):
         require_instance_binding(state_directory, instance_id)
-        if verify_password(state_directory, current) is None:
+        if verify_password(state_directory, current) is None or not account_matches:
             return None
         epoch = _next_epoch(state_directory)
         publish_verifier(state_directory, new, epoch)
@@ -104,13 +106,18 @@ def accept_login(
     cookie_lifetime: int,
     password: str,
     now: float,
+    account_matches: bool = True,
 ) -> tuple[str, str] | None:
-    """Run one KDF and, on success, create a session before releasing the lock."""
+    """Run one KDF and, on success, create a session before releasing the lock.
+
+    A wrong user name (``account_matches`` false) still runs the KDF, so it cannot be told
+    apart from a wrong password.
+    """
     require_instance_binding(state_directory, instance_id)
     with kdf_lock(state_directory, blocking=False):
         require_instance_binding(state_directory, instance_id)
         epoch = verify_password(state_directory, password)
-        if epoch is None:
+        if epoch is None or not account_matches:
             return None
         return create_session(
             state_directory,

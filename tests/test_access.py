@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from hopper_files.clock import ManualClock
 from hopper_files.config import ConfigError, host_matches, load_config, origin_matches
 
-from conftest import CLOCK_START, PASSWORD, boot, cookie_flags, write_config
+from conftest import CLOCK_START, PASSWORD, boot, cookie_flags, write_config, USERNAME
 
 
 def test_wrong_host_origin_and_port_are_rejected(tmp_path) -> None:
@@ -15,7 +15,7 @@ def test_wrong_host_origin_and_port_are_rejected(tmp_path) -> None:
         cookie = f"{world.config.cookie_name}={signed.cookies[world.config.cookie_name]}"
         wrong_origin = world.client.post(
             "/login",
-            json={"nonce": world.issue_nonce(), "password": PASSWORD},
+            json={"nonce": world.issue_nonce(), "username": USERNAME, "password": PASSWORD},
             headers={"origin": "http://127.0.0.1:9999"},
         )
         other = TestClient(
@@ -64,12 +64,12 @@ def test_remote_mode_requires_the_trusted_proxy_and_secure_cookies(tmp_path) -> 
         with direct:
             loopback = direct.post(
                 "/login",
-                json={"nonce": "ignored", "password": PASSWORD},
+                json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
                 headers={"origin": "http://127.0.0.1:9000"},
             )
         downgrade = world.client.post(
             "/login",
-            json={"nonce": "ignored", "password": PASSWORD},
+            json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
             headers={
                 "origin": world.config.origin,
                 "x-forwarded-proto": "http",
@@ -89,7 +89,7 @@ def test_remote_mode_requires_the_trusted_proxy_and_secure_cookies(tmp_path) -> 
         with untrusted:
             spoofed = untrusted.post(
                 "/login",
-                json={"nonce": "ignored", "password": PASSWORD},
+                json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
             )
         accepted = world.post_login(PASSWORD)
 
@@ -107,7 +107,7 @@ def test_cross_origin_on_another_port_is_rejected(tmp_path) -> None:
     with boot(tmp_path, ManualClock(CLOCK_START), password=PASSWORD, port=8765) as world:
         response = world.client.post(
             "/login",
-            json={"nonce": world.issue_nonce(), "password": PASSWORD},
+            json={"nonce": world.issue_nonce(), "username": USERNAME, "password": PASSWORD},
             headers={"origin": "http://127.0.0.1:8766"},
         )
     assert response.status_code == 403
@@ -140,7 +140,7 @@ def test_default_ports_are_canonical_and_nondefault_ports_remain(tmp_path) -> No
         )
         also_explicit = explicit.client.post(
             "/files/login",
-            json={"nonce": explicit.issue_nonce(), "password": PASSWORD},
+            json={"nonce": explicit.issue_nonce(), "username": USERNAME, "password": PASSWORD},
             headers={
                 "origin": "https://files.example.test:443",
                 "x-forwarded-host": "files.example.test:443",
@@ -149,7 +149,7 @@ def test_default_ports_are_canonical_and_nondefault_ports_remain(tmp_path) -> No
         )
         mismatched_port = explicit.client.post(
             "/files/login",
-            json={"nonce": "ignored", "password": PASSWORD},
+            json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
             headers={
                 "origin": "https://files.example.test:8443",
                 "x-forwarded-host": "files.example.test:8443",
@@ -160,7 +160,7 @@ def test_default_ports_are_canonical_and_nondefault_ports_remain(tmp_path) -> No
         nonce = page.text.split('name="nonce" value="', 1)[1].split('"', 1)[0]
         form = explicit.client.post(
             "/files/login",
-            data={"nonce": nonce, "password": PASSWORD},
+            data={"nonce": nonce, "username": USERNAME, "password": PASSWORD},
             headers={"origin": "https://files.example.test"},
             follow_redirects=False,
         )
@@ -177,7 +177,7 @@ def test_default_ports_are_canonical_and_nondefault_ports_remain(tmp_path) -> No
         with untrusted:
             spoofed = untrusted.post(
                 "/files/login",
-                json={"nonce": "ignored", "password": PASSWORD},
+                json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
             )
     with boot(
         tmp_path / "https-omitted",
@@ -201,7 +201,7 @@ def test_default_ports_are_canonical_and_nondefault_ports_remain(tmp_path) -> No
         local_login = local.post_login(PASSWORD, **{"host": "127.0.0.1:80"})
         wrong_port = local.client.post(
             "/login",
-            json={"nonce": "ignored", "password": PASSWORD},
+            json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
             headers={"origin": "http://127.0.0.1:81", "host": "127.0.0.1:81"},
         )
     with boot(
@@ -250,7 +250,7 @@ def test_malformed_origin_is_forbidden_without_an_exception(tmp_path) -> None:
         for origin in hostile:
             response = world.client.post(
                 "/files/login",
-                json={"nonce": "ignored", "password": PASSWORD},
+                json={"nonce": "ignored", "username": USERNAME, "password": PASSWORD},
                 headers={"origin": origin},
             )
             assert response.status_code == 403

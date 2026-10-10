@@ -91,6 +91,10 @@ def service_account() -> str:
     return pwd.getpwuid(os.geteuid()).pw_name
 
 
+# The login user name: the account the instance runs as (HF-AUTH-001).
+USERNAME = service_account()
+
+
 class World:
     def __init__(self, config, path: Path, clock: ManualClock, client: TestClient) -> None:
         self.config = config
@@ -113,12 +117,16 @@ class World:
         assert response.status_code == 200, response.text
         return response.json()["nonce"]
 
-    def post_login(self, password: str, nonce: str | None = None, **headers: str):
+    def post_login(self, password: str, nonce: str | None = None, *, username: str | None = None, **headers: str):
         request_headers = {"origin": self.config.origin}
         request_headers.update(headers)
         return self.client.post(
             self.login_path(),
-            json={"nonce": nonce if nonce is not None else self.issue_nonce(), "password": password},
+            json={
+                "nonce": nonce if nonce is not None else self.issue_nonce(),
+                "username": self.config.service_account if username is None else username,
+                "password": password,
+            },
             headers=request_headers,
             follow_redirects=False,
         )

@@ -98,7 +98,7 @@ The configuration is a JSON object, version 2, with exactly these fields:
 | `instanceId` | 1 to 64 letters, digits, `.`, `_`, or `-`, starting with a letter or digit. Unique on the host. It names the unit `hopper-files-<instanceId>.service`. |
 | `serviceAccount` | The existing account the instance runs as, not root. |
 | `timeZone` | An IANA time zone name, such as `UTC` or `Europe/Berlin`, used in generated file names and in the dates of the interface. There is no default; `timedatectl list-timezones` lists the names. |
-| `sessionDurationSeconds` | How long a session lasts, in seconds, from 1 to 31622400 (366 days). |
+| `sessionDurationSeconds` | How long a session lasts without use, in seconds, from 1 to 31622400 (366 days); each request renews it. |
 | `stateDirectory` | Absolute path of a directory for this instance only, owned by the account, mode `0700`. |
 | `cookieName` | Letters, digits, and ``!#$%&'*+-.^_`\|~``, for example `hf_alice`. Unique among the instances of the host, because browsers do not separate cookies by port. |
 | `access.mode` | `local` or `remote`. |

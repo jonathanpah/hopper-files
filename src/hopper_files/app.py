@@ -11,7 +11,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from hopper_files.access import evaluate_access
-from hopper_files.api.auth import get_app, get_login, get_password, post_login, post_logout, post_password
+from hopper_files.api.auth import get_app, get_login, get_password, post_login, post_logout, post_password, session_cookie_header
 from hopper_files.api.buffers import post_buffer_sync
 from hopper_files.api.changes import post_changes
 from hopper_files.api.editor import get_file, get_preview, put_file
@@ -29,7 +29,7 @@ from hopper_files.credentials import current_epoch
 from hopper_files.files import OperationStore
 from hopper_files.kdf import prove_kdf_runtime
 from hopper_files.responses import SECURITY_HEADERS, json_error
-from hopper_files.sessions import csrf_matches, open_session
+from hopper_files.sessions import csrf_matches, open_session, renew_session
 from hopper_files.migration import require_current_format
 from hopper_files.state import ensure_initialized
 from hopper_files.trash import TrashStore
@@ -160,14 +160,22 @@ class InstanceGuard:
         state = scope.setdefault("state", {})
         config = self.runtime.config
         state["network_origin"] = decision.network_origin
-        state["session"] = open_session(
+        cookie = _cookie(scope, config.cookie_name)
+        now = self.runtime.clock.now()
+        session = open_session(
             config.state_directory,
             instance_id=config.instance_id,
-            cookie=_cookie(scope, config.cookie_name),
+            cookie=cookie,
             epoch=current_epoch(config.state_directory),
-            now=self.runtime.clock.now(),
+            now=now,
         )
-        await self.app(scope, receive, _guard_send(config.base_url, send))
+        state["session"] = session
+        # Use keeps a session alive (HF-AUTH-004): its expiry moves forward, and the browser gets the
+        # cookie again with the full lifetime.
+        renewed = None
+        if session is not None and renew_session(session, lifetime=config.session_duration_seconds, now=now):
+            renewed = session_cookie_header(config, cookie)
+        await self.app(scope, receive, _guard_send(config.base_url, send, renewed))
 
 
 async def _unavailable(request: Request, full_path: str) -> Response:
@@ -242,7 +250,7 @@ def _cookie(scope: dict, name: str) -> str | None:
     return morsel.value
 
 
-def _guard_send(base_url: str, send: object):
+def _guard_send(base_url: str, send: object, renewed_cookie: tuple[bytes, bytes] | None = None):
     blocked = False
 
     async def send_wrapper(message: dict) -> None:
@@ -265,6 +273,12 @@ def _guard_send(base_url: str, send: object):
                 await send({"type": "http.response.body", "body": body})
                 return
             present = {name.lower() for name, _value in headers}
+            # A response that sets or clears the session cookie itself (login, logout) keeps its own.
+            if renewed_cookie is not None and not any(
+                name.lower() == b"set-cookie" and value.split(b"=", 1)[0] == renewed_cookie[1].split(b"=", 1)[0]
+                for name, value in headers
+            ):
+                headers.append(renewed_cookie)
             for name, value in SECURITY_HEADERS.items():
                 encoded = name.lower().encode("latin-1")
                 if encoded not in present:

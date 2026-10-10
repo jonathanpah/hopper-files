@@ -415,7 +415,11 @@ configured external base URL.
 ### 4.2 Authentication
 
 **HF-AUTH-001 — Independent authentication.** Selecting or opening an instance
-does not grant access. Each instance authenticates against only its own
+does not grant access. The login asks for a user name and the password; the user
+name is the account the instance runs as (`serviceAccount`), compared after
+surrounding spaces are removed, and the password change page asks for it too. A
+wrong user name gets the same response as a wrong password, after the same one
+KDF. Each instance authenticates against only its own
 credential store and accepts only its own cookie name, signature key, account,
 and instance ID. A proxy identity header, when available, does not replace the
 instance credential. The store contains no plaintext or reversible password.
@@ -466,7 +470,12 @@ and operational metadata, never the attempted password, verifier, or nonce.
 
 **HF-AUTH-004 — Session termination.** Logout and expiry invalidate the session
 and its CSRF token for that instance only. Session duration is an explicit
-instance setting; changing it does not affect another instance. The login page
+instance setting, counted from the last authenticated request: each request
+keeps the session alive, rewriting its record at most once a minute and giving
+the browser the cookie again with the full duration, so only logout, a password
+change, or no use for the whole duration ends it. A response that sets or
+clears the cookie itself keeps its own. Changing the duration does not affect
+another instance. The login page
 links to a password change page that needs no session: it takes the current
 password and the new password typed twice. `POST password` refuses a mismatched,
 empty, or over-1,024-byte new password before any KDF, verifies the current
@@ -686,6 +695,9 @@ of a typed path; it shows the reason whenever its confirm button is disabled.
 Items dragged from the listing can be dropped on a folder in the listing or the
 tree (move, or copy with Option/Alt), on Favorites, or on a label; files dropped
 from the computer are added to the open folder or to the folder under them.
+Holding dragged items or files over a collapsed folder of the `/` tree for 0.6 s
+expands it; when a drag of listing items ends without a drop in the
+application, the folders it expanded this way collapse again.
 
 **HF-FILE-002 — Exclusive destinations.** Copy, move, rename, extraction, and
 restoration publish to an exclusive destination. An occupied destination returns
@@ -875,7 +887,10 @@ N caminhos` instead, which copies their paths, one per line, in listing order.
 The `/` node, a symbolic link, a special file, an entry that a listing reports
 the account cannot open, and an item whose parent directory cannot be listed
 have a context menu with only `Copiar caminho`. An entry without an address
-has no context menu. In the listing, the arrow keys move between rows
+has no context menu. A context menu opens beside the pointer, or below the
+control that opened it, and flips up or left where it would not fit, so it does
+not cover what opened it; Esc or Tab closes it and returns focus to where it
+was without scrolling. In the listing, the arrow keys move between rows
 (one Tab stop for the list), Enter opens, Space checks, F2 renames, and Delete
 or Cmd/Ctrl+Backspace sends to the Trash. Redrawing the listing keeps keyboard
 focus on the same row or column header, and a folder opened with Enter takes
@@ -1096,6 +1111,15 @@ with `https://` added before `www.`. Inside an existing link it selects that
 link's destination instead of nesting a link. The palette marks as active the
 inline markup around the main cursor, the heading level of its line, and the
 bullet marker of its line.
+
+On a fine-pointer device, a non-empty selection in the `Markdown` view also
+shows a floating bar just above it, or below it when there is no room, with
+heading levels 1 and 2, bold, italic, strikethrough, highlight, code, and link.
+Its controls act like the palette's, show the same active state, and keep the
+selection. Esc hides the bar until the selection changes; it is also hidden
+while the mouse selects, for an empty selection, when the editor loses focus or
+is read-only, and when the selection is scrolled out of view. Touch layouts keep
+only the palette.
 
 The `-`, `*`, and `+` bullet controls insert the selected marker and one space
 after existing indentation. Choosing the marker that every applicable line
@@ -1568,7 +1592,7 @@ malformed credentials fail generically, and only one KDF runs per instance.
 Exhaust both the 5/60-second network-origin bucket and the 20/15-second global
 instance bucket; verify generic `429` plus `Retry-After`, persistence across
 restart, rejection of spoofed origin headers, and isolation between instances. A
-password change from the login page must require the current password, spend
+password change from the login page must require the user name and the current password, spend
 the login nonce and limits, and refuse a mismatched confirmation before any
 KDF. Both it and the local administrative password change must use a fresh
 verifier and invalidate all of that instance's sessions and CSRF tokens without
@@ -1851,7 +1875,8 @@ allowed, validated schemes may become links.
 
 **HF-ACC-021.** Validate desktop, 720 px transition, phone-sized, and tablet-sized
 layouts with keyboard and touch input. Check sidebar and split behavior,
-overflow, focus, contrast, reduced motion, Portuguese UI labels, and absence of
+overflow, focus, text contrast of at least 4.5:1 (3:1 for large text), reduced
+motion, Portuguese UI labels, and absence of
 all features excluded by HF-SCOPE-008. In `aqui` mode, compare NFC-equivalent
 names with case differences, immediate files and directories, and descendants.
 Only matching immediate children of the open directory appear;

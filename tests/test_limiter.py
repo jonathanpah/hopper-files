@@ -8,7 +8,7 @@ import time
 
 from hopper_files.clock import ManualClock
 
-from conftest import CLOCK_START, PASSWORD, boot
+from conftest import CLOCK_START, PASSWORD, boot, USERNAME
 
 
 def _bad_attempt(world, forwarded_for: str | None = None, client=None):
@@ -68,7 +68,7 @@ def test_global_bucket_limits_a_fresh_origin(tmp_path) -> None:
                 for _ in range(5):
                     response = client.post(
                         "/login",
-                        json={"nonce": "not-a-real-nonce", "password": PASSWORD},
+                        json={"nonce": "not-a-real-nonce", "username": USERNAME, "password": PASSWORD},
                         headers={"origin": world.config.origin},
                     )
                     assert response.status_code == 403
@@ -80,7 +80,7 @@ def test_global_bucket_limits_a_fresh_origin(tmp_path) -> None:
         with fresh:
             blocked = fresh.post(
                 "/login",
-                json={"nonce": "not-a-real-nonce", "password": PASSWORD},
+                json={"nonce": "not-a-real-nonce", "username": USERNAME, "password": PASSWORD},
                 headers={"origin": world.config.origin, "x-forwarded-for": "203.0.113.50"},
             )
     assert blocked.status_code == 429
@@ -119,18 +119,18 @@ def test_remote_untrusted_forwarded_for_does_not_spend_a_bucket(tmp_path) -> Non
         with untrusted:
             spoofed = untrusted.post(
                 "/login",
-                json={"nonce": "not-a-real-nonce", "password": PASSWORD},
+                json={"nonce": "not-a-real-nonce", "username": USERNAME, "password": PASSWORD},
             )
         for _ in range(5):
             response = world.client.post(
                 "/login",
-                json={"nonce": "not-a-real-nonce", "password": PASSWORD},
+                json={"nonce": "not-a-real-nonce", "username": USERNAME, "password": PASSWORD},
                 headers={"origin": world.config.origin, "x-forwarded-for": "198.51.100.99"},
             )
             assert response.status_code == 403
         blocked = world.client.post(
             "/login",
-            json={"nonce": "not-a-real-nonce", "password": PASSWORD},
+            json={"nonce": "not-a-real-nonce", "username": USERNAME, "password": PASSWORD},
             headers={"origin": world.config.origin, "x-forwarded-for": "198.51.100.99"},
         )
 

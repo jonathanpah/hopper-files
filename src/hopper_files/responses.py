@@ -13,7 +13,8 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "same-origin",
     "Content-Security-Policy": (
         "default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; "
-        "img-src 'self' data: blob:; worker-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+        "img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; form-action 'self'; base-uri 'none'; "
+        "frame-ancestors 'none'"
     ),
     "X-Frame-Options": "DENY",
 }

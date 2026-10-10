@@ -1,6 +1,8 @@
 /* Hopper Files theme tokens (CSS custom properties). The theme follows the
    OS setting by default, or can be pinned with the data-tema attribute on
-   :root ("claro" or "escuro"). */
+   :root ("claro" or "escuro"). Text uses --accent-texto instead of --accent,
+   white text sits on --primaria-bg, and secondary text on a tinted fill uses
+   --text2-fundo, so all of them reach a 4.5:1 contrast ratio. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 /* The `hidden` attribute always wins: layout rules like display:grid/flex
    cannot re-show an element the code has hidden. */
@@ -9,8 +11,11 @@
   --bg: #f5f5f7;
   --panel: #ffffff;
   --text: #1d1d1f;
-  --text2: #86868b;
+  --text2: #6e6e73;
   --accent: #0071e3;
+  --accent-texto: #0062c4;
+  --text2-fundo: #636366;
+  --primaria-bg: #0071e3;
   --sel: rgba(0,113,227,.09);
   --selecao-texto: rgba(0,113,227,.22);
   --hover: rgba(0,0,0,.035);
@@ -146,6 +151,9 @@
   --text: #f5f5f7;
   --text2: #98989d;
   --accent: #0a84ff;
+  --accent-texto: #64b0ff;
+  --text2-fundo: #aeaeb2;
+  --primaria-bg: #0062c4;
   --sel: rgba(10,132,255,.20);
   --selecao-texto: rgba(10,132,255,.40);
   --hover: rgba(255,255,255,.05);
@@ -186,8 +194,11 @@
   --bg: #f5f5f7;
   --panel: #ffffff;
   --text: #1d1d1f;
-  --text2: #86868b;
+  --text2: #6e6e73;
   --accent: #0071e3;
+  --accent-texto: #0062c4;
+  --text2-fundo: #636366;
+  --primaria-bg: #0071e3;
   --sel: rgba(0,113,227,.09);
   --selecao-texto: rgba(0,113,227,.22);
   --hover: rgba(0,0,0,.035);
@@ -230,6 +241,9 @@
   --text: #f5f5f7;
   --text2: #98989d;
   --accent: #0a84ff;
+  --accent-texto: #64b0ff;
+  --text2-fundo: #aeaeb2;
+  --primaria-bg: #0062c4;
   --sel: rgba(10,132,255,.20);
   --selecao-texto: rgba(10,132,255,.40);
   --hover: rgba(255,255,255,.05);
@@ -315,7 +329,7 @@ body.resizing-side { cursor: col-resize; user-select: none; -webkit-user-select:
   padding: 0 6px; border-radius: 6px; cursor: pointer; white-space: nowrap;
 }
 .node-row:hover { background: var(--hover); }
-.node-row.ativo { background: var(--sel); color: var(--accent); }
+.node-row.ativo { background: var(--sel); color: var(--accent-texto); }
 .node-row .chev {
   width: 16px; height: 16px; display: flex; align-items: center;
   justify-content: center; color: var(--text2); flex: none;
@@ -375,7 +389,7 @@ button.acao:active { transform: scale(.97); }
 .segmentado { min-height: 30px; }  
 .segmentado button {
   font: inherit; font-size: 12px; border: 0; background: transparent;
-  padding: 0 12px; border-radius: 6px; cursor: pointer; color: var(--text2);
+  padding: 0 12px; border-radius: 6px; cursor: pointer; color: var(--text2-fundo);
 }
 .segmentado button.ativo { background: var(--panel); color: var(--text); box-shadow: var(--sombra-segmento); }
 
@@ -564,7 +578,7 @@ table.lista th.ordenavel:hover { color: var(--text); }
 .info .valor { font-size: 12.5px; word-break: break-all; }
 .info .valor.mono { font-family: var(--font-mono); font-size: 11.5px; }
 .info button.mini {
-  font: inherit; font-size: 12px; color: var(--accent); background: none;
+  font: inherit; font-size: 12px; color: var(--accent-texto); background: none;
   border: 0; padding: 4px 0 0; cursor: pointer;
 }
 
@@ -633,13 +647,13 @@ tr.item .lx-prazo { margin-left: 7px; }
 /* ---------- upload drop zone ---------- */
 .drop-alvo { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 50; background: var(--drop-veu); pointer-events: none; }
 .drop-alvo.ativo { display: flex; }
-.drop-caixa { border: 2.5px dashed var(--accent); color: var(--accent); font-weight: 600; font-size: 15px; padding: 30px 46px; border-radius: 16px; background: var(--panel); }
+.drop-caixa { border: 2.5px dashed var(--accent); color: var(--accent-texto); font-weight: 600; font-size: 15px; padding: 30px 46px; border-radius: 16px; background: var(--panel); }
 
 /* ---------- top bar buttons ---------- */
-button.acao.primaria { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+button.acao.primaria { background: var(--primaria-bg); color: var(--on-accent); border-color: var(--primaria-bg); }
 button.acao.perigo { background: var(--perigo-bg); color: var(--perigo-fg); border-color: var(--perigo-bd); }
 button.acao.so-icone { padding: 0; width: 30px; justify-content: center; }
-button.acao.ativa { background: var(--sel); color: var(--accent); border-color: transparent; }
+button.acao.ativa { background: var(--sel); color: var(--accent-texto); border-color: transparent; }
 button.acao svg { flex: none; }
 
 /* ---------- context menu ---------- */
@@ -658,7 +672,7 @@ button.acao svg { flex: none; }
   display: block; width: 100%; text-align: left; font: inherit; font-size: 13px;
   padding: 8px 10px; border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: var(--text);
 }
-.ctx-item:hover { background: var(--sel); color: var(--accent); }
+.ctx-item:hover { background: var(--sel); color: var(--accent-texto); }
 .ctx-item.perigo { color: var(--perigo-fg); }
 .ctx-item.perigo:hover { background: var(--perigo-bg); color: var(--perigo-fg); }
 .ctx-sep { height: 1px; background: var(--hair); margin: 5px 8px; }
@@ -702,7 +716,7 @@ button.acao svg { flex: none; }
 .dlg-lista { height: 210px; overflow-y: auto; border: 1px solid var(--hair); border-radius: 11px; padding: 5px; margin-bottom: 16px; }
 .pk-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; }
 .pk-item:hover { background: var(--sel); }
-.pk-item:hover { color: var(--accent); }  
+.pk-item:hover { color: var(--accent-texto); }  
 .pk-vazio { color: var(--text2); font-size: 12.5px; padding: 14px; text-align: center; }
 
 /* ---------- editor ---------- */
@@ -714,11 +728,11 @@ button.acao svg { flex: none; }
 .editor-barra { min-height: 36px; }  
 .ed-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 590; color: var(--text); }
 .ed-estado { flex: none; white-space: nowrap; font-size: 11.5px; color: var(--text2); }
-.ed-estado.sujo { color: var(--accent); }
+.ed-estado.sujo { color: var(--accent-texto); }
 /* HF-NAV-008: edit hint matches the status text style; "Markdown" is a
    link that switches views. */
 .ed-dica { flex: none; white-space: nowrap; font-size: 11.5px; color: var(--text2); }
-.ed-dica-link { border: 0; padding: 0; background: none; font: inherit; color: var(--accent); cursor: pointer; }
+.ed-dica-link { border: 0; padding: 0; background: none; font: inherit; color: var(--accent-texto); cursor: pointer; }
 .ed-dica-link:hover { text-decoration: underline; }
 button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
 
@@ -741,10 +755,16 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
 .lp-btn:active { transform: scale(.94); }
 /* The button lights up when the cursor is inside what it produced, using
    the syntax tree rather than guessing. */
-.lp-btn.ativo { background: var(--sel); color: var(--accent); }
+.lp-btn.ativo { background: var(--sel); color: var(--accent-texto); }
 .lp-btn .lp-i { line-height: 1; font-size: 12.5px; }
 .lp-i-mark { background: var(--mark-bg); border-radius: 3px; padding: 1px 3px; color: var(--text); }
 .lp-sep { flex: none; width: 1px; height: 16px; background: var(--hair); margin: 0 5px; }
+/* Floating bar over a selection in the Markdown view (pointer-fine only): above the editor, below
+   dialogs and menus. */
+.lp-flutuante {
+  position: fixed; z-index: 60; display: flex; align-items: center; gap: 2px; padding: 4px;
+  background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-menu); box-shadow: var(--sombra-menu);
+}
 /* `overflow-x: auto` forces the Y axis to `auto` too, clipping tooltips
    below the toolbar. A container query removes the overflow once the toolbar
    actually fits. */
@@ -820,13 +840,13 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
 /* Inline code background hugs the text tightly, so side padding doesn't
    look like an extra space before punctuation. */
 .lp-doc .lp-code { font-family: var(--font-mono); font-size: .86em; background: var(--bg); border-radius: 4px; padding: .1em 0; }
-.lp-doc .lp-link-md { color: var(--accent); }
+.lp-doc .lp-link-md { color: var(--accent-texto); }
 .lp-doc .lp-img-md { color: var(--text2); }
 .lp-doc .lp-img-w { display: inline-block; max-width: 100%; vertical-align: top; }
 .lp-doc .lp-img-w img.hf-img { max-height: 340px; width: auto; object-fit: contain; }
 /* The tag keeps the same background and color whether its line is being
    edited or not. */
-.lp-doc .lp-tag { color: var(--accent); }
+.lp-doc .lp-tag { color: var(--accent-texto); }
 .lp-doc .hf-tag { background: var(--sel); border-radius: 5px; padding: .05em .2em; }
 
 /* ---------- trash ---------- */
@@ -899,7 +919,7 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
   border: 0; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer;
 }
 .sb-icone:hover { background: var(--hover); color: var(--text); }
-.sb-icone.ativa { background: var(--sel); color: var(--accent); }
+.sb-icone.ativa { background: var(--sel); color: var(--accent-texto); }
 
 .busca-wrap { position: relative; }
 .busca-hist {
@@ -912,7 +932,7 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
   padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.bh-item:hover { background: var(--sel); color: var(--accent); }
+.bh-item:hover { background: var(--sel); color: var(--accent-texto); }
 
 /* ---------- sidebar: header, search, favorites ---------- */
 /* Title on the left, both icons together on the right, aligned with the
@@ -943,7 +963,7 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
   letter-spacing: .04em; color: var(--text2); background: none; border: 0;
   border-radius: 5px; padding: 3px 4px; cursor: pointer;
 }
-.busca-modo:hover { color: var(--accent); }
+.busca-modo:hover { color: var(--accent-texto); }
 /* option row in the Settings dialog */
 .opt-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; cursor: pointer; }
 /* Settings/Administration screen */
@@ -990,7 +1010,7 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .fav-row:hover { background: var(--hover); }
-.fav-row.ativo { background: var(--sel); color: var(--accent); }
+.fav-row.ativo { background: var(--sel); color: var(--accent-texto); }
 .fav-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .fav-row .fav-x { opacity: 0; color: var(--text2); border: 0; background: transparent; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; border-radius: 50%; }
 .fav-row .fav-x { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }  
@@ -1007,7 +1027,7 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
 .side-lixeira:hover { background: var(--hover); color: var(--text); }
 /* While browsing inside the trash, its sidebar entry lights up like the
    active tree node. */
-.side-lixeira.ativo { background: var(--sel); color: var(--accent); }
+.side-lixeira.ativo { background: var(--sel); color: var(--accent-texto); }
 /* HF-NAV-006: Trash sits in its own block, separated from the tree by a
    hairline. */
 #btn-lixeira { margin-top: 6px; border-top: 1px solid var(--hair2); border-radius: 0; }
@@ -1063,13 +1083,13 @@ button.acao.ativa#btn-fav svg { fill: currentColor; }   /* filled star = already
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
 }
 .fp-chip { height: 26px; }  
-.fp-chip:hover { background: var(--sel); border-color: transparent; color: var(--accent); }
+.fp-chip:hover { background: var(--sel); border-color: transparent; color: var(--accent-texto); }
 .fp-chip .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- search results ---------- */
 .busca-cab { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; border-bottom: 1px solid var(--hair2); }
 .busca-cab .conta { font-size: 12px; color: var(--text2); }
-.busca-cab .limpar { margin-left: auto; font: inherit; font-size: 12px; color: var(--accent); background: none; border: 0; cursor: pointer; }
+.busca-cab .limpar { margin-left: auto; font: inherit; font-size: 12px; color: var(--accent-texto); background: none; border: 0; cursor: pointer; }
 /* long-press opens the menu on both search results and the label view */
 .res-item {
   display: flex; align-items: center; gap: 10px; padding: 9px 16px;
@@ -1084,7 +1104,7 @@ button.acao.ativa#btn-fav svg { fill: currentColor; }   /* filled star = already
    here even though the row itself disables it. */
 .res-trecho { font-family: var(--font-mono); font-size: 11.5px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; cursor: text; }
-.res-trecho mark { background: var(--sel); color: var(--accent); padding: 0 1px; border-radius: 3px; }
+.res-trecho mark { background: var(--sel); color: var(--accent-texto); padding: 0 1px; border-radius: 3px; }
 .busca-carregando { padding: 30px; text-align: center; color: var(--text2); }
 
 /* ---------- keyboard focus / inline rename / marquee / palette ---------- */
@@ -1107,7 +1127,7 @@ tr.item.foco td:last-child { box-shadow: inset -1.5px 0 0 var(--accent), inset 0
 }
 .pal-lista { max-height: 320px; overflow-y: auto; margin-top: 6px; }
 .pal-item { padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; }
-.pal-item:hover, .pal-item.ativo { background: var(--sel); color: var(--accent); }
+.pal-item:hover, .pal-item.ativo { background: var(--sel); color: var(--accent-texto); }
 
 /* ---------- swipe-to-delete (touch) ---------- */
 tr.item.arrastando td { transition: none; }
@@ -1272,7 +1292,7 @@ body.resizing-col iframe { pointer-events: none; }
 }
 .tag-chip { height: 26px; }  
 .tag-chip .tag-dot { width: 10px; height: 10px; box-shadow: none; }
-.tag-chip.on { border-color: var(--accent); background: var(--sel); color: var(--accent); font-weight: 600; }
+.tag-chip.on { border-color: var(--accent); background: var(--sel); color: var(--accent-texto); font-weight: 600; }
 .tag-chip.parcial { border-color: var(--borda-forte); }
 .tag-chip.parcial .tc-nome::after { content: "–"; margin-left: 5px; color: var(--text2); font-weight: 600; }
 .et-emoji { margin-top: 2px; }
@@ -1283,7 +1303,7 @@ body.resizing-col iframe { pointer-events: none; }
 .tag-chip .tc-tog { height: 100%; }  
 .tag-chip .tc-ren { font: inherit; font-size: 11px; color: var(--text2); background: none; border: 0; cursor: pointer; padding: 0 9px 0 4px; }
 .tag-chip .tc-ren { height: 100%; }  
-.tag-chip .tc-ren:hover { color: var(--accent); }
+.tag-chip .tc-ren:hover { color: var(--accent-texto); }
 .tag-chip .tc-input { font: inherit; font-size: 12.5px; width: 118px; margin: 3px 6px; padding: 2px 6px; color: var(--text); background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; outline: none; }
 .tag-chip .tc-input { box-shadow: 0 0 0 3px var(--sel); }  
 
@@ -1297,7 +1317,7 @@ body.resizing-col iframe { pointer-events: none; }
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
 }
 .et-row:hover { background: var(--hover); }
-.et-row.ativo { background: var(--sel); color: var(--accent); }
+.et-row.ativo { background: var(--sel); color: var(--accent-texto); }
 .et-row.drop-alvo-item { background: var(--sel); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .et-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .et-row .et-n { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
@@ -1319,14 +1339,14 @@ body.resizing-col iframe { pointer-events: none; }
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;   /* no text selection or iOS callout on long press */
 }
 .tg-row:hover { background: var(--hover); }
-.tg-row.ativo { background: var(--sel); color: var(--accent); }
+.tg-row.ativo { background: var(--sel); color: var(--accent-texto); }
 .tg-row .nome { overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .tg-row .tg-n { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
-.tg-hash { color: var(--accent); font-weight: 600; flex: none; }
+.tg-hash { color: var(--accent-texto); font-weight: 600; flex: none; }
 .tg-hash { width: 15px; text-align: center; }  
 /* Tag as rendered in the Formatted view and inactive Live Preview blocks. */
 .hf-tag {
-  color: var(--accent); background: var(--sel); border-radius: 5px;
+  color: var(--accent-texto); background: var(--sel); border-radius: 5px;
   padding: .05em .2em; cursor: pointer; white-space: nowrap;
 }
 .hf-tag:hover { text-decoration: underline; }
@@ -1370,7 +1390,7 @@ body.resizing-col iframe { pointer-events: none; }
 
 .nota-copiar-caminho:focus-visible { background: var(--hover); color: var(--text); }  
 .nota-copiar-caminho:hover { background: var(--hover); color: var(--text); }  
-.nota-copiar-caminho.copiou { color: var(--accent); }
+.nota-copiar-caminho.copiou { color: var(--accent-texto); }
 /* Metadata line lists name, character/word/line counts, and labels; each
    separator disappears along with its own empty field. */
 .nota-meta { font-size: 12px; color: var(--text2); overflow-wrap: anywhere; }
@@ -1415,7 +1435,7 @@ body.arrastando-itens #favoritos:empty ~ #favoritos-soltar::before {
   color: var(--text2); font-size: 11px; border: 1.5px dashed var(--hair);
   border-radius: 8px; padding: 12px 6px;
 }
-body.arrastando-itens #favoritos:empty ~ #favoritos-soltar.drop-alvo-item::before { border-color: var(--accent); color: var(--accent); }
+body.arrastando-itens #favoritos:empty ~ #favoritos-soltar.drop-alvo-item::before { border-color: var(--accent); color: var(--accent-texto); }
 
 .ptr-ind {
   position: absolute; top: calc(6px + env(safe-area-inset-top)); left: 50%; z-index: 36;
@@ -1448,7 +1468,7 @@ body.arrastando-itens #favoritos:empty ~ #favoritos-soltar.drop-alvo-item::befor
 }
 .bs-item:active { background: var(--sel); }
 .bs-item.perigo { color: var(--perigo-fg); }
-.bs-cancelar { text-align: center; font-weight: 600; color: var(--accent); margin-top: 4px; }
+.bs-cancelar { text-align: center; font-weight: 600; color: var(--accent-texto); margin-top: 4px; }
 .bs-sep { height: 1px; background: var(--hair); margin: 4px 10px; }
 @media (prefers-reduced-motion: reduce) { .bottom-sheet { transition: none; } }
 
@@ -1619,12 +1639,23 @@ button, a, select, label, tr.item, .node-row, .seg, .aba, .ctx-item, .bs-item, .
   .abas-barra { min-height: 42px; }
   .aba-mais { height: 40px; align-self: center; }
   .aba-mais { width: 40px; }  
+  /* Already 40px: an enlarged hit area would take taps meant for the close button of the last tab. */
+  .aba-mais::after { content: none; }
+  /* The monitored-folders link under Tags gets the height of the rows around it. */
+  #tags-nav .tg-pastas { min-height: 40px; }
+  /* The "/" segment of the breadcrumb is a single narrow glyph: give it a minimum width. */
+  #breadcrumbs button.seg { min-width: 28px; }
+  /* The tree tools are 40px: their invisible <select> keeps that size instead of growing over the
+     first tree row. */
+  .sec-ferramentas .sf-sel select { inset: 0; }
   /* Long-press menu items use the touch scale on iPad too. */
   .ctx-item { padding: 12px 10px; }
   /* The sidebar/center divider gets a wider invisible drag zone without
    changing its visible width. */
   .side-resizer { position: relative; }
-  .side-resizer::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -13px; }
+  /* The zone reaches less into the listing than into the sidebar, so it does not take taps meant
+     for the checkboxes and the breadcrumb next to it. */
+  .side-resizer::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -8px; }
   /* Touch feedback: the row responds immediately, since iOS has no hover state. */
   tr.item:active td { background: var(--hover); }
   .node-row:active, .fav-row:active { background: var(--hover); }
@@ -1705,7 +1736,7 @@ main[aria-label="Área de arquivos"] { flex: 1 1 0; display: flex; flex-directio
 #results table.lista td.c-nome .nome-wrap { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; max-width: 100%; vertical-align: middle; }
 #results table.lista td.c-nome .nome-wrap > .nome { flex: 1 1 auto; min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #results table.lista td.c-nome button.nome-link { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; vertical-align: middle; }
-#results table.lista td.c-nome button.nome-link:hover { color: var(--accent); }
+#results table.lista td.c-nome button.nome-link:hover { color: var(--accent-texto); }
 #results table.lista td.c-nome .icone-item { display: inline-flex; width: 15px; flex: none; align-items: center; justify-content: center; }
 #results table.lista td.c-data { color: var(--text2); font-size: 12px; }
 #results table.lista td.c-nao-fornecido { color: var(--text2); }
@@ -1754,14 +1785,14 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 .login-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .login-cartao input[type="password"] { width: 100%; height: var(--campo-h); padding: 0 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: var(--r-campo); outline: none; margin-bottom: 12px; text-align: center; }
 .login-cartao input[type="password"]:focus { border-color: var(--accent); box-shadow: var(--foco-campo); }
-.login-cartao button { width: 100%; height: var(--campo-h); font: inherit; font-weight: 590; color: var(--on-accent); background: var(--accent); border: 0; border-radius: var(--r-campo); cursor: pointer; }
+.login-cartao button { width: 100%; height: var(--campo-h); font: inherit; font-weight: 590; color: var(--on-accent); background: var(--primaria-bg); border: 0; border-radius: var(--r-campo); cursor: pointer; }
 .login-cartao button:active { transform: scale(.97); }
 .login-cartao button:disabled { opacity: .4; cursor: default; }
 .login-erro, .login-status.erro { color: var(--perigo-fg); font-size: 12.5px; margin-top: 10px; }
 .login-status { color: var(--text2); font-size: 12.5px; min-height: 18px; margin-top: 10px; }
 
 .login-trocar { margin-top: 14px; font-size: 12.5px; }
-.login-trocar a { color: var(--accent); text-decoration: none; }
+.login-trocar a { color: var(--accent-texto); text-decoration: none; }
 .login-trocar a:hover, .login-trocar a:focus-visible { text-decoration: underline; }
 @media (pointer: coarse) { .login-trocar a { display: inline-block; padding: 12px 10px; margin: -12px 0; } }
 @media (pointer: coarse) { .login-cartao input[type="password"] { font-size: 16px; } }
@@ -1789,7 +1820,7 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 .raiz-vault .tree-entry-name { min-height: 28px; cursor: pointer; }
 .raiz-vault .tree-entry-name:hover { color: var(--text); }
 #tree .node-row.arq .tree-entry-name, #favoritos .node-row.arq .tree-entry-name { color: var(--text); }
-#tree .node-row.ativo .tree-entry-name, #favoritos .node-row.ativo .tree-entry-name { color: var(--accent); }
+#tree .node-row.ativo .tree-entry-name, #favoritos .node-row.ativo .tree-entry-name { color: var(--accent-texto); }
 #tree .tree-entry-name:disabled, #favoritos .tree-entry-name:disabled { opacity: .4; }
 #sidebar-search .busca-box { gap: 6px; }
 #sidebar-search .busca-box { position: relative; overflow: visible; }
@@ -1798,7 +1829,7 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 #sidebar-search .busca-roots { position: relative; flex: none; margin: 0; }
 #sidebar-search .busca-roots summary { display: flex; width: 20px; height: 22px; align-items: center; justify-content: center; list-style: none; color: var(--text2); cursor: pointer; font-size: 12px; }
 #sidebar-search .busca-roots summary::-webkit-details-marker { display: none; }
-#sidebar-search .busca-roots summary:hover { color: var(--accent); }
+#sidebar-search .busca-roots summary:hover { color: var(--accent-texto); }
 #sidebar-search .busca-raizes { position: absolute; top: calc(100% + 7px); right: -8px; z-index: 50; display: grid; gap: 3px; width: 208px; max-height: 240px; overflow: auto; padding: 5px; border: 1px solid var(--hair); border-radius: var(--r-menu); background: var(--panel); box-shadow: var(--sombra-menu); }
 .busca-raiz { display: flex; align-items: center; gap: 6px; min-height: 22px; color: var(--text); }
 .sec-count { margin-left: auto; color: var(--text2); font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -1815,10 +1846,10 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 #toolbar::-webkit-scrollbar { display: none; }
 #toolbar .toolbar-fixed, #toolbar #document-mode-slot, #toolbar #toolbar-actions { white-space: nowrap; }
 .sec-titulo { cursor: pointer; }
-#btn-lixeira.ativo { background: var(--sel); color: var(--accent); }
+#btn-lixeira.ativo { background: var(--sel); color: var(--accent-texto); }
 #results .busca-cab { min-height: 38px; }
 #results .res-nome { border: 0; padding: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; }
-#results .res-nome:hover { color: var(--accent); }
+#results .res-nome:hover { color: var(--accent-texto); }
 #results .res-item > svg { flex: none; }
 /* List checkbox keeps a real, accessible input, styled to look like .check. */
 #results .check { appearance: none; -webkit-appearance: none; margin: 0; flex: none; }
@@ -1850,7 +1881,7 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 #operation-dialog .tag-chips { margin: 0; }
 #operation-dialog .dlg-lista-curta { height: auto; max-height: 210px; margin: 0; }
 .pk-item { width: 100%; font: inherit; font-size: 13px; color: var(--text); background: transparent; border: 0; text-align: left; }
-.pk-item.escolhido { background: var(--sel); color: var(--accent); }
+.pk-item.escolhido { background: var(--sel); color: var(--accent-texto); }
 .opt-linha .segmentado { margin-left: auto; }
 #operation-dialog .opt-secao { margin: 6px 0 -4px; }
 #operation-dialog .opt-linha { margin: 0; }
@@ -1863,7 +1894,7 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 }
 .secondary-button:hover { background: var(--bg); }
 .secondary-button:active, .primary-button:active, .danger-button:active { transform: scale(.97); }
-.primary-button { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.primary-button { background: var(--primaria-bg); color: var(--on-accent); border-color: var(--primaria-bg); }
 .danger-button { background: var(--perigo-bg); color: var(--perigo-fg); border-color: var(--perigo-bd); }
 .secondary-button:disabled, .primary-button:disabled, .danger-button:disabled { opacity: .4; cursor: default; }
 .conflict-actions { display: flex; flex-wrap: wrap; gap: var(--gap-topo); padding: 8px var(--gutter); border-top: 1px solid var(--hair2); }
@@ -1871,8 +1902,8 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 .document-status { color: var(--text2); font-size: 12.5px; }
 .editor-barra[hidden], .lp-paleta[hidden], .doc-status[hidden] { display: none; }
 .lp-btn.digitar-button { padding: 0 8px; }
-.lp-btn.digitar-button[aria-pressed="true"] { background: var(--sel); color: var(--accent); }
-.badge-fav { display: inline-flex; flex: none; color: var(--accent); }
+.lp-btn.digitar-button[aria-pressed="true"] { background: var(--sel); color: var(--accent-texto); }
+.badge-fav { display: inline-flex; flex: none; color: var(--accent-texto); }
 .tree-empty { color: var(--text2); font-size: 12.5px; padding: 4px 8px; }
 /* Color of file-type icons (tokens --tipo-*). */
 .tipo-pasta { color: var(--tipo-pasta); } .tipo-documento { color: var(--tipo-documento); }
@@ -1906,7 +1937,7 @@ tr.item.foco td:last-child, tr.item.drop-alvo-item td:last-child { border-top-ri
   .dlg-input, .dlg-area, .tc-input, .rename-inline, #sidebar-search-query,
   #operation-dialog input, #operation-dialog textarea { font-size: 16px; }
   .side-resizer, .split-divisor, .col-rz { position: relative; }
-  .side-resizer::before, .split-divisor::before, .col-rz::before, #workspace-splitter::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -13px; }
+  .split-divisor::before, .col-rz::before, #workspace-splitter::before { content: ""; position: absolute; top: 0; bottom: 0; left: -13px; right: -13px; }
 }
 @media (max-width: 720px), (pointer: coarse) {
   .ctx-item, .bh-item, .pk-item, .pal-item { padding: 12px 10px; }
@@ -1969,12 +2000,12 @@ td.c-tam.c-calculando { opacity: .6; }
 /* Formatted view: images never exceed the panel width, links use the
    accent color, small headings stay legible, and tags are clickable. */
 .viewer-md img { max-width: 100%; height: auto; }
-.viewer-md a { color: var(--accent); text-decoration: none; }
+.viewer-md a { color: var(--accent-texto); text-decoration: none; }
 .viewer-md a:hover { text-decoration: underline; }
 .viewer-md h4 { font-size: 15px; }
 .viewer-md h5 { font-size: 14px; }
 .viewer-md h6 { font-size: 13px; color: var(--text2); }
-.viewer-md mark[data-tag] { background: var(--sel); color: var(--accent); border-radius: 5px; padding: .05em .25em; cursor: pointer; }
+.viewer-md mark[data-tag] { background: var(--sel); color: var(--accent-texto); border-radius: 5px; padding: .05em .25em; cursor: pointer; }
 .viewer-md mark[data-tag]:hover { text-decoration: underline; }
 /* Image view fits to width; a click reveals full size with scrolling. */
 .viewer-img .raster-preview { cursor: zoom-in; }
@@ -2008,7 +2039,7 @@ aside#sidebar { overflow-x: hidden; }
 #tabs::-webkit-scrollbar { display: none; }
 /* The list's sticky header stays above the rows. */
 table.lista th { z-index: 3; }
-table.lista th .ordem-seta { color: var(--accent); }
+table.lista th .ordem-seta { color: var(--accent-texto); }
 /* Labels share the tags' grid layout. */
 #etiquetas .et-cab { flex: 1; min-width: 0; display: flex; }
 #etiquetas .et-cab .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
@@ -2020,7 +2051,9 @@ table.lista th .ordem-seta { color: var(--accent); }
 @container (max-width: 520px) { #results .c-mod { display: none; } }
 @container (max-width: 340px) { #results .c-tam { display: none; } }
 /* Marks the row a right-click menu currently refers to. */
-table.lista tr.menu-alvo td { background: var(--sel); }
+/* The row a menu belongs to keeps its highlight under the pointer too, now that the menu opens beside it. */
+table.lista tr.menu-alvo td, table.lista tr.item.menu-alvo:hover td { background: var(--sel); }
+#results table.lista tr.menu-alvo td.c-tam, #results table.lista tr.menu-alvo td.c-data { color: var(--text2-fundo); }
 /* Notice shown when a folder doesn't accept writes. */
 .barra-somente-leitura { align-self: center; font-size: 11.5px; color: var(--text2); background: var(--circ); border-radius: 6px; padding: 2px 8px; white-space: nowrap; cursor: help; }
 #tree-heading .sec-rotulo { cursor: pointer; }
@@ -2047,7 +2080,7 @@ table.lista tr.menu-alvo td { background: var(--sel); }
    buttons. */
 .layout:has(#split-pane.aberto) .topo { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
 /* Keeps the open tag highlighted, overriding a conflicting id-based rule. */
-#tags-nav .tg-row.ativo { background: var(--sel); color: var(--accent); }
+#tags-nav .tg-row.ativo { background: var(--sel); color: var(--accent-texto); }
 /* On phones, key buttons don't shrink when the open sidebar narrows the
    bar. */
 @media (max-width: 720px) { #sidebar-toggle, #btn-inicio { flex: none; min-width: 40px; } }
@@ -2106,11 +2139,11 @@ table.lista tr.menu-alvo td { background: var(--sel); }
 #operation-dialog button:focus-visible, #operation-dialog .pk-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* HF-META-002: tag-monitored folders get a # badge, a menu note, a
    sidebar summary, and a Settings list. */
-.badge-tags { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 16px; height: 15px; padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 1; }
+.badge-tags { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 16px; height: 15px; padding: 0 4px; border-radius: 4px; background: var(--primaria-bg); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 1; }
 #results table.lista td.c-nome .nome-wrap > .badge-tags { flex: none; }
 #tree .node-row .tree-entry-name .badge-tags, #favoritos .node-row .tree-entry-name .badge-tags { margin-left: -2px; }
 .ctx-nota { padding: 8px 10px; font-size: 12.5px; color: var(--text2); max-width: 280px; overflow-wrap: anywhere; cursor: default; }
-#tags-nav .tg-pastas { display: block; width: 100%; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--accent); text-align: left; padding: 0 10px 6px; cursor: pointer; }
+#tags-nav .tg-pastas { display: block; width: 100%; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--accent-texto); text-align: left; padding: 0 10px 6px; cursor: pointer; }
 #tags-nav .tg-pastas:hover { text-decoration: underline; }
 #tags-nav .tg-dica { margin: 0; padding: 0 10px 8px; font-size: 12px; line-height: 1.4; color: var(--text2); }
 .opt-pastas { display: flex; flex-direction: column; gap: 6px; }

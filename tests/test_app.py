@@ -14,7 +14,8 @@ def test_health_is_data_free_and_login_page_is_portuguese(tmp_path) -> None:
     assert health.json() == {"service": "hopper-files", "status": "up"}
     assert page.status_code == 200
     assert "lang=\"pt-BR\"" in page.text
-    assert "Informe a senha desta instância" in page.text
+    assert "Informe o usuário e a senha desta instância" in page.text
+    assert 'name="username"' in page.text and 'autocomplete="username"' in page.text
     assert "navegar pelos arquivos" in page.text
     assert "buscar conteúdo" in page.text
     assert 'id="login-form"' in page.text

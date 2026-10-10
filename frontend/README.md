@@ -54,3 +54,9 @@ whitespace while retaining the license text, so the notice is easier to diff.
 
 Node.js and npm are build tools only. `frontend/node_modules` is local build
 state and is not part of the public source or wheel.
+
+`npm --prefix frontend test` runs the JavaScript fixtures in `test/`. The
+browser suite in `browser/` runs with `npm --prefix frontend run test:browser`;
+it needs `playwright-core`, the one test-only development dependency, and the
+WebKit build it installs. See
+[the development guide](../docs/development.md#browser-tests).

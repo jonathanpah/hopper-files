@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 import secrets
@@ -32,7 +33,9 @@ from hopper_files.state import KdfBusy
 
 logger = logging.getLogger("hopper_files.auth")
 MAX_BODY_BYTES = CONTROL_BODY_MAX_BYTES
-PASSWORD_FIELDS = ("nonce", "current", "new", "confirmation")
+PASSWORD_FIELDS = ("nonce", "username", "current", "new", "confirmation")
+# A Linux account name is at most 32 bytes; anything far longer is refused before the KDF.
+USERNAME_MAX_BYTES = 256
 PASSWORD_CHANGED = "Senha trocada. Entre com a nova senha."
 
 
@@ -56,7 +59,7 @@ async def post_login(request: Request) -> Response:
     config = runtime.config
     now = runtime.clock.now()
     try:
-        nonce, password, wants_html = await _read_login(request)
+        nonce, username, password, wants_html = await _read_login(request)
     except BodyTooLarge:
         _log(config.instance_id, "login_rejected")
         return json_error(413, "limit_exceeded")
@@ -75,7 +78,7 @@ async def post_login(request: Request) -> Response:
     if not consume_nonce(config.state_directory, nonce, now):
         _log(config.instance_id, "login_rejected")
         return _rejected(config, now, wants_html, status=403)
-    if password_byte_length(password) > PASSWORD_MAX_BYTES:
+    if password_byte_length(password) > PASSWORD_MAX_BYTES or len(username.encode("utf-8")) > USERNAME_MAX_BYTES:
         _log(config.instance_id, "login_rejected")
         return _rejected(config, now, wants_html, status=400)
     try:
@@ -85,6 +88,7 @@ async def post_login(request: Request) -> Response:
             cookie_lifetime=config.session_duration_seconds,
             password=password,
             now=now,
+            account_matches=_account_matches(config, username),
         )
     except KdfBusy:
         _log(config.instance_id, "login_limited")
@@ -121,7 +125,7 @@ async def post_password(request: Request) -> Response:
     config = runtime.config
     now = runtime.clock.now()
     try:
-        nonce, current, new, confirmation, wants_html = await _read_password_change(request)
+        nonce, username, current, new, confirmation, wants_html = await _read_password_change(request)
     except BodyTooLarge:
         _log(config.instance_id, "password_rejected")
         return json_error(413, "limit_exceeded")
@@ -145,6 +149,7 @@ async def post_password(request: Request) -> Response:
         oversized = any(password_byte_length(value) > PASSWORD_MAX_BYTES for value in (current, new, confirmation))
     except PasswordTooLong:
         oversized = True
+    oversized = oversized or len(username.encode("utf-8")) > USERNAME_MAX_BYTES
     if oversized or not new:
         _log(config.instance_id, "password_rejected")
         text = "A senha excede o limite." if oversized else "Digite a nova senha."
@@ -160,6 +165,7 @@ async def post_password(request: Request) -> Response:
             instance_id=config.instance_id,
             current=current,
             new=new,
+            account_matches=_account_matches(config, username),
         )
     except KdfBusy:
         _log(config.instance_id, "password_limited")
@@ -169,7 +175,7 @@ async def post_password(request: Request) -> Response:
         return _password_rejected(config, now, wants_html, 400, "invalid_request", "A senha excede o limite.")
     if epoch is None:
         _log(config.instance_id, "password_rejected")
-        return _password_rejected(config, now, wants_html, 401, "authentication_failed", "Senha atual incorreta.")
+        return _password_rejected(config, now, wants_html, 401, "authentication_failed", "Usuário ou senha atual incorretos.")
     _log(config.instance_id, "password_changed")
     if wants_html:
         # Redirect after the POST, as the login does: a reload does not resend the form.
@@ -278,21 +284,21 @@ def _json(status: int, payload: dict[str, object]) -> Response:
     )
 
 
-async def _read_login(request: Request) -> tuple[str, str, bool]:
+async def _read_login(request: Request) -> tuple[str, str, str, bool]:
     body = await read_limited_body(request, MAX_BODY_BYTES)
     content_type = _content_type(request)
     if content_type == "application/json":
-        nonce, password = _json_fields(body, required={"nonce", "password"})
-        return nonce, password, False
+        nonce, username, password = _json_fields(body)
+        return nonce, username, password, False
     if content_type == "application/x-www-form-urlencoded":
         fields = _form_fields(body)
-        if "nonce" not in fields or "password" not in fields:
+        if not {"nonce", "username", "password"} <= set(fields):
             raise ValueError("login fields are missing")
-        return fields["nonce"], fields["password"], True
+        return fields["nonce"], fields["username"], fields["password"], True
     raise ValueError("unsupported login content type")
 
 
-async def _read_password_change(request: Request) -> tuple[str, str, str, str, bool]:
+async def _read_password_change(request: Request) -> tuple[str, str, str, str, str, bool]:
     body = await read_limited_body(request, MAX_BODY_BYTES)
     content_type = _content_type(request)
     if content_type == "application/json":
@@ -342,18 +348,22 @@ async def _presented_csrf(request: Request) -> str:
     return header or body_token
 
 
-def _json_fields(body: bytes, *, required: set[str]) -> tuple[str, str]:
+def _json_fields(body: bytes) -> tuple[str, str, str]:
     try:
         payload = json.loads(body.decode("utf-8"))
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError("login JSON is invalid") from exc
-    if not isinstance(payload, dict) or set(payload) != required:
+    if not isinstance(payload, dict) or set(payload) != {"nonce", "username", "password"}:
         raise ValueError("login JSON fields are invalid")
-    nonce = payload["nonce"]
-    password = payload["password"]
-    if not isinstance(nonce, str) or not isinstance(password, str):
+    values = (payload["nonce"], payload["username"], payload["password"])
+    if not all(isinstance(value, str) for value in values):
         raise ValueError("login JSON fields are invalid")
-    return nonce, password
+    return values
+
+
+def _account_matches(config: InstanceConfig, username: str) -> bool:
+    """The user name is the instance's account (HF-AUTH-001); surrounding spaces do not count."""
+    return hmac.compare_digest(username.strip().encode("utf-8"), config.service_account.encode("utf-8"))
 
 
 def _form_fields(body: bytes) -> dict[str, str]:
@@ -382,6 +392,15 @@ def _set_cookie(response: Response, config: InstanceConfig, value: str) -> None:
     )
 
 
+def session_cookie_header(config: InstanceConfig, value: str | None) -> tuple[bytes, bytes] | None:
+    """The Set-Cookie header that gives the browser the session cookie again with the full lifetime."""
+    if value is None:
+        return None
+    response = Response()
+    _set_cookie(response, config, value)
+    return next((name, header) for name, header in response.raw_headers if name == b"set-cookie")
+
+
 def _clear_cookie(response: Response, config: InstanceConfig) -> None:
     response.delete_cookie(
         key=config.cookie_name,
@@ -402,11 +421,13 @@ def _login_markup(config: InstanceConfig, nonce: str, message: str, *, neutral: 
         f"""
         <section class="login-cartao" aria-labelledby="login-titulo">
           <h1 id="login-titulo">Hopper Files</h1>
-          <p class="login-sub">Informe a senha desta instância para navegar pelos arquivos, buscar conteúdo e editar suas notas.</p>
+          <p class="login-sub">Informe o usuário e a senha desta instância para navegar pelos arquivos, buscar conteúdo e editar suas notas.</p>
           <form id="login-form" method="post" action="{escape(config.base_path)}login" data-base-path="{escape(config.base_path)}">
             <input type="hidden" name="nonce" value="{escape(nonce)}">
+            <label class="login-rotulo" for="username">Usuário</label>
+            <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Usuário" required autofocus>
             <label class="login-rotulo" for="password">Senha</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Senha" required autofocus>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Senha" required>
             <button type="submit">Entrar</button>
           </form>
           {notice}
@@ -427,11 +448,13 @@ def _password_markup(config: InstanceConfig, nonce: str, message: str) -> str:
         f"""
         <section class="login-cartao" aria-labelledby="senha-titulo">
           <h1 id="senha-titulo">Trocar senha</h1>
-          <p class="login-sub">Digite a senha atual e a nova duas vezes. Depois da troca, as sessões abertas desta instância se encerram, e você entra de novo com a senha nova.</p>
+          <p class="login-sub">Digite o usuário, a senha atual e a nova duas vezes. Depois da troca, as sessões abertas desta instância se encerram, e você entra de novo com a senha nova.</p>
           <form id="password-form" method="post" action="{escape(config.base_path)}password" data-base-path="{escape(config.base_path)}">
             <input type="hidden" name="nonce" value="{escape(nonce)}">
+            <label class="login-rotulo" for="username">Usuário</label>
+            <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Usuário" required autofocus>
             <label class="login-rotulo" for="current">Senha atual</label>
-            <input id="current" name="current" type="password" autocomplete="current-password" placeholder="Senha atual" required autofocus>
+            <input id="current" name="current" type="password" autocomplete="current-password" placeholder="Senha atual" required>
             <label class="login-rotulo" for="new">Nova senha</label>
             <input id="new" name="new" type="password" autocomplete="new-password" placeholder="Nova senha" required>
             <label class="login-rotulo" for="confirmation">Confirme a nova senha</label>
@@ -548,7 +571,8 @@ def _page(title: str, session: str, body: str, config: InstanceConfig, *, includ
 def _app_csp(nonce: str) -> str:
     return (
         "default-src 'none'; style-src 'self' 'nonce-" + nonce + "'; script-src 'self'; connect-src 'self'; "
-        "img-src 'self' data: blob:; worker-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+        "img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; form-action 'self'; base-uri 'none'; "
+        "frame-ancestors 'none'"
     )
 
 

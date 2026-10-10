@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import hopper_files.editor as editor_module
-from conftest import CLOCK_START, PASSWORD, ManualClock, boot, D, DOCUMENTS, ROOT, doc
+from conftest import CLOCK_START, PASSWORD, ManualClock, boot, D, DOCUMENTS, ROOT, doc, USERNAME
 
 
 def _signed(world):
@@ -317,7 +317,7 @@ def test_two_authenticated_sessions_conflict_on_the_second_stale_save(tmp_path) 
         )
         with second_client:
             nonce = second_client.get("/login", headers={"accept": "application/json"}).json()["nonce"]
-            login = second_client.post("/login", json={"nonce": nonce, "password": PASSWORD})
+            login = second_client.post("/login", json={"nonce": nonce, "username": USERNAME, "password": PASSWORD})
             second_headers = {"origin": world.config.origin, "x-csrf-token": login.json()["csrfToken"]}
             loaded_first = world.client.get("/api/file", params=_address("sessions.md")).json()
             loaded_second = second_client.get("/api/file", params=_address("sessions.md")).json()

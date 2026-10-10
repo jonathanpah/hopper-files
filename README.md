@@ -15,7 +15,7 @@ favorites, labels, Markdown tags, create, rename, move, copy, and delete with a
 editor with formatted and clean views, a plain-text editor, and image and PDF
 viewers.
 
-The current release is 0.1.5, Git tag `v0.1.5`.
+The current release is 0.1.6, Git tag `v0.1.6`.
 
 [Install](#install) · [Check and open](#check-and-open) ·
 [Remote access](docs/operations.md#remote-access-behind-an-https-proxy) ·
@@ -36,7 +36,7 @@ The current release is 0.1.5, Git tag `v0.1.5`.
 
 ## Install
 
-These steps install release 0.1.5 for one existing account, `alice`, with
+These steps install release 0.1.6 for one existing account, `alice`, with
 local access on port 8765. Replace the account, port, and paths with your own.
 Run every command as your administrator account, from a terminal on the
 server.
@@ -56,12 +56,12 @@ server.
    ```
 
 3. Open the release page,
-   <https://github.com/jonathanpah/hopper-files/releases/tag/v0.1.5>. It lists the
-   release ID, `hopper-files-0.1.5`, the Git tree, and the SHA-256 of the
+   <https://github.com/jonathanpah/hopper-files/releases/tag/v0.1.6>. It lists the
+   release ID, `hopper-files-0.1.6`, the Git tree, and the SHA-256 of the
    release archive. Copy the SHA-256.
 
-   The build is reproducible: building tag `v0.1.5` with release ID
-   `hopper-files-0.1.5` produces the same archive, byte for byte. The script in
+   The build is reproducible: building tag `v0.1.6` with release ID
+   `hopper-files-0.1.6` produces the same archive, byte for byte. The script in
    the next step builds it on your server and stops unless its SHA-256 matches
    the published one.
 
@@ -75,8 +75,8 @@ server.
    # Run it from the repository clone: bash ~/hopper-files-release.sh install|update
    set -euo pipefail
 
-   TAG=v0.1.5
-   RELEASE_ID=hopper-files-0.1.5
+   TAG=v0.1.6
+   RELEASE_ID=hopper-files-0.1.6
    EXPECTED_ARCHIVE_SHA256=PASTE_THE_SHA256_FROM_THE_RELEASE_PAGE
 
    action=${1:-}
@@ -133,13 +133,13 @@ server.
    ```
 
    It takes a few minutes. It ends with `Instalação compartilhada ativa:
-   hopper-files-0.1.5` and creates the command `hopper-files-admin`. The
+   hopper-files-0.1.6` and creates the command `hopper-files-admin`. The
    release lives in `/opt/hopper-files`; the script removes its temporary
    directories when it exits.
 
    If `sha256sum` prints `FAILED`, the script stops before it installs
    anything. Check that `TAG` and `RELEASE_ID` match the release page and that
-   `git rev-parse 'v0.1.5^{tree}'` prints the Git tree shown there. If they
+   `git rev-parse 'v0.1.6^{tree}'` prints the Git tree shown there. If they
    match, report the problem; do not replace the SHA-256.
 
 5. Write the instance configuration. It is a plain JSON file, owned by root
@@ -240,8 +240,10 @@ Open the `baseUrl` exactly as configured, including the final `/`:
 - For HTTPS without a tunnel, use remote mode behind a reverse proxy; see
   [remote access](docs/operations.md#remote-access-behind-an-https-proxy).
 
-Sign in with the password you set. The login page also links to a page that
-changes the password with the current one.
+Sign in with the account name (`alice`) as the user name and the password you
+set. Use keeps the session alive; it ends after `sessionDurationSeconds` without
+use. The login page also links to a page that changes the password with the
+current one.
 
 ## Everyday administration
 

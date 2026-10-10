@@ -77,8 +77,21 @@ filesystem. A few permission tests skip when they run as root, because root
 reads and lists everything. Two image-collection tests depend on the 10-second
 scan budget of `HF-NAV-011`; on a very slow machine, such as one without
 hardware acceleration, the scan reports an incomplete result and they fail.
-The verifier prints `repository verification passed.`. `--forbid TEXT` also
-fails when `TEXT` appears in a public source file.
+The verifier prints `repository verification passed.`. Besides the inventory,
+the generated frontend files, and the specification hash, it looks in the
+public tree for personal data: e-mail addresses, IP addresses outside the
+private and documentation ranges, home and site paths, tailnet names, private
+keys, and access tokens; the example values the documentation uses
+(`example.com`, `alice`, the loopback and documentation addresses) pass.
+`--forbid TEXT` also fails when `TEXT` appears, and `--markers-file FILE` reads
+a private list of site markers, one per line, matched without regard to case,
+also in UTF-16 and Latin-1 binary content. With `--git-commits REVISION...`
+(arguments of `git rev-list`, such as `origin/main..main`) and `--git-tag TAG`,
+it checks Git history instead: every file of every listed commit, the file
+names, and each author, committer, and message. A failure names the place and
+the kind of finding, never a private marker. A maintainer can run it from a
+`pre-push` hook with the range being pushed, so a commit in the middle of a
+push is checked too.
 
 The integration scripts start a synthetic instance on a free loopback port,
 exercise it over HTTP, and remove their temporary files when they exit. Run
@@ -103,6 +116,52 @@ the synthetic instance running for a manual browser session and print its
 address and synthetic password; stop the script to remove it. These scripts
 are not installed-service commands.
 
+## Browser tests
+
+`frontend/browser/` holds the browser suite: `node:test` files that drive
+WebKit, the engine of Safari, through `playwright-core`, a development
+dependency of `frontend/package.json`. Each file starts its own synthetic
+instance with `scripts/browser_fixture.py`, logs in once, and checks the
+interface on desktop, tablet, and phone sizes, in the light and dark themes,
+with mouse, keyboard, and touch: context menus, copying paths, favorites, the
+tag menu, live refresh, drag and drop into the tree, the editor's selection
+bar, and a layout audit (text contrast, cut text, wrapped labels, sideways
+scroll, controls off screen or covered, and tap targets). A test fails on any
+page error or console error.
+
+```sh
+npm --prefix frontend ci --ignore-scripts --registry=https://registry.npmjs.org/
+(cd frontend && npx playwright-core install webkit)
+export HOPPER_FILES_LOCKED_SITE="$LOCKED_SITE"
+npm --prefix frontend run test:browser
+```
+
+`npx playwright-core install webkit` downloads the browser build that matches
+the pinned `playwright-core`; on Linux, WebKit also needs the system libraries
+its `install-dependencies.sh` lists. Optional variables: `HOPPER_FILES_PYTHON`
+(the Python 3.13 interpreter), `HOPPER_FILES_FIXTURE_ROOT` (where the
+temporary instances are created), and `HOPPER_FILES_FIXTURE_WRAPPER` (a command
+that runs the fixture server, for example a sandbox that leaves only the
+fixture directory writable; it receives that directory in
+`HOPPER_FILES_FIXTURE_DIR`). The fixture reads note content only below its own
+documents directory, but the product keeps `/` as its base and acts with the
+account's permissions, so run the suite as an account whose other files a test
+may not touch, or inside such a sandbox.
+
+## Dependency advisories
+
+Before a release, check the locked dependencies against the published
+advisories:
+
+```sh
+(cd frontend && npm audit --package-lock-only --registry=https://registry.npmjs.org/)
+pip-audit -r requirements.lock --require-hashes --disable-pip
+```
+
+`npm audit` covers the browser bundle and the build and test tools;
+[pip-audit](https://pypi.org/project/pip-audit/) covers the Python lock. Record
+the result in [validation](validation.md).
+
 ## Clean-checkout check
 
 ```sh
@@ -123,7 +182,7 @@ it exits.
 ```sh
 env PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$LOCKED_SITE" \
   python3 -m hatchling build -t wheel -d dist
-python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.5-py3-none-any.whl
+python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.6-py3-none-any.whl
 ```
 
 `hatchling` must be the pinned `1.32.4` from the locked dependencies. The
@@ -157,12 +216,12 @@ real account's files.
 ## Release archive
 
 A release archive is built from a full Git tree ID, not from the working
-directory. For tag `v0.1.5`:
+directory. For tag `v0.1.6`:
 
 ```sh
-TREE=$(git rev-parse 'v0.1.5^{tree}')
+TREE=$(git rev-parse 'v0.1.6^{tree}')
 python3 scripts/build_release_artifact.py --tree "$TREE" \
-  --release-id hopper-files-0.1.5 --output "$HOME/hopper-files-0.1.5.tar.gz"
+  --release-id hopper-files-0.1.6 --output "$HOME/hopper-files-0.1.6.tar.gz"
 ```
 
 `--tree` takes the full hexadecimal ID of a tree object; a commit or tag ID is

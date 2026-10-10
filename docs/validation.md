@@ -1,9 +1,62 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.5 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.6 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.6
+
+Release 0.1.6 changes the interface and the sign-in, and keeps its browser
+checks in the repository:
+
+- **Sign-in:** the login and password change pages ask for the user name, the
+  account the instance runs as, besides the password, with the hints that let
+  a browser's password manager fill both. A wrong user name gets the same
+  answer as a wrong password, after the same one KDF.
+- **Sessions:** a session lasts `sessionDurationSeconds` after the last
+  authenticated request instead of after the login: use renews it, at most once
+  a minute, and the browser gets the cookie again with the full duration.
+  Renewal and revocation share a lock, so a renewal never brings back a session
+  that logout or a password change ended.
+- **Text contrast:** secondary text, blue text on a highlighted background,
+  white text on the blue primary button, the inactive options of segmented
+  controls, and the secondary columns of the row a menu belongs to reach 4.5:1
+  in both themes.
+- **Context menus:** a menu opens beside the pointer or below its button and
+  flips up or left where it would not fit, so it does not cover what opened it;
+  Tab closes it, focus returns without scrolling, and the row it belongs to
+  keeps its highlight under the pointer.
+- **Drag and drop:** holding dragged items over a collapsed tree folder for
+  0.6 s opens it; a drag that ends without a drop closes it again.
+- **Editor:** on a fine pointer, a selection in the Markdown view shows a
+  floating formatting bar.
+- **Touch:** the tap areas of the first breadcrumb segment, the monitored-folders
+  link, the tree tools, the new-tab button, and the sidebar resize handle no
+  longer take taps meant for the controls next to them.
+
+The new browser checks also found two older defects, now fixed: a change made
+outside the application between a folder's first read and the start of its
+watch appeared only with the next change answer, up to 20 seconds later; and a
+PDF in a standard font that it does not embed logged a blocked font load (the
+page policy now allows fonts from the application itself). DOMPurify is
+updated to 3.4.16, which fixes two advisories about a sanitizing mode the
+application does not use.
+
+On the development machine, these checks passed:
+
+- the browser suite in `frontend/browser/` in WebKit, 91 tests in 11 files, run
+  twice in a row; the checks of the new interface behavior fail on 0.1.5;
+- the frontend tests and two identical frontend builds;
+- the Python tests, with the private marker list, including the new sign-in,
+  session renewal, and repository verifier tests;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the repository verifier with the private marker list, on the tree and on
+  every commit of the release;
+- the dependency advisory check: none for the locked npm and Python
+  dependencies;
+- two byte-identical builds of the release archive;
+- an update from 0.1.5 with `update-release`.
 
 ## Release 0.1.5
 
@@ -113,6 +166,10 @@ On the development machine:
   writable filesystem.
 - **Frontend tests:** all passed, with Node.js `v24.21.0` and npm `11.19.0`.
 - **Integration scripts:** the five loopback scripts passed.
+- **Browser suite:** the WebKit checks in `frontend/browser/` passed (from
+  0.1.6 on).
+- **Dependency advisories:** `npm audit` and `pip-audit` found none (from 0.1.6
+  on).
 - **Repository verifier:** passed.
 - **Reproducible builds:** two frontend builds from a clean export matched
   each other and the generated files in the tree. Two builds of the release
@@ -190,8 +247,8 @@ input. They covered:
   validated (`HF-UI-003`, `HF-ACC-021`).
 - In the WebKit build used for testing, the PDF preview rendered upside down.
   It rendered correctly in Chromium and must be checked on a device.
-- `static/app.js` has no unit tests; its behavior is checked in browsers. The
-  editor runtime has the frontend tests above.
+- `static/app.js` has no unit tests; its behavior is checked by the browser
+  suite in WebKit only. The editor runtime has the frontend tests above.
 - No acceptance requirement of specification section 13 is claimed as passed
   as a whole. [Security](security.md#limits-that-remain-open) lists the limits
   that remain open.

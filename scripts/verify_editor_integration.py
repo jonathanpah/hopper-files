@@ -225,7 +225,7 @@ def _login(client: httpx.Client, origin: str) -> str:
     nonce = client.get(BASE + "login", headers={"accept": "application/json"})
     assert nonce.status_code == 200
     response = client.post(
-        BASE + "login", json={"nonce": nonce.json()["nonce"], "password": PASSWORD}, headers={"origin": origin}
+        BASE + "login", json={"nonce": nonce.json()["nonce"], "username": pwd.getpwuid(os.geteuid()).pw_name, "password": PASSWORD}, headers={"origin": origin}
     )
     assert response.status_code == 200, response.text
     return response.json()["csrfToken"]

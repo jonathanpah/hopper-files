@@ -180,7 +180,7 @@ def _login(client: httpx.Client, origin: str) -> str:
     assert nonce.status_code == 200, nonce.text
     response = client.post(
         BASE + "login",
-        json={"nonce": nonce.json()["nonce"], "password": PASSWORD},
+        json={"nonce": nonce.json()["nonce"], "username": pwd.getpwuid(os.geteuid()).pw_name, "password": PASSWORD},
         headers={"origin": origin},
     )
     assert response.status_code == 200, response.text

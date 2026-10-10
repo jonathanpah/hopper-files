@@ -14,7 +14,7 @@ from hopper_files.api.request_body import BodyTooLarge
 from hopper_files.clock import ManualClock
 from hopper_files.kdf import SCRYPT_DKLEN, SCRYPT_MAXMEM, SCRYPT_N, SCRYPT_P, SCRYPT_R
 
-from conftest import CLOCK_START, OTHER_PASSWORD, PASSWORD, boot, cookie_flags
+from conftest import CLOCK_START, OTHER_PASSWORD, PASSWORD, boot, cookie_flags, USERNAME
 
 
 @pytest.mark.parametrize("declared_length", [None, "1"])
@@ -58,7 +58,7 @@ def test_login_body_limit_stops_streaming_without_trusting_content_length(declar
 
 def test_login_body_limit_accepts_exact_boundary() -> None:
     maximum = auth_api.MAX_BODY_BYTES
-    prefix = b'{"nonce":"n","password":"'
+    prefix = b'{"nonce":"n","username":"' + USERNAME.encode() + b'","password":"'
     suffix = b'"}'
     body = prefix + b"x" * (maximum - len(prefix) - len(suffix)) + suffix
 
@@ -79,10 +79,10 @@ def test_login_body_limit_accepts_exact_boundary() -> None:
         "root_path": "",
     }, receive)
 
-    nonce, password, wants_html = asyncio.run(auth_api._read_login(request))
+    nonce, username, password, wants_html = asyncio.run(auth_api._read_login(request))
 
     assert len(body) == maximum
-    assert nonce == "n"
+    assert nonce == "n" and username == USERNAME
     assert len(password) == maximum - len(prefix) - len(suffix)
     assert not wants_html
 
@@ -284,7 +284,7 @@ def test_form_login_redirects_only_inside_the_base_url(tmp_path) -> None:
         nonce = re.search(r'name="nonce" value="([^"]+)"', page.text).group(1)
         response = world.client.post(
             "/login",
-            data={"nonce": nonce, "password": PASSWORD, "next": "https://evil.example/phish"},
+            data={"nonce": nonce, "username": USERNAME, "password": PASSWORD, "next": "https://evil.example/phish"},
             headers={"origin": world.config.origin},
             follow_redirects=False,
         )
@@ -327,8 +327,7 @@ def _post_password(world, current: str, new: str, confirmation: str | None = Non
     return world.client.post(
         world.config.base_path + "password",
         json={
-            "nonce": nonce if nonce is not None else _password_nonce(world),
-            "current": current,
+            "nonce": nonce if nonce is not None else _password_nonce(world), "username": USERNAME, "current": current,
             "new": new,
             "confirmation": new if confirmation is None else confirmation,
         },
@@ -432,13 +431,13 @@ def test_password_page_is_linked_from_login_and_works_without_script(tmp_path) -
         nonce = re.search(r'name="nonce" value="([^"]+)"', page.text).group(1)
         mismatch = world.client.post(
             base + "password",
-            data={"nonce": nonce, "current": PASSWORD, "new": NEW_PASSWORD, "confirmation": "other"},
+            data={"nonce": nonce, "username": USERNAME, "current": PASSWORD, "new": NEW_PASSWORD, "confirmation": "other"},
             headers={"origin": world.config.origin},
         )
         nonce = re.search(r'name="nonce" value="([^"]+)"', mismatch.text).group(1)
         changed = world.client.post(
             base + "password",
-            data={"nonce": nonce, "current": PASSWORD, "new": NEW_PASSWORD, "confirmation": NEW_PASSWORD},
+            data={"nonce": nonce, "username": USERNAME, "current": PASSWORD, "new": NEW_PASSWORD, "confirmation": NEW_PASSWORD},
             headers={"origin": world.config.origin},
             follow_redirects=False,
         )
@@ -481,11 +480,11 @@ def test_non_ascii_nonce_is_refused_instead_of_failing(tmp_path) -> None:
         base = world.config.base_path
         login = world.client.post(
             base + "login", headers=headers,
-            content=('{"nonce":"\\ud800","password":"' + PASSWORD + '"}').encode("ascii"),
+            content=('{"nonce":"\\ud800","username":"' + USERNAME + '","password":"' + PASSWORD + '"}').encode("ascii"),
         )
         change = world.client.post(
             base + "password", headers=headers,
-            content=('{"nonce":"\\ud800","current":"' + PASSWORD + '","new":"' + NEW_PASSWORD
+            content=('{"nonce":"\\ud800","username":"' + USERNAME + '","current":"' + PASSWORD + '","new":"' + NEW_PASSWORD
                      + '","confirmation":"' + NEW_PASSWORD + '"}').encode("ascii"),
         )
         unchanged = world.post_login(PASSWORD)
@@ -503,3 +502,90 @@ def test_pages_with_forms_keep_the_origin_on_same_site_posts(tmp_path) -> None:
 
     for page in pages:
         assert page.headers["referrer-policy"] == "same-origin"
+
+
+def test_login_needs_the_instance_account_as_user_name(tmp_path, monkeypatch) -> None:
+    calls: list[int] = []
+    from hopper_files import kdf
+
+    real = kdf.derive
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return real(*args, **kwargs)
+
+    with boot(tmp_path, ManualClock(CLOCK_START), password=PASSWORD) as world:
+        monkeypatch.setattr("hopper_files.kdf.derive", counted)
+        wrong_user = world.post_login(PASSWORD, username="someone-else")
+        wrong_user_calls = len(calls)
+        wrong_password = world.post_login(OTHER_PASSWORD)
+        spaced = world.post_login(PASSWORD, username=f"  {USERNAME} ")
+        missing = world.client.post(
+            world.login_path(),
+            json={"nonce": world.issue_nonce(), "password": PASSWORD},
+            headers={"origin": world.config.origin},
+        )
+
+    # A wrong user name answers exactly like a wrong password, after the same one KDF.
+    assert wrong_user.status_code == wrong_password.status_code == 401
+    assert wrong_user.json() == wrong_password.json()
+    assert wrong_user_calls == 1
+    assert "set-cookie" not in wrong_user.headers
+    assert spaced.status_code == 200
+    assert missing.status_code == 400
+
+
+def test_password_change_needs_the_user_name_too(tmp_path) -> None:
+    with boot(tmp_path, ManualClock(CLOCK_START), password=PASSWORD) as world:
+        nonce = _password_nonce(world)
+        refused = world.client.post(
+            world.config.base_path + "password",
+            json={"nonce": nonce, "username": "someone-else", "current": PASSWORD, "new": NEW_PASSWORD, "confirmation": NEW_PASSWORD},
+            headers={"origin": world.config.origin},
+        )
+        still = world.post_login(PASSWORD)
+
+    assert refused.status_code == 401
+    assert refused.json() == {"error": "authentication_failed"}
+    assert still.status_code == 200
+
+
+def test_use_keeps_the_session_alive_and_renews_the_cookie(tmp_path) -> None:
+    clock = ManualClock(CLOCK_START)
+    with boot(tmp_path, clock, password=PASSWORD, duration=600) as world:
+        assert world.post_login(PASSWORD).status_code == 200
+        clock.advance(30)
+        early = world.client.get("/app")
+        clock.advance(470)
+        used = world.client.get("/app")
+        clock.advance(500)
+        still = world.client.get("/app")
+        clock.advance(601)
+        idle = world.client.get("/app")
+
+    # Within a minute of the last renewal, nothing is rewritten; later, the expiry moves forward
+    # and the browser gets the cookie again with the full lifetime.
+    assert early.status_code == 200 and "set-cookie" not in early.headers
+    assert used.status_code == 200
+    assert "max-age=600" in used.headers["set-cookie"].lower()
+    assert world.config.cookie_name in used.headers["set-cookie"]
+    assert still.status_code == 200
+    assert idle.status_code == 401
+
+
+def test_logout_is_not_undone_by_the_renewal(tmp_path) -> None:
+    clock = ManualClock(CLOCK_START)
+    with boot(tmp_path, clock, password=PASSWORD, duration=600) as world:
+        login = world.post_login(PASSWORD)
+        csrf = login.json()["csrfToken"]
+        clock.advance(120)
+        logout = world.client.post(
+            world.config.base_path + "logout",
+            headers={"origin": world.config.origin, "x-csrf-token": csrf},
+        )
+        after = world.client.get("/app")
+
+    assert logout.status_code == 200
+    cookies = logout.headers.get_list("set-cookie")
+    assert len(cookies) == 1 and "max-age=0" in cookies[0].lower()
+    assert after.status_code == 401

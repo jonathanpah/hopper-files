@@ -15,12 +15,12 @@
       const values = new FormData(loginForm);
       if (button) button.disabled = true;
       document.querySelector(".login-cartao .login-aviso, .login-cartao .login-erro")?.remove();
-      if (message) { message.textContent = "Verificando senha…"; message.classList.remove("erro"); }
+      if (message) { message.textContent = "Verificando…"; message.classList.remove("erro"); }
       try {
         const response = await fetch(loginForm.action, {
           method: "POST", credentials: "same-origin",
           headers: { Accept: "application/json", "Content-Type": "application/json" },
-          body: JSON.stringify({ nonce: values.get("nonce"), password: values.get("password") }),
+          body: JSON.stringify({ nonce: values.get("nonce"), username: values.get("username"), password: values.get("password") }),
         });
         if (response.ok) {
           window.location.assign(loginForm.dataset.basePath + "app");
@@ -31,7 +31,7 @@
           clearInterval(waitTimer);
           message.textContent = response.status === 429
             ? `Muitas tentativas. Aguarde ${wait > 0 ? waitText(wait) : "um pouco"} antes de tentar de novo.`
-            : response.status === 401 ? "Senha incorreta." : "Não foi possível entrar.";
+            : response.status === 401 ? "Usuário ou senha incorretos." : "Não foi possível entrar.";
           if (response.status === 429 && wait > 0) {
             const until = Date.now() + wait * 1000;
             waitTimer = setInterval(() => {
@@ -59,8 +59,8 @@
     });
     return;
   }
-  // Password change page (HF-AUTH-004), linked from the sign-in page: current password plus the
-  // new one twice.
+  // Password change page (HF-AUTH-004), linked from the sign-in page: user name, current password,
+  // and the new one twice.
   // The confirmation is checked here before spending an attempt; the server checks it again.
   const passwordForm = document.getElementById("password-form");
   if (passwordForm) {
@@ -88,7 +88,7 @@
         const response = await fetch(passwordForm.action, {
           method: "POST", credentials: "same-origin",
           headers: { Accept: "application/json", "Content-Type": "application/json" },
-          body: JSON.stringify({ nonce: values.get("nonce"), current: values.get("current"), new: values.get("new"), confirmation: values.get("confirmation") }),
+          body: JSON.stringify({ nonce: values.get("nonce"), username: values.get("username"), current: values.get("current"), new: values.get("new"), confirmation: values.get("confirmation") }),
         });
         if (response.ok) {
           window.location.assign(passwordForm.dataset.basePath + "login?senha=trocada");
@@ -98,7 +98,7 @@
         const code = await response.json().then(body => body?.error, () => "");
         say(response.status === 429
           ? `Muitas tentativas. Aguarde ${wait > 0 ? waitText(wait) : "um pouco"} antes de tentar de novo.`
-          : response.status === 401 ? "Senha atual incorreta."
+          : response.status === 401 ? "Usuário ou senha atual incorretos."
           : code === "password_mismatch" ? "A nova senha e a confirmação não coincidem."
           : response.status === 400 ? "A senha excede o limite."
           : "Não foi possível trocar a senha. Tente de novo.");
@@ -140,6 +140,7 @@
     roots: [BASE_ROOT], generation: "", ui: null, listingWritable: true, baseUi: null, listingRootId: "", listingPath: "",
     view: "files", rootId: BASE_ID, path: "", entries: [], listingVersion: "",
     treeExpanded: new Map(), treeInitialized: new Set(), treeEntries: new Map(), treeLoading: new Map(), treeErrors: new Set(),
+    springOpened: [], dragDropped: false,
     listInFlight: new Map(), favoriteTreesSaved: null, treeOrigin: null, favoritesDrawPending: false,
     localFilter: "", searchMode: "name", searchUiMode: "name", searchText: "", searchTimer: null, searchRequestId: 0,
     sortDirection: "asc", groupBy: "none", treeOrdering: "name", treeGrouping: "none", treeDirection: "asc", treeSectionOpen: true,
@@ -1383,14 +1384,40 @@
     row.draggable = true; row.dataset.drag = "1";
     row.addEventListener("dragstart", event => {
       const paths = draggedPaths(path);
-      state.dragPaths = paths;
+      state.dragPaths = paths; state.springOpened = []; state.dragDropped = false;
       event.dataTransfer.setData("text/plain", paths.map(absolutePath).join("\n"));
       event.dataTransfer.effectAllowed = "all";
       document.body.classList.add("arrastando-itens"); row.classList.add("arrastando");
     });
     row.addEventListener("dragend", () => {
       state.dragPaths = null; document.body.classList.remove("arrastando-itens"); row.classList.remove("arrastando"); clearDropTargets();
+      // A drag that was not dropped in the application closes again the tree folders it opened on its
+      // way. A drop is recorded by the page itself: Safari does not report it reliably in dragend.
+      const opened = state.springOpened; state.springOpened = [];
+      if (!state.dragDropped) {
+        for (const {rootId, path: branch, treeId} of opened.reverse()) if (treeExpandedFor(treeId).has(branch)) toggleTreeBranch(rootId, branch, treeId);
+      }
     });
+  }
+  // Spring-loaded tree folders: holding dragged items or files over a collapsed folder for 0.6 s
+  // expands it, so a deep destination is reachable in the same gesture.
+  const SPRING_MS = 600;
+  document.addEventListener("drop", () => { if (state.dragPaths) state.dragDropped = true; }, true);
+  function springOpen(node, rootId, path, treeId) {
+    let timer = null;
+    const stop = () => { clearTimeout(timer); timer = null; };
+    const dragging = event => state.dragPaths || [...(event.dataTransfer?.types || [])].includes("Files");
+    node.addEventListener("dragover", event => {
+      if (timer || !dragging(event) || treeExpandedFor(treeId).has(path)) return;
+      timer = setTimeout(() => {
+        timer = null;
+        if (!node.isConnected || treeExpandedFor(treeId).has(path)) return;
+        state.springOpened.push({rootId, path, treeId});
+        toggleTreeBranch(rootId, path, treeId);
+      }, SPRING_MS);
+    });
+    node.addEventListener("dragleave", event => { if (!node.contains(event.relatedTarget)) stop(); });
+    node.addEventListener("drop", stop);
   }
   function makeFolderDropTarget(node, folder) {
     const accepts = event => {
@@ -2167,7 +2194,7 @@
         ? state.activeDocument.path : state.path;
       row.classList.toggle("ativo", usable && state.view === "files" && state.rootId === rootId && activePath === path);
       // In Favorites, dropping an item only favorites it (HF-FILE-001): folders there do not receive dropped items.
-      if (directory && !isFavoriteTree(treeId)) makeFolderDropTarget(row, path);
+      if (directory && !isFavoriteTree(treeId)) { makeFolderDropTarget(row, path); springOpen(row, rootId, path, treeId); }
       const icon = entryIcon(entry, path); icon.classList.add("icone");
       // Folder: the name navigates and expands without collapsing (HF-NAV-006); other entry types follow activateEntry.
       // A file opened from the tree is already visible there; a link leads elsewhere, which then gets revealed.
@@ -2262,6 +2289,7 @@
     rootRow.append(treeChevron(rootExpanded, "/", () => toggleTreeBranch(BASE_ID, "")), rootName);
     rootRow.onclick = event => { if (event.target === rootRow) activateTreeFolder(BASE_ID, ""); };
     rootRow.addEventListener("contextmenu", event => showItemMenu(event, BASE_ID, "", false, "directory", {pathOnly: true}));
+    springOpen(rootRow, BASE_ID, "", BASE_ID);
     const rootChildren = el("div", undefined, "node-filhos"); rootChildren.hidden = !rootExpanded; rootChildren.setAttribute("role", "group");
     if (rootExpanded) renderTreeChildren(rootChildren, BASE_ID, "");
     rootNode.append(rootRow, rootChildren); tree.append(rootNode);
@@ -3265,6 +3293,70 @@
     });
     target.append(fragment);
   }
+  // Floating formatting bar of the Markdown view, for a fine pointer only (touch keeps the palette and
+  // the system's selection menu): a non-empty selection shows the inline commands just above it, or
+  // below when there is no room. Pressing a button keeps the selection; Esc hides the bar until the
+  // selection changes, and it hides while the mouse selects, on an empty selection, on loss of focus,
+  // when the selection scrolls out of view, and while the editor is read-only.
+  const SELECTION_COMMANDS = [["heading1", "H1", "Título 1"], ["heading2", "H2", "Título 2"], ["bold", "B", "Negrito", "b"],
+    ["italic", "I", "Itálico", "i"], ["strike", "S", "Riscado", "s"], ["highlight", "M", "Marca", "mark"],
+    ["code", "</>", "Código"], ["link", "↗", "Link"]];
+  function attachSelectionBar(doc) {
+    if (doc.source.coarse) return;
+    const view = doc.source.view;
+    const bar = el("div", undefined, "lp-flutuante");
+    bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "Formatação da seleção");
+    bar.hidden = true;
+    for (const [command, glyph, label, style] of SELECTION_COMMANDS) {
+      const control = button("", () => { if (state.logoutPhase === "idle") doc.source.command(command); }, "lp-btn");
+      control.tabIndex = -1; control.setAttribute("aria-label", label); control.title = label; control.dataset.command = command;
+      const text = el("span", undefined, style === "mark" ? "lp-i lp-i-mark" : "lp-i");
+      text.append(["b", "i", "s"].includes(style) ? el(style, glyph) : document.createTextNode(glyph));
+      control.append(text);
+      bar.append(control);
+    }
+    bar.addEventListener("mousedown", event => event.preventDefault());
+    document.body.append(bar);
+    doc.selectionBar = bar;
+    const listening = new AbortController(), signal = listening.signal;
+    doc.stopSelectionBar = () => { listening.abort(); bar.remove(); };
+    let pressing = false, dismissedAt = null, frame = 0;
+    const selectionKey = () => { const {from, to} = view.state.selection.main; return `${from}:${to}`; };
+    const place = () => {
+      frame = 0;
+      if (!bar.isConnected) return;
+      const {from, to, empty} = view.state.selection.main;
+      const editable = view.contentDOM.getAttribute("contenteditable") === "true";
+      if (dismissedAt !== null && dismissedAt !== selectionKey()) dismissedAt = null;
+      if (empty || pressing || !editable || !view.hasFocus || dismissedAt !== null || doc.sourcePane.hidden || !doc.sourcePane.offsetParent) { bar.hidden = true; return; }
+      const start = view.coordsAtPos(from, 1), end = view.coordsAtPos(to, -1);
+      const area = view.scrollDOM.getBoundingClientRect();
+      if (!start || !end || end.bottom < area.top || start.top > area.bottom) { bar.hidden = true; return; }
+      bar.hidden = false;
+      const width = bar.offsetWidth, height = bar.offsetHeight;
+      let top = start.top - height - 8;
+      if (top < Math.max(area.top, 8)) top = end.bottom + 8;
+      top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
+      const center = Math.abs(start.top - end.top) < 2 ? (start.left + end.right) / 2 : start.left + width / 2;
+      const left = Math.max(Math.max(area.left, 8), Math.min(center - width / 2, Math.min(area.right, window.innerWidth - 8) - width));
+      bar.style.left = `${Math.round(left)}px`; bar.style.top = `${Math.round(top)}px`;
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(place); };
+    view.contentDOM.addEventListener("mousedown", event => { if (event.button === 0) { pressing = true; bar.hidden = true; } });
+    window.addEventListener("mouseup", () => { if (pressing) { pressing = false; schedule(); } }, {signal});
+    // Captured on the editor's outer element, before CodeMirror's own Esc, which would collapse the
+    // selection: the first Esc only hides the bar.
+    view.dom.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !bar.hidden) { event.preventDefault(); event.stopPropagation(); dismissedAt = selectionKey(); bar.hidden = true; }
+    }, true);
+    document.addEventListener("selectionchange", schedule, {signal});
+    view.contentDOM.addEventListener("focus", schedule); view.contentDOM.addEventListener("blur", schedule);
+    view.scrollDOM.addEventListener("scroll", schedule, {passive: true});
+    window.addEventListener("resize", schedule, {signal});
+    // A command changes the text and the selection; not every engine reports that as a selection event.
+    bar.addEventListener("click", schedule);
+  }
+
   function createDocumentShell(rootId, path, loaded) {
     const isMarkdown = ["md", "markdown"].includes(extension(path));
     const name = path.split("/").pop();
@@ -3424,7 +3516,7 @@
       doc.source = window.HFEditorRuntime.createMarkdownEditor({
         parent: doc.sourcePane, initial: loaded.content, nonce: app.dataset.styleNonce,
         onActiveFormats: active => {
-          for (const node of commandBar.querySelectorAll(".lp-btn[data-command]")) {
+          for (const node of [...commandBar.querySelectorAll(".lp-btn[data-command]"), ...(doc.selectionBar?.querySelectorAll(".lp-btn[data-command]") || [])]) {
             const on = active.has(node.dataset.command);
             node.classList.toggle("ativo", on); node.setAttribute("aria-pressed", String(on));
           }
@@ -3441,6 +3533,7 @@
         const files = [...(event.clipboardData?.items || [])].filter(item => item.kind === "file").map(item => item.getAsFile()).filter(file => file && file.type.startsWith("image/"));
         if (!files.length) return; event.preventDefault(); event.stopImmediatePropagation(); void uploadManagedImages(doc, files);
       }, true);
+      if (doc.editable) attachSelectionBar(doc);
       doc.source.view.contentDOM.addEventListener("dragover", event => { if ([...(event.dataTransfer?.types || [])].includes("Files")) event.preventDefault(); });
       doc.source.view.contentDOM.addEventListener("drop", event => {
         const files = [...(event.dataTransfer?.files || [])].filter(file => file.type.startsWith("image/"));
@@ -3461,7 +3554,7 @@
     doc.host.append(editorBar, commandBar, noteHeader, surface);
     surface.append(doc.sourcePane, doc.previewPane, doc.rawPane, doc.cleanPane, doc.attachmentsPane);
     doc.getValue = () => doc.source.getValue();
-    doc.destroy = () => doc.source.destroy?.();
+    doc.destroy = () => { doc.stopSelectionBar?.(); doc.source.destroy?.(); };
     doc.copyClean = async () => {
       const clean = window.HFEditorRuntime.cleanCopy(doc.getValue(), isMarkdown);
       try { await navigator.clipboard.writeText(clean); toast("Texto limpo copiado"); }
@@ -4162,8 +4255,9 @@
     if (result.resync) {
       // Restart or overflow: changes may have been missed, and every folder is watched anew.
       live.confirmed.clear();
-      if (!first) refreshShown();
-      return;
+      if (!first) { refreshShown(); return; }
+      // The first answer only starts the watch: the check below covers a change made between the
+      // last read and this answer, instead of waiting for the next one.
     }
     const changed = new Map();
     for (const change of Array.isArray(result.changes) ? result.changes : []) {
@@ -4785,8 +4879,15 @@
     state.returnFocusPath = targetRow ? path : null;
     menu.hidden = false; menu.style.display = "block";
     const rect = menu.getBoundingClientRect();
-    menu.style.left = `${Math.max(8, Math.min(event.clientX, window.innerWidth - Math.max(rect.width, 220) - 8))}px`;
-    menu.style.top = `${Math.max(8, Math.min(event.clientY, window.innerHeight - Math.max(rect.height, 100) - 8))}px`;
+    const width = Math.max(rect.width, 220), height = Math.max(rect.height, 100);
+    // Beside the pointer, or below the anchor button; when it does not fit, it flips up (and left)
+    // instead of sliding over the item or the button that opened it.
+    const box = anchor ? anchor.getBoundingClientRect() : null;
+    let left = box ? box.left : event.clientX, top = box ? box.bottom + 4 : event.clientY;
+    if (left + width > window.innerWidth - 8) left = (box ? box.right : event.clientX) - width;
+    if (top + height > window.innerHeight - 8) top = (box ? box.top - 4 : event.clientY) - height;
+    menu.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(top, window.innerHeight - height - 8))}px`;
     const items = () => [...menu.querySelectorAll(".ctx-item")];
     const close = (outside, {restoreFocus = false} = {}) => {
       if (outside && menu.contains(outside.target)) return;
@@ -4796,11 +4897,14 @@
       document.removeEventListener("pointerdown", close, true); document.removeEventListener("keydown", keys, true);
       if (state.closeItemMenu === closeNow) state.closeItemMenu = null;
       const back = returnTo ? returnTo() : origin;
-      if (restoreFocus && back?.isConnected) back.focus();
+      if (restoreFocus && back?.isConnected) back.focus({preventScroll: true});
     };
     const closeNow = options => close(null, options);
     const keys = keyEvent => {
       if (keyEvent.key === "Escape") { keyEvent.preventDefault(); close(null, {restoreFocus: true}); return; }
+      // Tab leaves the menu like a menu button does: focus returns to the opener, and the key's
+      // default action then moves on from there.
+      if (keyEvent.key === "Tab") { close(null, {restoreFocus: true}); return; }
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(keyEvent.key)) return;
       const list = items(); if (!list.length) return;
       keyEvent.preventDefault();

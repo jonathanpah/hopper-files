@@ -1,9 +1,30 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.10 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.11 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.11
+
+Release 0.1.11 makes a scrolling context menu easier to read on an iPhone.
+The menu cut its last visible command through the middle of the box, and the
+name sits in the middle, so only the top of the letters showed. Now the cut
+leaves the name readable and the lower edge of the menu fades while more
+commands are below; the fade goes away at the end of the list.
+
+On the development machine, these checks passed:
+
+- the browser suite in `frontend/browser/` in WebKit, 112 tests in 10 files,
+  run twice in a row; the check of the new behavior fails on 0.1.10;
+- the frontend tests and two identical frontend builds;
+- the Python tests, with the private marker list;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the repository verifier with the private marker list, on the tree and on
+  every commit since 0.1.5;
+- two byte-identical builds of the release archive;
+- an update from 0.1.10 with `update-release`, a return, and an update again,
+  in an isolated environment.
 
 ## Release 0.1.10
 

@@ -895,8 +895,9 @@ has no context menu. A context menu opened on an item row, by pointer, touch,
 or keyboard, opens just below that row at the pointer's column (at the row's
 left edge from the keyboard), and one opened by a control opens just below the
 control; where it does not fit below it opens above, where it does not fit on
-either side it takes the larger side and scrolls, with a command cut in half at
-its edge to show that it scrolls, and it flips left at the right edge; the
+either side it takes the larger side and scrolls, its last visible command cut
+at the edge with the name still readable and the edge fading while more
+commands are below, and it flips left at the right edge; the
 space counts only the visible height of the page, without what a browser's
 floating toolbar covers, so it never covers the row or control it acts on. Elsewhere it
 opens beside the pointer. Esc or Tab closes it and returns focus to where it

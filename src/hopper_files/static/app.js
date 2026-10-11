@@ -4961,7 +4961,7 @@
     const targetRow = path === null ? null : [...app.querySelectorAll("#results tr.item")].find(row => row.dataset.path === path);
     targetRow?.classList.add("menu-alvo");
     state.returnFocusPath = targetRow ? path : null;
-    menu.hidden = false; menu.style.display = "block"; menu.style.maxHeight = "";
+    menu.hidden = false; menu.style.display = "block"; menu.style.maxHeight = ""; menu.classList.remove("rola");
     const rect = menu.getBoundingClientRect();
     const width = rect.width || 220;
     let height = rect.height || 100;
@@ -4981,10 +4981,12 @@
     if (box && Math.max(below, above) >= Math.min(height, 120)) {
       const downward = height <= below || (height > above && below >= above), room = downward ? below : above;
       if (height > room) {
-        // The edge cuts through the middle of a command, so the half-shown one tells that the menu scrolls.
-        const middles = [...menu.querySelectorAll(".ctx-item")].map(item => item.offsetTop + item.offsetHeight / 2);
-        height = middles.filter(middle => middle <= room).pop() ?? room;
+        // The edge cuts the lower part of a command whose name still reads, under a fade, so the menu
+        // shows that it scrolls; the fade goes away at the end of the list.
+        const cuts = [...menu.querySelectorAll(".ctx-item")].map(item => item.offsetTop + item.offsetHeight * 0.75);
+        height = cuts.filter(cut => cut <= room).pop() ?? room;
         menu.style.maxHeight = `${height}px`;
+        menu.classList.add("rola");
       }
       top = downward ? box.bottom + 4 : box.top - 4 - height;
     } else {
@@ -4994,6 +4996,7 @@
     menu.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
     menu.style.top = `${Math.max(8, Math.min(top, viewBottom - height - 8))}px`;
     const items = () => [...menu.querySelectorAll(".ctx-item")];
+    menu.onscroll = () => menu.classList.toggle("rola", menu.scrollTop + menu.clientHeight < menu.scrollHeight - 2);
     const close = (outside, {restoreFocus = false} = {}) => {
       if (outside && menu.contains(outside.target)) return;
       menu.hidden = true; menu.style.display = "";

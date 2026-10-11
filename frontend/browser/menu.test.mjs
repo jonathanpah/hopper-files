@@ -112,14 +112,25 @@ test("on a short phone screen, a long press opens the menu above a row near the 
   await menu(page).waitFor({state: "visible"});
   await assertBesideRow(page, listingRow(page, "notas"));
   assert.ok(await menu(page).evaluate(element => element.scrollHeight > element.clientHeight), "a menu taller than either side scrolls");
-  // A command cut in half at the edge shows that there is more to scroll to.
-  assert.ok(await menu(page).evaluate(element => {
+  // The last visible command is cut at the edge with its name still readable, under a fade that
+  // goes away at the end of the list.
+  const cut = await menu(page).evaluate(element => {
     const edge = element.getBoundingClientRect().bottom;
-    return [...element.querySelectorAll(".ctx-item")].some(item => {
-      const box = item.getBoundingClientRect();
-      return box.top < edge - 4 && box.bottom > edge + 4;
+    const item = [...element.querySelectorAll(".ctx-item")].find(node => {
+      const box = node.getBoundingClientRect();
+      return box.top < edge - 4 && box.bottom > edge + 2;
     });
-  }), "a command is cut in half at the edge of a scrolling menu");
+    if (!item) return null;
+    const box = item.getBoundingClientRect(), range = document.createRange();
+    range.selectNodeContents(item);
+    return {shown: (edge - box.top) / box.height, textBottom: range.getBoundingClientRect().bottom, edge, fades: element.classList.contains("rola")};
+  });
+  assert.ok(cut, "a command is cut at the edge of a scrolling menu");
+  assert.ok(cut.shown >= 0.6 && cut.shown < 1, `${Math.round(cut.shown * 100)}% of the cut command shows`);
+  assert.ok(cut.textBottom <= cut.edge, "the cut command's name reads in full");
+  assert.ok(cut.fades, "the edge fades while more commands are below");
+  await menu(page).evaluate(element => { element.scrollTop = element.scrollHeight; element.dispatchEvent(new Event("scroll")); });
+  assert.equal(await menu(page).evaluate(element => element.classList.contains("rola")), false, "no fade at the end of the list");
   await page.keyboard.press("Escape");
   assert.deepEqual(errors, []);
   await context.close();

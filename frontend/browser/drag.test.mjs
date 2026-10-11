@@ -31,13 +31,15 @@ async function dragStart(page, name) {
     row.dispatchEvent(new DragEvent("dragstart", {bubbles: true, cancelable: true, dataTransfer: window.dragData}));
   });
 }
-// dragenter and then dragover every 100 ms, as a browser does while the pointer rests on a row.
+// dragenter and then dragover every 100 ms, as a browser does while the pointer rests on a row, for
+// `milliseconds` of real time: a slow machine does not stretch a short pass past the opening delay.
 async function hover(page, locator, milliseconds) {
+  const until = Date.now() + milliseconds;
   await locator.evaluate(row => row.dispatchEvent(new DragEvent("dragenter", {bubbles: true, cancelable: true, dataTransfer: window.dragData})));
-  for (let elapsed = 0; elapsed <= milliseconds; elapsed += 100) {
+  do {
     await locator.evaluate(row => row.dispatchEvent(new DragEvent("dragover", {bubbles: true, cancelable: true, dataTransfer: window.dragData})));
-    await page.waitForTimeout(100);
-  }
+    await page.waitForTimeout(Math.min(100, Math.max(0, until - Date.now())));
+  } while (Date.now() < until);
 }
 async function leave(locator) {
   await locator.evaluate(row => row.dispatchEvent(new DragEvent("dragleave", {bubbles: true, cancelable: true, dataTransfer: window.dragData, relatedTarget: document.body})));

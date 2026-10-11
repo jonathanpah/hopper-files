@@ -668,6 +668,12 @@ button.acao svg { flex: none; }
    clipped off-screen. */
   max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain;
 }
+/* A menu taller than the room scrolls; its lower edge fades while more commands are below (a band
+   held at the bottom, so the menu keeps its shadow). */
+.menu-ctx.rola::after {
+  content: ""; position: sticky; bottom: -5px; display: block; height: 28px; margin-top: -28px;
+  background: linear-gradient(to bottom, transparent, var(--panel)); pointer-events: none;
+}
 .ctx-item {
   display: block; width: 100%; text-align: left; font: inherit; font-size: 13px;
   padding: 8px 10px; border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: var(--text);

@@ -1,6 +1,6 @@
 // Favorites in the sidebar: each favorite folder is the first node of its own tree, a file favorite is
-// a single row, expanded branches return after a reload in the same browser, and items dropped on
-// Favorites become favorites.
+// a single row, expanded branches return after a reload in the same browser, items dropped on
+// Favorites become favorites, and two browsers of the same account share favorites without conflicts.
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { after, before, test } from "node:test";
@@ -25,9 +25,9 @@ function favoriteRows(page) {
   }), `${fixture.documents.slice(1)}/`);
 }
 
-// Leaves exactly these favorites in the instance state, and a single folder tab on the fixture
-// documents (navigation in an earlier test moves the saved tab), through the API the page itself
-// uses; then reloads so the page starts from that state.
+// Leaves exactly these favorites in the instance state, and a single stored folder tab on the
+// fixture documents (what a browser without tabs of its own starts from), through the API the page
+// itself uses; then reloads so the page starts from that state.
 async function resetState(page, names) {
   const status = await page.evaluate(async ({documents, paths}) => {
     const csrf = document.getElementById("hf-app").dataset.csrf;
@@ -262,6 +262,129 @@ test("with no favorites, a drag shows a drop zone below the Trash without shifti
   await favoriteRow(page, "texto.txt").waitFor();
   await expectSavedFavorites(page, ["texto.txt"]);
   assert.equal(existsSync(at("texto.txt")), true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+// Two browsers of the same account, as a Mac and an iPad are: each keeps its own folder tabs, and a
+// change of favorites made in one reaches the other when its window comes back, with no conflict.
+const activeTabName = page => page.locator("#tabs .aba.ativa .aba-nome").textContent();
+const conflictShown = page => page.locator("#operation-dialog[open]", {hasText: "mudaram em outra aba"}).count();
+
+async function favoriteFromMenu(page, name) {
+  await listingRow(page, name).click({button: "right"});
+  await page.locator("#menu-ctx").getByRole("menuitem", {name: "Adicionar aos favoritos"}).click();
+}
+
+test("navigating in two browsers keeps each one's folder tabs and a favorite saved afterwards meets no conflict", async () => {
+  const first = await openApp(fixture), second = await openApp(fixture);
+  await resetState(first.page, []);
+  await second.page.reload(); await waitForListing(second.page);
+  await listingRow(first.page, "notas").locator("button.nome-link").click();
+  await waitForListing(first.page);
+  await listingRow(second.page, "arquivo").locator("button.nome-link").click();
+  await waitForListing(second.page);
+  await second.page.locator("#breadcrumbs button.seg", {hasText: /^documents$/}).last().click();
+  await waitForListing(second.page);
+  await favoriteFromMenu(second.page, "texto.txt");
+  await expectSavedFavorites(second.page, ["texto.txt"]);
+  assert.equal(await conflictShown(second.page), 0);
+  assert.equal(await activeTabName(first.page), "notas");
+  await first.page.reload(); await waitForListing(first.page);
+  assert.equal(await activeTabName(first.page), "notas");
+  assert.equal(await lastCrumb(first.page), "notas");
+  assert.deepEqual([...first.errors, ...second.errors], []);
+  await first.context.close(); await second.context.close();
+});
+
+test("a favorite added in another browser appears when this window comes back, and the next change here meets no conflict", async () => {
+  const first = await openApp(fixture), second = await openApp(fixture);
+  await resetState(first.page, []);
+  await second.page.reload(); await waitForListing(second.page);
+  await favoriteFromMenu(first.page, "texto.txt");
+  await expectSavedFavorites(first.page, ["texto.txt"]);
+  await second.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await favoriteRow(second.page, "texto.txt").waitFor();
+  await favoriteFromMenu(second.page, "notas");
+  await expectSavedFavorites(second.page, ["notas", "texto.txt"]);
+  assert.equal(await conflictShown(second.page), 0);
+  assert.deepEqual([...first.errors, ...second.errors], []);
+  await first.context.close(); await second.context.close();
+});
+
+// Changes the stored state through the API, as another browser would, without touching this page's
+// own copy: `change` maps the stored document (without its revision) to the next one.
+async function changeStoredState(page, change) {
+  const {stateRevision, ...saved} = await page.evaluate(async () => (await fetch("api/state", {headers: {Accept: "application/json"}, cache: "no-store"})).json());
+  const status = await page.evaluate(async body => {
+    const csrf = document.getElementById("hf-app").dataset.csrf;
+    const response = await fetch("api/state", {
+      method: "PUT", headers: {"Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": csrf}, body,
+    });
+    return response.status;
+  }, JSON.stringify({...change(saved), baseRevision: stateRevision}));
+  assert.equal(status, 200);
+}
+const withTheme = theme => state => ({...state, preferences: {...state.preferences, theme}});
+
+test("favorites changed in two browsers with no window switch are joined and saved without asking", async () => {
+  const first = await openApp(fixture), second = await openApp(fixture);
+  await resetState(first.page, []);
+  await second.page.reload(); await waitForListing(second.page);
+  await favoriteFromMenu(first.page, "texto.txt");
+  await expectSavedFavorites(first.page, ["texto.txt"]);
+  await favoriteFromMenu(second.page, "notas");
+  await expectSavedFavorites(second.page, ["notas", "texto.txt"]);
+  await favoriteRow(second.page, "texto.txt").waitFor();
+  assert.equal(await conflictShown(second.page), 0);
+  assert.deepEqual([...first.errors, ...second.errors].filter(error => !error.includes("status of 409")), []);
+  await first.context.close(); await second.context.close();
+});
+
+test("a theme chosen in another browser is shown when this window comes back", async () => {
+  const {context, page, errors} = await openApp(fixture);
+  await resetState(page, []);
+  const theme = await page.evaluate(() => document.documentElement.dataset.theme);
+  const other = theme === "dark" ? "light" : "dark";
+  await changeStoredState(page, withTheme(other));
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.waitForFunction(expected => document.documentElement.dataset.theme === expected, other);
+  await changeStoredState(page, withTheme("system"));
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("when two browsers change the same preference to different values, the choice is still offered", async () => {
+  const {context, page, errors} = await openApp(fixture);
+  await resetState(page, []);
+  // The theme button moves to the next of three themes; another browser stores the remaining one.
+  const order = ["system", "light", "dark"];
+  const before = await page.evaluate(() => document.documentElement.dataset.theme);
+  const mine = order[(order.indexOf(before) + 1) % 3], theirs = order.find(theme => theme !== before && theme !== mine);
+  await changeStoredState(page, withTheme(theirs));
+  await page.locator("#theme-choice").click();
+  await page.locator("#operation-dialog[open]", {hasText: "mudaram em outra aba"}).waitFor();
+  await page.locator("#operation-dialog").getByRole("button", {name: "Usar as da outra aba"}).click();
+  await changeStoredState(page, withTheme("system"));
+  assert.deepEqual(errors.filter(error => !error.includes("status of 409")), []);
+  await context.close();
+});
+
+test("a browser without folder tabs of its own starts from the stored ones, and keeps its own after closing and opening tabs", async () => {
+  const {context, page, errors} = await openApp(fixture);
+  await resetState(page, []);
+  await changeStoredState(page, state => ({...state, tabs: [{path: `${fixture.documents}/notas`, mode: "navegar"}]}));
+  await page.evaluate(() => { sessionStorage.clear(); localStorage.clear(); });
+  await page.reload(); await waitForListing(page);
+  assert.equal(await activeTabName(page), "notas");
+  await page.locator("#tabs .aba-mais").click();
+  await waitForListing(page);
+  await page.locator("#breadcrumbs button.seg", {hasText: /^documents$/}).last().click();
+  await waitForListing(page);
+  await page.locator("#tabs .aba", {hasText: /^notas/}).locator(".aba-x").click();
+  await page.reload(); await waitForListing(page);
+  assert.deepEqual(await page.locator("#tabs .aba-nome").allTextContents(), ["documents"]);
+  assert.equal(await activeTabName(page), "documents");
   assert.deepEqual(errors, []);
   await context.close();
 });

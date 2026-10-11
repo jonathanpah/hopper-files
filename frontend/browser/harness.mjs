@@ -83,8 +83,15 @@ export async function openApp(fixture, {profile = "desktop", dark = false} = {})
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
+  // A failed load names its request, so an unexpected status shows which route answered it.
+  const failed = [];
+  page.on("response", response => { if (response.status() >= 400) failed.push(`${response.request().method()} ${new URL(response.url()).pathname}`); });
   page.on("pageerror", error => errors.push(`pageerror: ${error.message}`));
-  page.on("console", message => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+  page.on("console", message => {
+    if (message.type() !== "error") return;
+    const request = message.text().includes("Failed to load resource") && failed.length ? ` [${failed.shift()}]` : "";
+    errors.push(`console: ${message.text()}${request}`);
+  });
   if (!fixture.session) {
     await page.goto(fixture.url);
     await page.fill("#login-form input[name=username]", fixture.username);
@@ -108,6 +115,20 @@ export async function keyboardMenu(locator) {
 // A secondary click at a given point of the window, delivered to `locator`.
 export async function pointerMenuAt(locator, clientX, clientY) {
   await locator.evaluate((element, [x, y]) => element.dispatchEvent(new MouseEvent("contextmenu", {bubbles: true, cancelable: true, detail: 1, button: 2, clientX: x, clientY: y})), [clientX, clientY]);
+}
+
+// A long press as Safari on iPhone delivers it: a touch pointerdown, the finger held still, and a
+// pointerup. The application opens its menu after 500 ms.
+export async function longPress(page, locator, holdMs = 800) {
+  await locator.scrollIntoViewIfNeeded();
+  const box = await locator.boundingBox();
+  const point = {x: box.x + Math.min(60, box.width / 2), y: box.y + box.height / 2};
+  const send = type => page.evaluate(({type, x, y}) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent(type, {
+    bubbles: true, cancelable: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y,
+  })), {type, ...point});
+  await send("pointerdown");
+  await page.waitForTimeout(holdMs);
+  await send("pointerup");
 }
 
 export async function waitForListing(page) {

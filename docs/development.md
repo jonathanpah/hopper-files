@@ -123,8 +123,8 @@ WebKit, the engine of Safari, through `playwright-core`, a development
 dependency of `frontend/package.json`. Each file starts its own synthetic
 instance with `scripts/browser_fixture.py`, logs in once, and checks the
 interface on desktop, tablet, and phone sizes, in the light and dark themes,
-with mouse, keyboard, and touch: context menus, copying paths, favorites, the
-tag menu, live refresh, drag and drop into the tree, the editor's selection
+with mouse, keyboard, and touch: context menus, copying paths, favorites and
+two browsers of the same account, the tag menu, live refresh, drag and drop into the tree, the editor's selection
 bar, and a layout audit (text contrast, cut text, wrapped labels, sideways
 scroll, controls off screen or covered, and tap targets). A test fails on any
 page error or console error.
@@ -182,7 +182,7 @@ it exits.
 ```sh
 env PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$LOCKED_SITE" \
   python3 -m hatchling build -t wheel -d dist
-python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.7-py3-none-any.whl
+python3 scripts/verify_built_wheel.py dist/hopper_files-0.1.8-py3-none-any.whl
 ```
 
 `hatchling` must be the pinned `1.32.4` from the locked dependencies. The
@@ -216,12 +216,12 @@ real account's files.
 ## Release archive
 
 A release archive is built from a full Git tree ID, not from the working
-directory. For tag `v0.1.7`:
+directory. For tag `v0.1.8`:
 
 ```sh
-TREE=$(git rev-parse 'v0.1.7^{tree}')
+TREE=$(git rev-parse 'v0.1.8^{tree}')
 python3 scripts/build_release_artifact.py --tree "$TREE" \
-  --release-id hopper-files-0.1.7 --output "$HOME/hopper-files-0.1.7.tar.gz"
+  --release-id hopper-files-0.1.8 --output "$HOME/hopper-files-0.1.8.tar.gz"
 ```
 
 `--tree` takes the full hexadecimal ID of a tree object; a commit or tag ID is

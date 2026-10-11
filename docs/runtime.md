@@ -343,13 +343,22 @@ unmark changes nothing. The interface marks a folder from its context menu or
 its information panel and lists the folders in Settings. A mark does not
 follow a rename or a move of its folder.
 
-Favorites, label IDs and names, directory emoji, tabs, theme, ordering, and
-density are stored in the per-instance interface state by absolute path. The
-browser submits a complete document with `baseRevision` to `PUT api/state`; it
-omits `stateRevision` from the proposal and may omit `orphans`, which only the
+Favorites, label IDs and names, directory emoji, theme, ordering, and density
+are stored in the per-instance interface state by absolute path. The browser
+submits a complete document with `baseRevision` to `PUT api/state`; it omits
+`stateRevision` from the proposal and may omit `orphans`, which only the
 server writes. A stale revision returns `409`. The page preserves local changes
-and offers an explicit reload or merge. Tabs store only the path and mode,
-never document contents. The interface includes a trash view backed by the
+and reads the current state: when each side changed different labels,
+preferences, or items, it joins them and saves again without asking; when both
+changed the same one, it offers an explicit reload or merge. With no unsaved
+change, a page reads the state again when its window or browser tab returns to
+the foreground, so favorites, labels, theme, density, and ordering changed in
+another browser or device show up there without a reload; the sidebar width
+takes effect on the next opening. Folder tabs belong to the browser tab, like
+document tabs: the page keeps them in the browser's session and local storage,
+so navigating in one browser or device never changes another's tabs or the
+interface state. The state's `tabs` list, path and mode only, is read to start
+a browser that has no folder tabs of its own and is no longer written. The interface includes a trash view backed by the
 trash routes below.
 
 ### Changes made outside the application
@@ -729,7 +738,8 @@ SHA-256 of the instance and the address.
 begins at zero and is independent of `version`; each durable state change
 increases the revision once. It carries the seven fixed label IDs and colors,
 items `{path,labelIds,favorite,emoji,inode,device}` identified by their
-absolute path, tabs `{path,mode}` without document content (tabs may repeat),
+absolute path, tabs `{path,mode}` without document content (tabs may repeat; the
+interface reads them only to start a browser with no folder tabs of its own),
 `orphans` (version 1 records the migration could not map, kept only for
 reporting and rollback and never shown as marks), and theme, ordering, and
 density preferences, plus an optional `ignoredTags` list of normalized tags,

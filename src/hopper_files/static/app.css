@@ -765,12 +765,11 @@ button.acao:disabled { opacity: .4; cursor: default; pointer-events: none; }
   position: fixed; z-index: 60; display: flex; align-items: center; gap: 2px; padding: 4px;
   background: var(--panel); border: 1px solid var(--hair); border-radius: var(--r-menu); box-shadow: var(--sombra-menu);
 }
-/* `overflow-x: auto` forces the Y axis to `auto` too, clipping tooltips
-   below the toolbar. A container query removes the overflow once the toolbar
-   actually fits. */
-@media (hover: hover) and (min-width: 721px) {
-  .lp-wrap { container-type: inline-size; }
-  @container (min-width: 620px) { .lp-paleta { overflow: visible; } }
+/* With a mouse or trackpad no swipe reveals buttons past the edge, and the
+   scrollbar is hidden: the toolbar wraps onto another line instead of
+   scrolling. Without the overflow, its tooltips are not clipped either. */
+@media (hover: hover) and (pointer: fine) and (min-width: 721px) {
+  .lp-paleta { flex-wrap: wrap; overflow: visible; }
 }
 /* The tooltip is centered by default; the first button in the bar needs
    the same edge correction as .tip-esq. */

@@ -887,9 +887,13 @@ N caminhos` instead, which copies their paths, one per line, in listing order.
 The `/` node, a symbolic link, a special file, an entry that a listing reports
 the account cannot open, and an item whose parent directory cannot be listed
 have a context menu with only `Copiar caminho`. An entry without an address
-has no context menu. A context menu opens beside the pointer, or below the
-control that opened it, and flips up or left where it would not fit, so it does
-not cover what opened it; Esc or Tab closes it and returns focus to where it
+has no context menu. A context menu opened on an item row, by pointer, touch,
+or keyboard, opens just below that row at the pointer's column (at the row's
+left edge from the keyboard), and one opened by a control opens just below the
+control; where it does not fit below it opens above, where it does not fit on
+either side it takes the larger side and scrolls, and it flips left at the
+right edge, so it never covers the row or control it acts on. Elsewhere it
+opens beside the pointer. Esc or Tab closes it and returns focus to where it
 was without scrolling. In the listing, the arrow keys move between rows
 (one Tab stop for the list), Enter opens, Space checks, F2 renames, and Delete
 or Cmd/Ctrl+Backspace sends to the Trash. Redrawing the listing keeps keyboard
@@ -904,9 +908,13 @@ sidebar views (Trash, a tag, a label) visited in the application. A step that
 happened in another tab returns to that tab while it still shows the same
 folder, a step that would change nothing on screen is skipped, and returning
 to a folder by Back, Forward, a tab, or closing a document restores the
-listing's scroll position and focuses the row that was opened. Open document
-tabs and the active tab return after a reload in the same browser tab (no
-unsaved text is stored). In the tree, the
+listing's scroll position and focuses the row that was opened. Folder tabs,
+open document tabs, and the active tab belong to the browser tab: they return
+after a reload in the same browser tab (no unsaved text is stored), a new
+browser tab starts from the ones used last in that browser, and navigating in
+one browser or device never changes another's tabs nor the shared UI state of
+HF-META-004. A browser with no folder tabs of its own starts from the `tabs` of
+that state. In the tree, the
 arrow keys move between nodes and open or close folders, and a node has the
 same context menu as its listing row. A tag row in the sidebar has its own
 context menu, opened by a secondary click or the keyboard's menu key like a
@@ -1028,7 +1036,9 @@ Version 2 is an object with `version: 2`; `stateRevision`, a persistent integer
 that starts at zero and increases by exactly one for every committed state
 change; `labels`, mapping the seven fixed IDs to `{name,color}`; `items`, a list
 of `{path,labelIds,favorite,emoji,inode,device}`; `tabs`, a list of
-`{path,mode}`; `orphans`, a list of version 1 records whose root could not be
+`{path,mode}` that the interface reads only to start a browser with no folder
+tabs of its own and never changes, sending it back unchanged with every save
+(HF-UI-001); `orphans`, a list of version 1 records whose root could not be
 mapped by HF-NAV-012, kept only for reporting and rollback and never shown as
 active marks; and `preferences`, containing theme, ordering, and density
 choices, an optional `ignoredTags` list, and an optional integer
@@ -1067,9 +1077,17 @@ the complete new document, and only then exposes the incremented revision. This
 prevents lost updates between processes and sessions, not merely simultaneous
 physical writes. A write failure does not silently replace valid state with an
 empty, truncated, or older document. On `409`, the client preserves its local
-changes and offers explicit reload or resolution against the returned current
-revision; it never silently overwrites either side. Dismissing that choice
-merges both sides, so later changes keep being saved. After a failed write for
+changes and reads the current revision. When its own changes and the newer
+revision's changes touch different labels, preferences, or items, it joins
+them and saves again without asking, since neither side is lost; when both
+changed the same label, preference, or item, it offers explicit reload or
+resolution against the current revision. It never silently overwrites either
+side. Dismissing that choice merges both sides, so later changes keep being
+saved. A client with no unsaved change reads the state again when its window
+or browser tab returns to the foreground, so favorites, labels, and display
+preferences changed in another browser or device appear there without a
+reload (the sidebar width takes effect on the next opening) and the next
+change does not meet a conflict. After a failed write for
 any reason other than `401` or `422`, the client keeps the local change, says
 so, and retries on its own with a growing delay and when the network returns;
 the notice clears once a write succeeds. This state protocol does not make tabs
@@ -1137,7 +1155,9 @@ On a coarse-pointer device, the editor initially blocks only the virtual
 keyboard while preserving cursor movement, selection, copying, and physical
 keyboard input. A visible `Digitar` control enables or disables the virtual
 keyboard, and loss of editor focus blocks it again. Pointer-fine layouts do not
-show this control. `Cmd/Ctrl+S`, `Cmd/Ctrl+B`, `Cmd/Ctrl+I`, selection, and
+show this control. With a mouse or trackpad, the formatting toolbar wraps onto
+more lines instead of hiding controls past its edge; on touch and narrow
+screens it scrolls sideways with a visible hint. `Cmd/Ctrl+S`, `Cmd/Ctrl+B`, `Cmd/Ctrl+I`, selection, and
 editor-local undo/redo are supported.
 
 **HF-EDIT-003 — Views and clean copy.** Markdown provides the `Formatado`,
@@ -1617,7 +1637,8 @@ and expired record and the report, verify idempotence, and use the migrated
 instance. A pending journal of each kind in HF-NAV-012 blocks migration and
 return with a report and without change. The new release refuses to serve an
 instance left at version 1 without creating empty state, and a conversion
-failure on one instance leaves both on the previous release. Create new marks, tabs, and trash
+failure on one instance leaves both on the previous release. Create new marks, tabs (through
+`PUT api/state`, since the interface keeps folder tabs in the browser), and trash
 items inside and outside the former roots, roll back to the previous release,
 and verify that it starts with its restored configuration and unit, maps a path
 inside a former document root to that root even where the System view overlaps
@@ -1763,8 +1784,9 @@ bullet insertion and replacement without duplicate markers, raw Enter after a
 bullet, and the coarse-pointer `Digitar` focus behavior in HF-EDIT-002. Open
 `ui-state.json` revision R in two sessions. For both different-key and same-key
 edits, the first `PUT` must commit R+1 and the stale second `PUT` must return
-`409`, preserve both server and local changes, and offer reload or explicit
-resolution; omission of `baseRevision` returns `428`. Interleave stale writes
+`409` and preserve both server and local changes; the client then joins and
+saves the different-key edits without asking and offers reload or explicit
+resolution for the same-key edits; omission of `baseRevision` returns `428`. Interleave stale writes
 with move, delete, restore, and recovery state updates and verify each internal
 commit increments the durable revision and cannot be reintroduced or erased by
 the stale full-state payload. The schema remains at `version: 2`, and tabs never
@@ -1876,7 +1898,11 @@ allowed, validated schemes may become links.
 **HF-ACC-021.** Validate desktop, 720 px transition, phone-sized, and tablet-sized
 layouts with keyboard and touch input. Check sidebar and split behavior,
 overflow, focus, text contrast of at least 4.5:1 (3:1 for large text), reduced
-motion, Portuguese UI labels, and absence of
+motion, Portuguese UI labels, a context menu opened by pointer, keyboard, and
+long press next to a row at the bottom and in the middle of the screen without
+covering it, the same account open in two browsers that both navigate and then
+change different favorites without a conflict while a change to the same item
+still offers the choice, and absence of
 all features excluded by HF-SCOPE-008. In `aqui` mode, compare NFC-equivalent
 names with case differences, immediate files and directories, and descendants.
 Only matching immediate children of the open directory appear;

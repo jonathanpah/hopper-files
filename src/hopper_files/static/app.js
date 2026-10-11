@@ -146,7 +146,7 @@
     sortDirection: "asc", groupBy: "none", treeOrdering: "name", treeGrouping: "none", treeDirection: "asc", treeSectionOpen: true,
     searchResult: null, tagIndex: null, tagIndexRequest: 0, tagFolders: null, selectedTag: "", selectedLabel: "",
     busy: false, listRequestId: 0, saveBusy: false, saveAgain: false, savePromise: null, conflict: null,
-    activeTabPos: null, activeTabKey: null, tablessKey: null,
+    activeTabPos: null, activeTabKey: null, tablessKey: null, tabs: [],
     documents: new Map(), activeDocument: null, visualRequestId: 0, visualCleanup: null,
     bufferAcks: [], bufferSyncBusy: false, bufferSyncTimer: null, bufferFinished: new Set(),
     trashEntries: [], trashLoad: null, selectedForZip: new Set(), splitEnabled: false, splitDocument: null,
@@ -1780,8 +1780,10 @@
       state.ui = ui;
       state.baseUi = clone(ui);
       state.rootId = BASE_ID;
-      const resumeIndex = savedActiveTab(ui.tabs);
-      const resume = ui.tabs[resumeIndex];
+      const savedTabs = savedFolderTabs();
+      state.tabs = savedTabs?.tabs ?? clone(ui.tabs);
+      const resumeIndex = savedTabs ? savedTabs.active : savedActiveTab(state.tabs);
+      const resume = state.tabs[resumeIndex];
       if (resume) { state.rootId = resume.rootId; state.path = resume.path; setActiveTab(resumeIndex); }
       // With no saved tab (all were closed), opening the app does not recreate one; the next navigation creates it.
       else state.tablessKey = tabKey(state.rootId, state.path);
@@ -1795,6 +1797,21 @@
       // After a reload, the current history entry stays the same: position comes from it.
       state.historySeq = history.state?.hf ? (history.state.seq ?? 0) : 0;
       window.addEventListener("online", () => { if (state.saveFailures) scheduleSave(); });
+      // Back on this screen after another app, window, or device: favorites, labels, and preferences
+      // changed elsewhere are read again, one reading at a time and once no menu, dialog, or drag is
+      // open, so nothing is redrawn under the pointer.
+      let readingUi = false;
+      const readUiAgain = async () => {
+        if (readingUi || document.visibilityState !== "visible") return;
+        readingUi = true;
+        try {
+          await screenSettled();
+          if (state.saveBusy || state.conflict || !same(withoutRevision(state.ui), withoutRevision(state.baseUi))) return;
+          await refreshUiFromServer({onlyIfNewer: true});
+        } finally { readingUi = false; }
+      };
+      document.addEventListener("visibilitychange", readUiAgain);
+      window.addEventListener("focus", readUiAgain);
       $("#operation-dialog").addEventListener("close", () => {
         const path = state.returnFocusPath; state.returnFocusPath = null;
         if (path && !$("#operation-dialog").open) focusListRow(path);
@@ -1813,7 +1830,7 @@
         if (doc) { showDocument(doc); return; }
         // The entry happened in another tab that is still on that folder: switch back to it instead of
         // changing the current tab's folder.
-        const tab = state.ui.tabs[entry.tab];
+        const tab = state.tabs[entry.tab];
         if (Number.isInteger(entry.tab) && entry.tab !== activeTabIndex() && tab && tab.rootId === BASE_ID && tab.path === entry.path) {
           state.restoreListScroll = true; openFolderTab(tab, {index: entry.tab}); return;
         }
@@ -2555,18 +2572,19 @@
       if (row) { rovingRow(row); row.focus({preventScroll: true}); }
     } else if (moved) panel.scrollTop = 0;
   }
-  // Folder tabs: the active tab is matched by the (rootId, path) key from HF-META-004, never by
-  // object reference (saving replaces state.ui with a copy). Duplicate tabs at the same location
-  // are allowed: "+" always creates a new one.
+  // Folder tabs belong to this browser tab, like document tabs: navigating here never changes another
+  // browser's or device's tabs, nor the shared UI state. The active tab is matched by its
+  // (rootId, path) key, never by object reference. Duplicate tabs at the same location are allowed:
+  // "+" always creates a new one.
   function tabKey(rootId, path) { return `${rootId}\u0000${path}`; }
-  function tabIndex(key) { return state.ui.tabs.findIndex(tab => tabKey(tab.rootId, tab.path) === key); }
+  function tabIndex(key) { return state.tabs.findIndex(tab => tabKey(tab.rootId, tab.path) === key); }
   function tabAt(index, key) {
-    const tab = state.ui.tabs[index];
+    const tab = state.tabs[index];
     return tab && tabKey(tab.rootId, tab.path) === key ? index : tabIndex(key);
   }
   function activeTabIndex() { return state.activeTabKey === null ? -1 : tabAt(state.activeTabPos, state.activeTabKey); }
   function setActiveTab(index) {
-    const tab = state.ui.tabs[index];
+    const tab = state.tabs[index];
     state.activeTabPos = tab ? index : null;
     state.activeTabKey = tab ? tabKey(tab.rootId, tab.path) : null;
     // The active tab is restored on reload (this browser's convenience state; the saved state itself is unchanged).
@@ -2588,9 +2606,30 @@
     return tabs.length - 1;
   }
   function insertTab(tab, index) {
-    state.ui.tabs.splice(index, 0, {rootId: tab.rootId, path: tab.path, mode: "navegar"});
-    while (state.ui.tabs.length > 12) { state.ui.tabs.shift(); index--; }
+    state.tabs.splice(index, 0, {rootId: tab.rootId, path: tab.path, mode: "navegar"});
+    while (state.tabs.length > 12) { state.tabs.shift(); index--; }
     return index;
+  }
+  // Stored like the document tabs, together with the active one and under a key of this instance:
+  // each browser tab keeps its own, and a new browser tab starts from the ones used last in this
+  // browser. The UI state's tabs only seed a browser that has none yet.
+  const FOLDER_TABS_KEY = `hf-abas:${base}`;
+  function rememberFolderTabs() {
+    if (!state.tabsRestored) return;
+    try {
+      const value = JSON.stringify({tabs: state.tabs.map(tab => ({path: tab.path})), active: activeTabIndex()});
+      sessionStorage.setItem(FOLDER_TABS_KEY, value); localStorage.setItem(FOLDER_TABS_KEY, value);
+    } catch (_error) { /* optional */ }
+  }
+  function savedFolderTabs() {
+    state.tabsRestored = true;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(FOLDER_TABS_KEY) || localStorage.getItem(FOLDER_TABS_KEY) || "null");
+      const tabs = saved?.tabs;
+      if (!Array.isArray(tabs) || tabs.length > 12 || !tabs.every(tab => typeof tab?.path === "string")) return null;
+      const active = Number.isInteger(saved.active) && saved.active < tabs.length ? saved.active : tabs.length - 1;
+      return {tabs: tabs.map(tab => ({rootId: BASE_ID, path: tab.path, mode: "navegar"})), active};
+    } catch (_error) { return null; }
   }
   function rememberTab() {
     const key = tabKey(state.rootId, state.path);
@@ -2600,23 +2639,21 @@
     state.tablessKey = null;
     // Navigating reuses the current tab; only "+" or "Abrir em nova aba" add another one.
     if (active >= 0) {
-      state.ui.tabs[active] = { rootId: state.rootId, path: state.path, mode: "navegar" };
+      state.tabs[active] = { rootId: state.rootId, path: state.path, mode: "navegar" };
       setActiveTab(active);
-    } else setActiveTab(insertTab({rootId: state.rootId, path: state.path}, state.ui.tabs.length));
+    } else setActiveTab(insertTab({rootId: state.rootId, path: state.path}, state.tabs.length));
     renderTabs();
-    scheduleSave();
   }
   // index: the clicked tab; newTab: "+" (always creates one); reuse: "Abrir em nova aba" (activates the existing one).
   function openFolderTab(tab, {index = -1, newTab = false, reuse = false, atEnd = false} = {}) {
     const key = tabKey(tab.rootId, tab.path);
     const existing = reuse ? tabIndex(key) : -1;
-    if ((newTab || (reuse && existing < 0)) && state.ui.tabs.length >= 12) {
+    if ((newTab || (reuse && existing < 0)) && state.tabs.length >= 12) {
       status("Limite de 12 abas de pasta. Feche uma aba para abrir outra.", true); return;
     }
     if (newTab || (reuse && existing < 0)) {
       const active = activeTabIndex();
-      setActiveTab(insertTab(tab, atEnd || active < 0 ? state.ui.tabs.length : active + 1));
-      scheduleSave();
+      setActiveTab(insertTab(tab, atEnd || active < 0 ? state.tabs.length : active + 1));
     } else if (reuse) setActiveTab(existing);
     else setActiveTab(tabAt(index, key));
     state.tablessKey = null;
@@ -2632,21 +2669,21 @@
     const index = tabAt(position, key);
     if (index < 0) return;
     const active = activeTabIndex();
-    state.ui.tabs.splice(index, 1);
+    state.tabs.splice(index, 1);
     if (index === active) {
-      const neighbor = index < state.ui.tabs.length ? index : index - 1;
+      const neighbor = index < state.tabs.length ? index : index - 1;
       if (neighbor < 0) { setActiveTab(-1); state.tablessKey = tabKey(state.rootId, state.path); }
-      else if (state.view === "files" && !state.activeDocument) { scheduleSave(); openFolderTab(state.ui.tabs[neighbor], {index: neighbor}); return; }
+      else if (state.view === "files" && !state.activeDocument) { openFolderTab(state.tabs[neighbor], {index: neighbor}); return; }
       else setActiveTab(neighbor);
     } else if (active > index) setActiveTab(active - 1);
-    renderTabs(); scheduleSave();
+    renderTabs();
   }
   function renderTabs() {
     const strip = $("#tabs");
     strip.replaceChildren();
     const showingFolder = state.view === "files" && !state.activeDocument;
     const active = activeTabIndex();
-    for (const [index, tab] of state.ui.tabs.entries()) {
+    for (const [index, tab] of state.tabs.entries()) {
       const key = tabKey(tab.rootId, tab.path);
       const current = showingFolder && index === active;
       const wrapper = el("div", undefined, current ? "aba ativa" : "aba");
@@ -2687,11 +2724,12 @@
       strip.append(wrapper);
     }
     const plus = button("+", () => {
-      if (state.ui.tabs.length >= 12) { status("Limite de 12 abas de pasta. Feche uma aba para abrir outra.", true); return; }
+      if (state.tabs.length >= 12) { status("Limite de 12 abas de pasta. Feche uma aba para abrir outra.", true); return; }
       openFolderTab({rootId: BASE_ID, path: state.view === "files" ? state.path : ""}, {newTab: true, atEnd: true});
     }, "aba-mais");
     plus.dataset.tip = "Nova aba"; plus.setAttribute("aria-label", "Nova aba");
     strip.append(plus);
+    rememberFolderTabs();
     rememberOpenDocuments();
     scheduleWatch();
     // The active tab always stays visible, even with many tabs open.
@@ -4798,12 +4836,15 @@
     } else void openDocument(rootId, path);
   }
   function closeItemMenu(options) { state.closeItemMenu?.(options); }
+  // The rows that open an item menu: long-press listens on them, and a menu opened on one sits next
+  // to it instead of over it.
+  const MENU_ROWS = "#results tr.item, #tree .node-row, #favoritos .node-row, .fav-row, .res-item, #tags-nav .tg-row";
   // Touch: a steady long-press on a row opens the same menu as right-click. Safari on iOS never
   // fires "contextmenu" on long-press, so the app dispatches it manually after 500ms; the
   // triggering touch does not also open the item, and touch rows are not draggable, to avoid
   // competing with the system's own drag gesture (mouse and trackpad remain draggable).
   function installLongPress() {
-    const rows = "#results tr.item, #tree .node-row, #favoritos .node-row, .fav-row, .res-item, #tags-nav .tg-row";
+    const rows = MENU_ROWS;
     let timer = null; let start = null; let fired = false; let swallowUntil = 0;
     const cancel = () => { clearTimeout(timer); timer = null; };
     document.addEventListener("pointerdown", event => {
@@ -4877,15 +4918,28 @@
     const targetRow = path === null ? null : [...app.querySelectorAll("#results tr.item")].find(row => row.dataset.path === path);
     targetRow?.classList.add("menu-alvo");
     state.returnFocusPath = targetRow ? path : null;
-    menu.hidden = false; menu.style.display = "block";
+    menu.hidden = false; menu.style.display = "block"; menu.style.maxHeight = "";
     const rect = menu.getBoundingClientRect();
-    const width = Math.max(rect.width, 220), height = Math.max(rect.height, 100);
-    // Beside the pointer, or below the anchor button; when it does not fit, it flips up (and left)
-    // instead of sliding over the item or the button that opened it.
-    const box = anchor ? anchor.getBoundingClientRect() : null;
-    let left = box ? box.left : event.clientX, top = box ? box.bottom + 4 : event.clientY;
-    if (left + width > window.innerWidth - 8) left = (box ? box.right : event.clientX) - width;
-    if (top + height > window.innerHeight - 8) top = (box ? box.top - 4 : event.clientY) - height;
+    const width = rect.width || 220;
+    let height = rect.height || 100;
+    // Below the button that opened it, or below the row it acts on (at the pointer's column); where it
+    // does not fit, it goes above, and where it fits on neither side, it takes the larger one and
+    // scrolls, so it never covers that row or button. Elsewhere it opens beside the pointer.
+    // A row redrawn while the menu was being opened is no longer on the page; the pointer is used then.
+    const owner = anchor || event.target?.closest?.(MENU_ROWS) || targetRow;
+    const box = owner?.isConnected ? owner.getBoundingClientRect() : null;
+    const below = box ? window.innerHeight - 8 - (box.bottom + 4) : 0, above = box ? box.top - 4 - 8 : 0;
+    const keyboard = event.detail === 0;
+    let left = box && (anchor || keyboard) ? box.left : event.clientX, top;
+    if (left + width > window.innerWidth - 8) left = (anchor ? box.right : left) - width;
+    if (box && Math.max(below, above) >= Math.min(height, 120)) {
+      const downward = height <= below || (height > above && below >= above);
+      if (height > (downward ? below : above)) { height = downward ? below : above; menu.style.maxHeight = `${height}px`; }
+      top = downward ? box.bottom + 4 : box.top - 4 - height;
+    } else {
+      top = event.clientY;
+      if (top + height > window.innerHeight - 8) top -= height;
+    }
     menu.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
     menu.style.top = `${Math.max(8, Math.min(top, window.innerHeight - height - 8))}px`;
     const items = () => [...menu.querySelectorAll(".ctx-item")];
@@ -5794,6 +5848,7 @@
     status(`A tag #${tag} deixou de ser mostrada. Para voltar a mostrá-la, use Configurações.`);
   }
   async function saveLoop() {
+    let joined = 0;
     do {
       state.saveAgain = false;
       const draft = clone(state.ui);
@@ -5809,8 +5864,19 @@
         if (same(currentContent, submittedContent)) state.ui = clone(saved);
         else { state.ui.stateRevision = saved.stateRevision; state.saveAgain = true; }
       } catch (error) {
-        if (error.status === 409) { await showConflict(); return; }
-        throw error;
+        if (error.status !== 409) throw error;
+        // Changes to different favorites, labels, marks, or preferences on each side are joined
+        // and saved without asking, since neither side is lost; the choice is offered only when both
+        // changed the same one (HF-META-006).
+        let remote = null;
+        if (joined < 3) { try { remote = await fetchUi(); } catch (_error) { remote = null; } }
+        if (!remote || clashes(state.baseUi, state.ui, remote)) { await showConflict(); return; }
+        joined += 1;
+        const previous = state.ui;
+        state.ui = mergeUi(state.baseUi, state.ui, remote); state.ui.stateRevision = remote.stateRevision;
+        state.baseUi = clone(remote);
+        showUiState(previous);
+        continue;
       }
     } while (state.saveAgain || !same(withoutRevision(state.ui), withoutRevision(state.baseUi)));
   }
@@ -5844,8 +5910,9 @@
     }, "secondary-button");
     const mergeChanges = () => {
       const { base: before, remote: latest } = state.conflict;
+      const previous = state.ui;
       state.ui = mergeUi(before, state.ui, latest); state.baseUi = clone(latest); state.ui.stateRevision = latest.stateRevision; state.conflict = null;
-      applyPreferences(); renderCollections(); renderTabs(); refreshItems();
+      showUiState(previous);
       status("Mudanças juntadas com as da outra aba."); scheduleSave();
       void state.savePromise?.then(() => refreshTagIndex());
     };
@@ -5859,18 +5926,45 @@
   }
   // The server moves favorites and labels along with the item (HF-META-005); the UI re-reads the
   // state so it does not show a favorite or label on the old path, nor overwrite the old state.
-  async function refreshUiFromServer() {
+  async function refreshUiFromServer({onlyIfNewer = false} = {}) {
     if (!state.ui || state.conflict) return;
     try {
       await state.savePromise;
       const fresh = await fetchUi();
+      // An answer older than a save that finished meanwhile must not undo it.
+      if (onlyIfNewer && fresh.stateRevision <= (state.baseUi?.stateRevision ?? -1)) return;
+      const previous = state.ui;
       const pending = !same(withoutRevision(state.ui), withoutRevision(state.baseUi));
       state.ui = pending ? mergeUi(state.baseUi, state.ui, fresh) : clone(fresh);
       if (pending) state.ui.stateRevision = fresh.stateRevision;
       state.baseUi = clone(fresh);
-      renderCollections(); renderTabs(); refreshItems();
+      showUiState(previous);
       if (pending) scheduleSave();
     } catch (_error) { /* the next save treats this as a conflict */ }
+  }
+  // Shows a state that came from the server: theme, density, and ordering, the collections, and the
+  // tag index when the ignored tags changed. The sidebar width takes effect on the next opening.
+  function showUiState(previous) {
+    applyPreferences(); renderCollections(); renderTabs(); refreshItems();
+    if (!same(previous?.preferences?.ignoredTags ?? [], state.ui.preferences.ignoredTags ?? [])) void refreshTagIndex();
+  }
+  // What each side changed from the common base, by label ID, preference name, and item address,
+  // with the value it left there.
+  function changedValues(before, after) {
+    const changes = new Map();
+    const differ = (kind, left, right) => {
+      for (const key of new Set([...Object.keys(left), ...Object.keys(right)])) if (!same(left[key], right[key])) changes.set(`${kind}\u0000${key}`, right[key]);
+    };
+    differ("label", before.labels, after.labels);
+    differ("preference", before.preferences, after.preferences);
+    const rows = list => Object.fromEntries(list.map(item => [`${item.rootId}\u0000${item.path}`, item]));
+    differ("item", rows(before.items), rows(after.items));
+    return changes;
+  }
+  // Both sides changed the same label, preference, or item, and left it different.
+  function clashes(before, local, remote) {
+    const theirs = changedValues(before, remote);
+    return [...changedValues(before, local)].some(([key, value]) => theirs.has(key) && !same(theirs.get(key), value));
   }
   function same(left, right) { return JSON.stringify(left) === JSON.stringify(right); }
   function withoutRevision(document) {
@@ -5891,7 +5985,7 @@
       }
     }
     if (!same(before.items, local.items)) merged.items = mergeRows(before.items, local.items, remote.items, (item) => `${item.rootId}\u0000${item.path}`);
-    if (!same(before.tabs, local.tabs)) merged.tabs = mergeRows(before.tabs, local.tabs, remote.tabs, (tab) => `${tab.rootId}\u0000${tab.path}`);
+    // Tabs stay the server's: the interface keeps folder tabs in the browser and never changes these.
     return merged;
   }
   function mergeRows(before, local, remote, keyOf) {

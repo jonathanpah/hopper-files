@@ -151,7 +151,7 @@ EXPECTED_FILES = frozenset(
         "tests/test_repository_verifier.py",
     }
 )
-SPECIFICATION_SHA256 = "8b4816f4f78ef60543bae85aac4ddac53bb7a59852287765ccb5918855d050dc"
+SPECIFICATION_SHA256 = "202da5e1d62cbe3f9487c682883ca4bb67e34d05e429720db9f11ff73a3ac8dc"
 def source_files() -> set[str]:
     generated_parts = {".git", "__pycache__", ".pytest_cache", ".venv", "build", "dist", "node_modules"}
     result: set[str] = set()

@@ -50,15 +50,15 @@ source inputs. `scripts/verify_repository.py` checks the same list.
 | `frontend/test/clean-copy.test.mjs` | Normative clean-copy and plain-text recomposition fixtures. |
 | `frontend/test/editor-commands.test.mjs` | Editor commands: selection-based formatting, crossing pairs, headings, bullets, links, attached images, and active formats. |
 | `frontend/test/markdown-render.test.mjs` | Formatted-view rendering: tags (normalization, limits, and where they apply), task items, bullet markers, and raw HTML kept as text. |
-| `frontend/browser/harness.mjs` | Browser suite kit: a synthetic instance per test file, WebKit through `playwright-core`, device profiles, login, and the layout audit. |
+| `frontend/browser/harness.mjs` | Browser suite kit: a synthetic instance per test file, WebKit through `playwright-core`, device profiles, login, menu and long-press helpers, failed requests named in errors, and the layout audit. |
 | `frontend/browser/copy-paths.test.mjs` | Browser checks of copying one or several paths from listing, tree, and touch menus, and of the path-only menus. |
 | `frontend/browser/drag.test.mjs` | Browser checks of tree folders that open while dragged items are held over them. |
-| `frontend/browser/editor-bar.test.mjs` | Browser checks of the floating formatting bar over a selection in the Markdown view. |
-| `frontend/browser/favorites.test.mjs` | Browser checks of favorites as trees in the sidebar. |
+| `frontend/browser/editor-bar.test.mjs` | Browser checks of the Markdown view's formatting bars: the floating bar over a selection and the wrapping toolbar. |
+| `frontend/browser/favorites.test.mjs` | Browser checks of favorites as trees in the sidebar, and of two browsers of the same account. |
 | `frontend/browser/layout.test.mjs` | Layout audit of the main screens on desktop, laptop, iPad, and iPhone sizes in both themes. |
 | `frontend/browser/live-refresh.test.mjs` | Browser checks of the listing, tree, documents, and previews following changes made outside the application. |
 | `frontend/browser/login.test.mjs` | Browser checks of the sign-in and password change pages: user name, password, and password-manager hints. |
-| `frontend/browser/menu.test.mjs` | Browser checks of context menu placement, keyboard, focus, and highlight. |
+| `frontend/browser/menu.test.mjs` | Browser checks of context menu placement next to its row (pointer, keyboard, and long press), keyboard, focus, and highlight. |
 | `frontend/browser/tags.test.mjs` | Browser checks of the tag list and the tag menu with mouse, keyboard, and touch. |
 | `frontend/browser/viewers.test.mjs` | Browser checks of the PDF viewer with a standard, non-embedded font. |
 | `src/hopper_files/__init__.py` | Package identity and version. |

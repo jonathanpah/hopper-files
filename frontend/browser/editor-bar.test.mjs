@@ -1,4 +1,5 @@
-// Floating formatting bar over a selection in the Markdown view (fine pointer only).
+// Formatting bars of the Markdown view: the floating bar over a selection (fine pointer only), and
+// the fixed toolbar, which wraps with a mouse instead of hiding buttons past the edge.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -97,6 +98,24 @@ test("touch screens keep the fixed palette and get no floating bar", async () =>
   await page.locator(".cm-content").waitFor();
   assert.equal(await bar(page).count(), 0);
   assert.equal(await page.locator(".lp-paleta").isVisible(), true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("with a mouse in a narrow editor, the formatting toolbar wraps and shows every button", async () => {
+  const {context, page, errors} = await openApp(fixture, {profile: "laptop"});
+  await page.setViewportSize({width: 760, height: 720});
+  await openMarkdownView(page);
+  const hidden = await page.locator(".lp-paleta").evaluate(palette => {
+    const box = palette.getBoundingClientRect();
+    return [...palette.querySelectorAll(".lp-btn")].filter(button => button.offsetParent !== null).filter(button => {
+      const own = button.getBoundingClientRect();
+      return own.right > box.right + 0.5 || own.left < box.left - 0.5 || own.bottom > box.bottom + 0.5;
+    }).map(button => button.getAttribute("aria-label"));
+  });
+  assert.deepEqual(hidden, []);
+  const wrapped = await page.locator(".lp-paleta").evaluate(palette => new Set([...palette.querySelectorAll(".lp-btn")].map(button => Math.round(button.getBoundingClientRect().top))).size);
+  assert.ok(wrapped >= 2, "the toolbar takes more than one line at this width");
   assert.deepEqual(errors, []);
   await context.close();
 });

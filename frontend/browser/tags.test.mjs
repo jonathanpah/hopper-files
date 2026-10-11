@@ -3,7 +3,7 @@
 // tag, and the limit of ignored tags.
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { closeBrowser, keyboardMenu, openApp, openSidebar, startFixture, waitForListing } from "./harness.mjs";
+import { closeBrowser, keyboardMenu, longPress, openApp, openSidebar, startFixture, waitForListing } from "./harness.mjs";
 
 let fixture;
 before(async () => { fixture = await startFixture(); });
@@ -81,20 +81,6 @@ const recordContextMenus = page => page.evaluate(() => {
     setTimeout(() => window.contextMenus.push({tag, prevented: event.defaultPrevented}));
   }, true);
 });
-
-// A long press as Safari on iPhone delivers it: a touch pointerdown, the finger held still, and a
-// pointerup. The application opens its menu after 500 ms.
-async function longPress(page, locator, holdMs = 800) {
-  await locator.scrollIntoViewIfNeeded();
-  const box = await locator.boundingBox();
-  const point = {x: box.x + Math.min(60, box.width / 2), y: box.y + box.height / 2};
-  const send = type => page.evaluate(({type, x, y}) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent(type, {
-    bubbles: true, cancelable: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y,
-  })), {type, ...point});
-  await send("pointerdown");
-  await page.waitForTimeout(holdMs);
-  await send("pointerup");
-}
 
 async function ignoreWithMenu(page, tag) {
   await tagRow(page, tag).click({button: "right"});

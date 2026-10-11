@@ -1,9 +1,43 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.7 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.8 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.8
+
+Release 0.1.8 fixes what use on a Mac, an iPhone, and an iPad found in 0.1.7,
+with the same accounts open on several devices at once.
+
+- **Context menus:** a menu opened on a row, by pointer, keyboard, or long
+  press, opens just below the row or, without room there, just above it; with
+  room on neither side it takes the larger one and scrolls. It no longer covers
+  the row it acts on, which on a phone it did by opening at the finger.
+- **Several devices on one account:** folder tabs belong to each browser tab,
+  like document tabs, so navigating on one device no longer changes the shared
+  state and no longer makes the next change on another device end in the
+  "changed in another tab" choice. When two browsers change different
+  favorites, labels, or preferences, the page joins both and saves without
+  asking; the choice remains when both changed the same one. A page with no
+  unsaved change reads the state again when it returns to the foreground, so
+  favorites, labels, theme, density, and ordering changed elsewhere show up
+  without a reload.
+- **Formatting toolbar:** with a mouse or trackpad, the Markdown toolbar wraps
+  onto another line instead of hiding its last buttons past the edge.
+
+On the development machine, these checks passed:
+
+- the browser suite in `frontend/browser/` in WebKit, 103 tests in 10 files,
+  run twice in a row; the checks of the new behavior fail on 0.1.7;
+- the frontend tests and two identical frontend builds;
+- the Python tests, with the private marker list;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the repository verifier with the private marker list, on the tree and on
+  every commit since 0.1.5;
+- two byte-identical builds of the release archive;
+- an update from 0.1.7 with `update-release`, a return, and an update again,
+  in an isolated environment.
 
 ## Release 0.1.7
 

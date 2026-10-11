@@ -874,7 +874,7 @@
       }
       list.replaceChildren(el("div", "Abrindo…", "pk-vazio")); update();
       try {
-        const result = await request("api/list", {}, {rootId: BASE_ID, path});
+        const result = await readListing({rootId: BASE_ID, path});
         if (mine !== ticket) return;
         listing = result;
         const folders = result.entries.filter(entry => entry.type === "directory" && entry.openable !== false && entry.addressable !== false)
@@ -945,7 +945,7 @@
     const target = destinationDescription(actions);
     if (!target || typeof target.path !== "string") return true;
     try {
-      const listing = await request("api/list", {}, {rootId: target.rootId, path: parentOf(target.path)});
+      const listing = await readListing({rootId: target.rootId, path: parentOf(target.path)});
       const name = target.path.split("/").pop();
       return listing.entries.some(entry => entry.name === name);
     } catch (_error) { return true; }
@@ -1384,7 +1384,7 @@
     row.draggable = true; row.dataset.drag = "1";
     row.addEventListener("dragstart", event => {
       const paths = draggedPaths(path);
-      state.dragPaths = paths; state.springOpened = []; state.dragDropped = false;
+      state.dragPaths = paths; state.dragSeenAt = Date.now(); state.dragPointerSeen = false; state.springOpened = []; state.dragDropped = false;
       event.dataTransfer.setData("text/plain", paths.map(absolutePath).join("\n"));
       event.dataTransfer.effectAllowed = "all";
       document.body.classList.add("arrastando-itens"); row.classList.add("arrastando");
@@ -1670,7 +1670,7 @@
     // Names already taken at the real destination (which may be a subfolder where the files were dropped).
     const destinationNames = async target => {
       try {
-        const listing = await request("api/list", {}, {rootId: target.rootId, path: target.path});
+        const listing = await readListing({rootId: target.rootId, path: target.path});
         return {names: new Set(listing.entries.map(entry => entry.name)), label: target.path.split("/").pop() || "/"};
       } catch (_error) { return null; }
     };
@@ -1797,12 +1797,13 @@
       // After a reload, the current history entry stays the same: position comes from it.
       state.historySeq = history.state?.hf ? (history.state.seq ?? 0) : 0;
       window.addEventListener("online", () => { if (state.saveFailures) scheduleSave(); });
-      // Back on this screen after another app, window, or device: favorites, labels, and preferences
-      // changed elsewhere are read again, one reading at a time and once no menu, dialog, or drag is
-      // open, so nothing is redrawn under the pointer.
+      // Back on this screen after another app, window, or device, and every 30 s while it is shown (a
+      // window that stays in front gets no event when the person comes back from another device):
+      // favorites, labels, and preferences changed elsewhere are read again, one reading at a time
+      // and once no menu, dialog, or drag is open, so nothing is redrawn under the pointer.
       let readingUi = false;
       const readUiAgain = async () => {
-        if (readingUi || document.visibilityState !== "visible") return;
+        if (readingUi || document.visibilityState !== "visible" || state.sessionEnded || state.logoutPhase !== "idle") return;
         readingUi = true;
         try {
           await screenSettled();
@@ -1812,6 +1813,7 @@
       };
       document.addEventListener("visibilitychange", readUiAgain);
       window.addEventListener("focus", readUiAgain);
+      setInterval(readUiAgain, UI_READ_INTERVAL_MS);
       $("#operation-dialog").addEventListener("close", () => {
         const path = state.returnFocusPath; state.returnFocusPath = null;
         if (path && !$("#operation-dialog").open) focusListRow(path);
@@ -2079,11 +2081,22 @@
   // The tree and the listing request the same folder on the same click. The listing always makes
   // its own request (it needs the current folder after an operation); the tree reuses a request
   // already in flight. Nothing is cached after the response.
+  // A folder written to while it is read answers 409 (HF-API-006): it is read again, up to two more
+  // times, before the change is reported as a failure. Every listing read goes through here.
+  async function readListing(params) {
+    for (let attempt = 0; ; attempt++) {
+      try { return await request("api/list", {}, params); }
+      catch (error) {
+        if (error.status !== 409 || attempt >= 2) throw error;
+        await new Promise(resolve => setTimeout(resolve, 150 * (attempt + 1)));
+      }
+    }
+  }
   function listDirectory(rootId, path, {join = true} = {}) {
     const key = treeBranchKey(rootId, path);
     const current = state.listInFlight.get(key);
     if (join && current) return current;
-    const pending = request("api/list", {}, {rootId, path}).finally(() => {
+    const pending = readListing({rootId, path}).finally(() => {
       if (state.listInFlight.get(key) === pending) state.listInFlight.delete(key);
     });
     state.listInFlight.set(key, pending);
@@ -2993,7 +3006,7 @@
         // The open folder is not part of its own listing: its dates come from the parent folder's listing.
         const pending = el("div", undefined, "campo-datas"); inner.append(pending);
         const name = selected.path.split("/").pop();
-        void request("api/list", {}, {rootId: selected.rootId, path: parentOf(selected.path)}).then(result => {
+        void readListing({rootId: selected.rootId, path: parentOf(selected.path)}).then(result => {
           const entry = result.entries.find(item => item.name === name);
           if (!entry || !pending.isConnected) return;
           const before = inner.lastChild; dates(entry);
@@ -4195,7 +4208,7 @@
   const live = {
     epoch: null, seq: 0, running: false, controller: null, key: "", kickPending: false, stopped: false,
     unsupported: false, failures: 0, wake: null, confirmed: new Set(), rejected: new Set(), jobs: new Map(),
-    visual: null, pointerDown: false,
+    visual: null, pointerDown: false, pointerDownAt: 0,
   };
   const liveDelay = ms => new Promise(resolve => setTimeout(resolve, ms));
   function liveActive() {
@@ -4359,8 +4372,28 @@
     })();
   }
   // A redraw waits while a menu, a dialog, a drag, or a press on the screen is in progress.
+  // A press or a drag whose end the browser never reported (a gesture the system took over, a drag
+  // released where the page does not hear it) stops holding the screen after a few seconds without
+  // news, so redraws and readings of the shared state cannot stop for good.
+  const STALE_HOLD_MS = 5000;
+  function holdingScreen() {
+    return !$("#menu-ctx").hidden || Boolean(app.querySelector("dialog[open]"))
+      || (Boolean(state.dragPaths) && !dragExpired())
+      || (live.pointerDown && Date.now() - live.pointerDownAt < STALE_HOLD_MS);
+  }
+  // A drag whose end the browser never reported: the page heard the pointer again after it began (no
+  // pointer events arrive during a drag) and no drag event for a few seconds. Its state is cleared, so
+  // a later drag, from the Finder for example, is not taken for it.
+  function dragExpired() {
+    if (!state.dragPaths || !state.dragPointerSeen || Date.now() - (state.dragSeenAt || 0) < STALE_HOLD_MS) return false;
+    state.dragPaths = null; state.springOpened = [];
+    document.body.classList.remove("arrastando-itens");
+    for (const row of app.querySelectorAll(".arrastando")) row.classList.remove("arrastando");
+    clearDropTargets();
+    return true;
+  }
   async function screenSettled() {
-    while (!$("#menu-ctx").hidden || app.querySelector("dialog[open]") || state.dragPaths || live.pointerDown) await liveDelay(250);
+    while (holdingScreen()) await liveDelay(250);
   }
   // The list is on screen (not a preview, an error card, or search results in its place), or the
   // notice that the open folder is gone.
@@ -4548,8 +4581,17 @@
       scheduleWatch();
     });
     window.addEventListener("online", () => live.wake?.());
-    document.addEventListener("pointerdown", () => { live.pointerDown = true; }, true);
+    document.addEventListener("pointerdown", () => { live.pointerDown = true; live.pointerDownAt = Date.now(); if (state.dragPaths) state.dragPointerSeen = true; }, true);
     for (const type of ["pointerup", "pointercancel"]) document.addEventListener(type, () => { live.pointerDown = false; }, true);
+    // A mouse that moves with no button pressed is not pressing; a press that moves is still going on.
+    document.addEventListener("pointermove", event => {
+      if (state.dragPaths) state.dragPointerSeen = true;
+      if (event.pointerType === "mouse" && event.buttons === 0) live.pointerDown = false;
+      else if (live.pointerDown) live.pointerDownAt = Date.now();
+    }, true);
+    for (const type of ["drag", "dragover"]) document.addEventListener(type, () => { state.dragSeenAt = Date.now(); }, true);
+    // A new drag entering the page first ends one whose end was never reported.
+    document.addEventListener("dragenter", () => { dragExpired(); }, true);
     window.addEventListener("blur", () => { live.pointerDown = false; });
     scheduleWatch();
   }
@@ -4933,8 +4975,13 @@
     let left = box && (anchor || keyboard) ? box.left : event.clientX, top;
     if (left + width > window.innerWidth - 8) left = (anchor ? box.right : left) - width;
     if (box && Math.max(below, above) >= Math.min(height, 120)) {
-      const downward = height <= below || (height > above && below >= above);
-      if (height > (downward ? below : above)) { height = downward ? below : above; menu.style.maxHeight = `${height}px`; }
+      const downward = height <= below || (height > above && below >= above), room = downward ? below : above;
+      if (height > room) {
+        // The edge cuts through the middle of a command, so the half-shown one tells that the menu scrolls.
+        const middles = [...menu.querySelectorAll(".ctx-item")].map(item => item.offsetTop + item.offsetHeight / 2);
+        height = middles.filter(middle => middle <= room).pop() ?? room;
+        menu.style.maxHeight = `${height}px`;
+      }
       top = downward ? box.bottom + 4 : box.top - 4 - height;
     } else {
       top = event.clientY;
@@ -5402,7 +5449,7 @@
         event.preventDefault();
         try {
           const parent = item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : "";
-          const listing = await request("api/list", {}, {rootId: item.rootId, path: parent});
+          const listing = await readListing({rootId: item.rootId, path: parent});
           const found = listing.entries.find(entry => entry.name === item.path.split("/").at(-1));
           const type = found?.type || "file";
           const full = !found || (entryUsable(found) && ["file", "directory"].includes(type));
@@ -5430,7 +5477,7 @@
     const parent = item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : "";
     const name = item.path.split("/").at(-1);
     try {
-      const listing = await request("api/list", {}, {rootId: item.rootId, path: parent});
+      const listing = await readListing({rootId: item.rootId, path: parent});
       const entry = listing.entries.find(value => value.name === name);
       if (!entry) throw new Error("not_found");
       state.view = "files"; state.rootId = item.rootId; state.path = parent; state.localFilter = "";
@@ -5583,7 +5630,7 @@
           event.preventDefault();
           try {
             const parent = item.path.includes("/") ? item.path.slice(0, item.path.lastIndexOf("/")) : "";
-            const listing = await request("api/list", {}, {rootId: item.rootId, path: parent});
+            const listing = await readListing({rootId: item.rootId, path: parent});
             const found = listing.entries.find(entry => entry.name === item.path.split("/").at(-1));
             const type = found?.type || "file";
             const full = !found || (entryUsable(found) && ["file", "directory"].includes(type));
@@ -5926,13 +5973,17 @@
   }
   // The server moves favorites and labels along with the item (HF-META-005); the UI re-reads the
   // state so it does not show a favorite or label on the old path, nor overwrite the old state.
+  const UI_READ_INTERVAL_MS = 30000;
   async function refreshUiFromServer({onlyIfNewer = false} = {}) {
     if (!state.ui || state.conflict) return;
     try {
       await state.savePromise;
       const fresh = await fetchUi();
-      // An answer older than a save that finished meanwhile must not undo it.
-      if (onlyIfNewer && fresh.stateRevision <= (state.baseUi?.stateRevision ?? -1)) return;
+      // An answer older than a save that finished meanwhile must not undo it; a reading of its own
+      // also waits again for the screen, which may have opened a menu or a drag during the request.
+      const stale = () => fresh.stateRevision <= (state.baseUi?.stateRevision ?? -1);
+      if (onlyIfNewer && stale()) return;
+      if (onlyIfNewer) { await screenSettled(); if (state.conflict || stale()) return; }
       const previous = state.ui;
       const pending = !same(withoutRevision(state.ui), withoutRevision(state.baseUi));
       state.ui = pending ? mergeUi(state.baseUi, state.ui, fresh) : clone(fresh);
@@ -5942,11 +5993,40 @@
       if (pending) scheduleSave();
     } catch (_error) { /* the next save treats this as a conflict */ }
   }
-  // Shows a state that came from the server: theme, density, and ordering, the collections, and the
-  // tag index when the ignored tags changed. The sidebar width takes effect on the next opening.
+  // Shows a state that came from the server, redrawing only what it changed: theme, density, and
+  // ordering; the collections; the listing when a listing is on screen (a preview, an error notice,
+  // search results, and a tag view are left alone), at the same scroll position; and the tag index
+  // when the ignored tags changed. Keyboard focus stays where it was. The sidebar width takes effect
+  // on the next opening.
   function showUiState(previous) {
-    applyPreferences(); renderCollections(); renderTabs(); refreshItems();
-    if (!same(previous?.preferences?.ignoredTags ?? [], state.ui.preferences.ignoredTags ?? [])) void refreshTagIndex();
+    const next = state.ui;
+    const preferencesChanged = !same(previous?.preferences, next.preferences);
+    const marksChanged = !same(previous?.items, next.items) || !same(previous?.labels, next.labels);
+    if (!preferencesChanged && !marksChanged) return;
+    keepFocus(() => {
+      if (preferencesChanged) applyPreferences();
+      if (marksChanged) renderCollections();
+      if (state.view === "files" ? listingShown() : ["favorites", "labels"].includes(state.view)) {
+        const panel = $("#results"), top = panel.scrollTop;
+        refreshItems();
+        panel.scrollTop = top;
+      }
+    });
+    if (marksChanged) scheduleWatch();
+    if (!same(previous?.preferences?.ignoredTags ?? [], next.preferences.ignoredTags ?? [])) void refreshTagIndex();
+  }
+  // A redraw replaces the element that had keyboard focus: focus returns, without scrolling, to the
+  // new element of the same kind, address, and name in the same region.
+  function keepFocus(render) {
+    const before = document.activeElement;
+    const region = before && before !== document.body ? before.closest("[id]")?.id : null;
+    const identity = node => [node.tagName, node.closest("[data-path]")?.dataset.path ?? "", node.getAttribute("aria-label") || node.textContent.trim()].join("\u0000");
+    const wanted = region ? identity(before) : null;
+    render();
+    if (!region || before.isConnected || (document.activeElement && document.activeElement !== document.body)) return;
+    const scope = document.getElementById(region);
+    const again = scope && [scope, ...scope.querySelectorAll(before.tagName)].find(node => node.tagName === before.tagName && identity(node) === wanted);
+    again?.focus({preventScroll: true});
   }
   // What each side changed from the common base, by label ID, preference name, and item address,
   // with the value it left there.

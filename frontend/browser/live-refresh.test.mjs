@@ -71,7 +71,12 @@ function recordRequests(page) {
   page.on("request", request => {
     const url = new URL(request.url());
     const route = url.pathname.match(/\/api\/(.+)$/)?.[1];
-    if (route) sent.push({at: Date.now(), route, path: url.searchParams.get("path")});
+    if (route) sent.push({at: Date.now(), route, path: url.searchParams.get("path"), request});
+  });
+  // A read the server refused with 409 (the folder changed while it was read) is made again by the app.
+  page.on("response", response => {
+    const entry = sent.find(item => item.request === response.request());
+    if (entry) entry.status = response.status();
   });
   return sent;
 }
@@ -106,6 +111,8 @@ async function happensWithin(page, ms, predicate, arg) {
 }
 
 // Console errors other than the failed loads, with one of `statuses`, that a test causes on purpose.
+// A test that writes next to a folder while the app reads it may also meet a 409: the server says the
+// folder changed during the read, and the app reads it again.
 const unexpected = (errors, ...statuses) => errors.filter(error => !(error.includes("Failed to load resource")
   && statuses.some(status => error.includes(`status of ${status}`))));
 
@@ -311,6 +318,91 @@ test("an open context menu holds the listing redraw until it closes", async t =>
   await context.close();
 });
 
+// A press or a drag whose end the browser never reports (the system took over the gesture, or the
+// drag ended where the page does not hear it) holds the redraw for a few seconds at most.
+const LOST_END = 5000 + 3 * LIVE;
+
+test("a press whose end never arrives stops holding the listing redraw after a few seconds", async t => {
+  removeAfter(t, "after-lost-press.txt");
+  const {context, page, errors} = await openLive(t);
+  await page.evaluate(() => document.querySelector("#results").dispatchEvent(new PointerEvent("pointerdown", {bubbles: true, pointerType: "touch", isPrimary: true})));
+  const reported = changeReported(page, apiPath(fixture.documents), "after-lost-press.txt");
+  writeFileSync(inDocuments("after-lost-press.txt"), "x\n");
+  await reported;
+  // The press holds the redraw at first, like a finger on the screen.
+  assert.equal(await happensWithin(page, 2500, selector => Boolean(document.querySelector(selector)), rowSelector("after-lost-press.txt")), false);
+  await listingRow(page, "after-lost-press.txt").waitFor({timeout: LOST_END});
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a drag whose end never arrives stops holding the listing redraw after a few seconds", async t => {
+  removeAfter(t, "after-lost-drag.txt");
+  const {context, page, errors} = await openLive(t);
+  await listingRow(page, "texto.txt").evaluate(row => row.dispatchEvent(new DragEvent("dragstart", {bubbles: true, cancelable: true, dataTransfer: new DataTransfer()})));
+  // The pointer moves on, which never happens while the browser still drags.
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent("pointermove", {bubbles: true, pointerType: "mouse", buttons: 0})));
+  const reported = changeReported(page, apiPath(fixture.documents), "after-lost-drag.txt");
+  writeFileSync(inDocuments("after-lost-drag.txt"), "x\n");
+  await reported;
+  assert.equal(await happensWithin(page, 2500, selector => Boolean(document.querySelector(selector)), rowSelector("after-lost-drag.txt")), false);
+  await listingRow(page, "after-lost-drag.txt").waitFor({timeout: LOST_END});
+  assert.equal(await page.evaluate(() => document.body.classList.contains("arrastando-itens")), false, "the expired drag is cleared");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a drag still going on keeps holding the redraw past a few seconds", async t => {
+  removeAfter(t, "during-drag.txt");
+  const {context, page, errors} = await openLive(t);
+  await listingRow(page, "texto.txt").evaluate(row => row.dispatchEvent(new DragEvent("dragstart", {bubbles: true, cancelable: true, dataTransfer: new DataTransfer()})));
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent("pointermove", {bubbles: true, pointerType: "mouse", buttons: 0})));
+  const reported = changeReported(page, apiPath(fixture.documents), "during-drag.txt");
+  writeFileSync(inDocuments("during-drag.txt"), "x\n");
+  await reported;
+  // The browser keeps sending drag events while the drag goes on.
+  for (let second = 0; second < 8; second++) {
+    await page.evaluate(() => document.querySelector("#results").dispatchEvent(new DragEvent("dragover", {bubbles: true, cancelable: true, dataTransfer: new DataTransfer()})));
+    await delay(1000);
+    assert.equal(await listingRow(page, "during-drag.txt").count(), 0, `redrawn during the drag, after ${second + 1} s`);
+  }
+  await listingRow(page, "texto.txt").evaluate(row => row.dispatchEvent(new DragEvent("dragend", {bubbles: true})));
+  await listingRow(page, "during-drag.txt").waitFor({timeout: LIVE});
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a mouse that moves with no button pressed ends a press at once", async t => {
+  removeAfter(t, "after-mouse-move.txt");
+  const {context, page, errors} = await openLive(t);
+  await page.evaluate(() => document.querySelector("#results").dispatchEvent(new PointerEvent("pointerdown", {bubbles: true, pointerType: "mouse", buttons: 1})));
+  const reported = changeReported(page, apiPath(fixture.documents), "after-mouse-move.txt");
+  writeFileSync(inDocuments("after-mouse-move.txt"), "x\n");
+  await reported;
+  assert.equal(await happensWithin(page, 1000, selector => Boolean(document.querySelector(selector)), rowSelector("after-mouse-move.txt")), false);
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent("pointermove", {bubbles: true, pointerType: "mouse", buttons: 0})));
+  await listingRow(page, "after-mouse-move.txt").waitFor({timeout: LIVE});
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a folder that changes while it is read is read again instead of showing an error", async t => {
+  const {context, page, errors} = await openLive(t);
+  let answered = 0;
+  await page.route("**/api/list?*", route => {
+    if (new URL(route.request().url()).searchParams.get("path")?.endsWith("/notas") && answered++ === 0) {
+      return route.fulfill({status: 409, contentType: "application/json", body: JSON.stringify({error: "conflict"})});
+    }
+    return route.continue();
+  });
+  await listingRow(page, "notas").locator("button.nome-link").click();
+  await listingRow(page, "projeto.md").waitFor({timeout: LIVE});
+  assert.equal(await page.locator("#results", {hasText: "A pasta mudou durante a leitura"}).count(), 0);
+  assert.equal(answered >= 2, true);
+  assert.deepEqual(unexpected(errors, 409), []);
+  await context.close();
+});
+
 test("an open tree branch shows folders created and deleted outside the app within 2 s", async t => {
   removeAfter(t, "arquivo/created-outside");
   const {context, page, errors} = await openLive(t);
@@ -339,8 +431,10 @@ test("a burst of 100 files written outside the app costs a few reads of the open
   await page.waitForFunction(() => document.querySelectorAll('#results tr.item[data-path*="/burst-"]').length === 100, null, {timeout: LIVE, polling: 50});
   const reads = () => sent.filter(request => request.at >= start && request.route === "list" && request.path === apiPath(fixture.documents));
   await quietFor(reads, 1000);
-  assert.ok(reads().length >= 1 && reads().length <= 5, `${reads().length} reads of the open folder`);
-  assert.deepEqual(errors, []);
+  // Reads the server refused because the folder changed meanwhile are made again and do not count.
+  const done = reads().filter(request => request.status !== 409);
+  assert.ok(done.length >= 1 && done.length <= 5, `${done.length} reads of the open folder`);
+  assert.deepEqual(unexpected(errors, 409), []);
   await context.close();
 });
 
@@ -459,6 +553,34 @@ test("an open image preview shows the new version within 2 s", async t => {
   await page.waitForFunction(() => document.querySelector("#results img.raster-preview")?.naturalWidth === 100);
   writeBySwap(inDocuments("live-image.png"), png(220, 80, [30, 60, 200]));
   await page.waitForFunction(() => document.querySelector("#results img.raster-preview")?.naturalWidth === 220, null, {timeout: LIVE, polling: 50});
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+// Changes the stored interface state through the API, as another browser would: `change` maps the
+// stored document (without its revision) to the next one.
+async function changeStoredState(page, change) {
+  const {stateRevision, ...saved} = await page.evaluate(async () => (await fetch("api/state", {headers: {Accept: "application/json"}, cache: "no-store"})).json());
+  const status = await page.evaluate(async body => (await fetch("api/state", {
+    method: "PUT", body, headers: {"Content-Type": "application/json", Accept: "application/json", "X-CSRF-Token": document.getElementById("hf-app").dataset.csrf},
+  })).status, JSON.stringify({...change(saved), baseRevision: stateRevision}));
+  assert.equal(status, 200);
+}
+
+test("reading the shared state again leaves an image preview on screen and keyboard focus where it was", async t => {
+  createFiles(t, {"ui-image.png": png(100, 50, [200, 30, 30])});
+  const {context, page, errors} = await openLive(t);
+  await openFromListing(page, "ui-image.png");
+  await page.waitForFunction(() => document.querySelector("#results img.raster-preview")?.naturalWidth === 100);
+  await page.locator("#tabs .aba-nome").first().focus();
+  const focused = await page.evaluate(() => document.activeElement.textContent);
+  const favorite = inDocuments("texto.txt");
+  t.after(() => changeStoredState(page, state => ({...state, items: state.items.filter(item => item.path !== favorite)})).catch(() => {}));
+  await changeStoredState(page, state => ({...state, items: [...state.items.filter(item => item.path !== favorite), {path: favorite, labelIds: [], favorite: true, emoji: null, inode: null, device: null}]}));
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.locator(`#favoritos .node-row[data-path="${apiPath(favorite)}"]`).waitFor({timeout: LIVE});
+  assert.equal(await page.locator("#results img.raster-preview").count(), 1, "the preview stays");
+  assert.equal(await page.evaluate(() => document.activeElement?.classList.contains("aba-nome") ? document.activeElement.textContent : null), focused);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -590,7 +712,7 @@ test("the open folder deleted outside the app says so, and shows its new content
   writeFileSync(join(output, "next.txt"), "next\n");
   await listingRow(page, "next.txt").waitFor({timeout: LIVE});
   // A missing folder answers 403 or 404 (HF-API-006).
-  assert.deepEqual(unexpected(errors, 403, 404), []);
+  assert.deepEqual(unexpected(errors, 403, 404, 409), []);
   await context.close();
 });
 
@@ -614,7 +736,7 @@ test("the open folder created again after more than one change request shows its
   mkdirSync(output);
   writeFileSync(join(output, "new.txt"), "new\n");
   await waitForFolderBack(page, "new.txt");
-  assert.deepEqual(unexpected(errors, 403, 404), []);
+  assert.deepEqual(unexpected(errors, 403, 404, 409), []);
   await context.close();
 });
 
@@ -627,7 +749,7 @@ test("the open folder and its parent deleted outside the app show the new conten
   mkdirSync(output, {recursive: true});
   writeFileSync(join(output, "new.txt"), "new\n");
   await waitForFolderBack(page, "new.txt");
-  assert.deepEqual(unexpected(errors, 403, 404), []);
+  assert.deepEqual(unexpected(errors, 403, 404, 409), []);
   await context.close();
 });
 

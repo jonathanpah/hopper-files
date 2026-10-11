@@ -1,9 +1,51 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.8 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.9 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.9
+
+Release 0.1.9 fixes what the use of 0.1.8 on a Mac, an iPhone, and an iPad
+showed.
+
+- **Shared state:** a page reads the shared state again every 30 seconds
+  while it is shown, besides when it returns to the foreground. A Safari
+  window that stays in front while the person uses another device gets no
+  focus event when they come back, so a favorite added on the iPad did not
+  show on the Mac until a reload. The reading redraws only what changed: a
+  preview, an error notice, search results, and a tag view stay as they are,
+  and keyboard focus stays where it was. It stops when the session ends.
+- **Scrolling menus:** when a menu fits on neither side of its row and
+  scrolls, its edge cuts through the middle of a command, so the half-shown
+  command tells that there is more below.
+- **Held redraws:** a redraw of the listing and a reading of the shared state
+  wait while a press or a drag is in progress, and a press or a drag whose end
+  the browser never reported held them for good. Now a press or a drag with no
+  news for 5 seconds stops holding them, and a mouse moving with no button
+  pressed ends a press. In the use of 0.1.8, a listing on an iPhone stopped
+  following new files for about two minutes and then recovered by itself; the
+  cause on the device was not confirmed, and this change bounds any such hold.
+- **Busy folders:** every listing read of a folder that changes while it is
+  read is made again, up to two more times, instead of showing "A pasta mudou
+  durante a leitura" and waiting for a click.
+- **Expired drags:** a drag counts as over when the pointer moved again after
+  it and no drag event came for 5 seconds; its state is cleared, so a later
+  drag from the Finder is not taken for it.
+
+On the development machine, these checks passed:
+
+- the browser suite in `frontend/browser/` in WebKit, 110 tests in 10 files,
+  run twice in a row; the checks of the new behavior fail on 0.1.8;
+- the frontend tests and two identical frontend builds;
+- the Python tests, with the private marker list;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the repository verifier with the private marker list, on the tree and on
+  every commit since 0.1.5;
+- two byte-identical builds of the release archive;
+- an update from 0.1.8 with `update-release`, a return, and an update again,
+  in an isolated environment.
 
 ## Release 0.1.8
 

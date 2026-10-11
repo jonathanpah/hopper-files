@@ -112,6 +112,14 @@ test("on a short phone screen, a long press opens the menu above a row near the 
   await menu(page).waitFor({state: "visible"});
   await assertBesideRow(page, listingRow(page, "notas"));
   assert.ok(await menu(page).evaluate(element => element.scrollHeight > element.clientHeight), "a menu taller than either side scrolls");
+  // A command cut in half at the edge shows that there is more to scroll to.
+  assert.ok(await menu(page).evaluate(element => {
+    const edge = element.getBoundingClientRect().bottom;
+    return [...element.querySelectorAll(".ctx-item")].some(item => {
+      const box = item.getBoundingClientRect();
+      return box.top < edge - 4 && box.bottom > edge + 4;
+    });
+  }), "a command is cut in half at the edge of a scrolling menu");
   await page.keyboard.press("Escape");
   assert.deepEqual(errors, []);
   await context.close();

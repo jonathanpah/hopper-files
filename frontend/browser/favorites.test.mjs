@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { after, before, test } from "node:test";
-import { closeBrowser, listingRow, openApp, startFixture, waitForListing } from "./harness.mjs";
+import { closeBrowser, listingRow, openApp, showDocuments, startFixture, waitForListing } from "./harness.mjs";
 
 let fixture;
 before(async () => { fixture = await startFixture(); });
@@ -27,7 +27,7 @@ function favoriteRows(page) {
 
 // Leaves exactly these favorites in the instance state, and a single stored folder tab on the
 // fixture documents (what a browser without tabs of its own starts from), through the API the page
-// itself uses; then reloads so the page starts from that state.
+// itself uses; then reloads so the page starts from that state, in the documents folder.
 async function resetState(page, names) {
   const status = await page.evaluate(async ({documents, paths}) => {
     const csrf = document.getElementById("hf-app").dataset.csrf;
@@ -48,6 +48,8 @@ async function resetState(page, names) {
   assert.equal(status, 200);
   await page.reload();
   await waitForListing(page);
+  // A page with folder tabs of its own keeps them: it goes back to the documents folder itself.
+  await showDocuments(page);
 }
 
 // The page saves its state shortly after a change: waits until the server holds exactly these favorites.
@@ -385,6 +387,20 @@ test("a browser without folder tabs of its own starts from the stored ones, and 
   await page.reload(); await waitForListing(page);
   assert.deepEqual(await page.locator("#tabs .aba-nome").allTextContents(), ["documents"]);
   assert.equal(await activeTabName(page), "documents");
+  await changeStoredState(page, state => ({...state, tabs: [{path: fixture.documents, mode: "navegar"}]}));
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+test("a favorite added in another browser appears within 30 seconds in a window that stays in front", async () => {
+  const first = await openApp(fixture), second = await openApp(fixture);
+  await resetState(first.page, []);
+  await second.page.reload(); await waitForListing(second.page);
+  await favoriteFromMenu(first.page, "texto.txt");
+  await expectSavedFavorites(first.page, ["texto.txt"]);
+  // No focus or visibility event reaches the second window: only the periodic reading can show it.
+  await favoriteRow(second.page, "texto.txt").waitFor({timeout: 40000});
+  assert.equal(await conflictShown(second.page), 0);
+  assert.deepEqual([...first.errors, ...second.errors], []);
+  await first.context.close(); await second.context.close();
 });

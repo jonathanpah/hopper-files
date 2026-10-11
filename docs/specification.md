@@ -782,7 +782,11 @@ is shown within about 2 seconds, without any action:
 - the listing and the tree read the folder again and redraw only when entries
   differ, keeping the list scroll position, keyboard focus, and marked items
   that still exist; a redraw waits while a context menu, a dialog, a drag, or a
-  pointer press is in progress, and folder sizes already measured are kept;
+  pointer press is in progress, except that a press with no news for 5
+  seconds, or a drag after which the pointer moved again with no drag event
+  for 5 seconds, whose end the browser never reported, stops holding it; folder
+  sizes already measured are kept, and a read that a change interrupts (`409`)
+  is made again, up to two more times, before the interface reports it;
 - when the open folder is deleted or can no longer be opened, the listing
   drops its entries and says so; the interface also watches the folder's
   ancestors, and when the folder exists again, its new content is shown;
@@ -891,8 +895,8 @@ has no context menu. A context menu opened on an item row, by pointer, touch,
 or keyboard, opens just below that row at the pointer's column (at the row's
 left edge from the keyboard), and one opened by a control opens just below the
 control; where it does not fit below it opens above, where it does not fit on
-either side it takes the larger side and scrolls, and it flips left at the
-right edge, so it never covers the row or control it acts on. Elsewhere it
+either side it takes the larger side and scrolls, with a command cut in half at
+its edge to show that it scrolls, and it flips left at the right edge, so it never covers the row or control it acts on. Elsewhere it
 opens beside the pointer. Esc or Tab closes it and returns focus to where it
 was without scrolling. In the listing, the arrow keys move between rows
 (one Tab stop for the list), Enter opens, Space checks, F2 renames, and Delete
@@ -1084,10 +1088,13 @@ changed the same label, preference, or item, it offers explicit reload or
 resolution against the current revision. It never silently overwrites either
 side. Dismissing that choice merges both sides, so later changes keep being
 saved. A client with no unsaved change reads the state again when its window
-or browser tab returns to the foreground, so favorites, labels, and display
-preferences changed in another browser or device appear there without a
-reload (the sidebar width takes effect on the next opening) and the next
-change does not meet a conflict. After a failed write for
+or browser tab returns to the foreground and every 30 seconds while it is
+shown, once no context menu, dialog, drag, or press is in progress, so
+favorites, labels, and display preferences changed in another browser or
+device appear there without a reload (the sidebar width takes effect on the
+next opening) and the next change does not meet a conflict. That reading
+redraws only what changed: a preview, an error notice, search results, and a
+tag view stay as they are, and keyboard focus stays where it was. After a failed write for
 any reason other than `401` or `422`, the client keeps the local change, says
 so, and retries on its own with a growing delay and when the network returns;
 the notice clears once a write succeeds. This state protocol does not make tabs

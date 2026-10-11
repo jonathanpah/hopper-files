@@ -352,7 +352,7 @@ and reads the current state: when each side changed different labels,
 preferences, or items, it joins them and saves again without asking; when both
 changed the same one, it offers an explicit reload or merge. With no unsaved
 change, a page reads the state again when its window or browser tab returns to
-the foreground, so favorites, labels, theme, density, and ordering changed in
+the foreground and every 30 seconds while it is shown, so favorites, labels, theme, density, and ordering changed in
 another browser or device show up there without a reload; the sidebar width
 takes effect on the next opening. Folder tabs belong to the browser tab, like
 document tabs: the page keeps them in the browser's session and local storage,

@@ -896,7 +896,9 @@ or keyboard, opens just below that row at the pointer's column (at the row's
 left edge from the keyboard), and one opened by a control opens just below the
 control; where it does not fit below it opens above, where it does not fit on
 either side it takes the larger side and scrolls, with a command cut in half at
-its edge to show that it scrolls, and it flips left at the right edge, so it never covers the row or control it acts on. Elsewhere it
+its edge to show that it scrolls, and it flips left at the right edge; the
+space counts only the visible height of the page, without what a browser's
+floating toolbar covers, so it never covers the row or control it acts on. Elsewhere it
 opens beside the pointer. Esc or Tab closes it and returns focus to where it
 was without scrolling. In the listing, the arrow keys move between rows
 (one Tab stop for the list), Enter opens, Space checks, F2 renames, and Delete

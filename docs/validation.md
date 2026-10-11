@@ -1,9 +1,35 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.9 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.10 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
+
+## Release 0.1.10
+
+Release 0.1.10 fixes the placement of a context menu on an iPhone. Safari's
+floating toolbar covers the bottom of the window, and the page's layout ends
+above it, but the menu counted the room down to the bottom of the window: a
+menu that scrolls below a row hid its last visible command under the toolbar,
+so the cut command that shows the scrolling was barely visible. The menu now
+counts only the visible height of the page.
+
+When the application opens on a folder, the status bar now shows how many items
+it has, as after any navigation, and live refresh keeps that count current;
+before, it said "Navegação pronta." until the next navigation.
+
+On the development machine, these checks passed:
+
+- the browser suite in `frontend/browser/` in WebKit, 112 tests in 10 files,
+  run twice in a row; the checks of the new behavior fail on 0.1.9;
+- the frontend tests and two identical frontend builds;
+- the Python tests, with the private marker list;
+- the integration scripts and `scripts/verify-clean-checkout.sh`;
+- the repository verifier with the private marker list, on the tree and on
+  every commit since 0.1.5;
+- two byte-identical builds of the release archive;
+- an update from 0.1.9 with `update-release`, a return, and an update again,
+  in an isolated environment.
 
 ## Release 0.1.9
 

@@ -1909,7 +1909,8 @@
       await restoreOpenDocuments();
       state.revealReady = true;
       void refreshTagIndex();
-      status("Navegação pronta.");
+      // With a folder on screen, the status bar shows its count, which live refresh keeps current.
+      status(listingShown() ? filterStatus() : "Navegação pronta.");
       syncOpenBuffers();
       state.bufferSyncTimer = window.setInterval(syncOpenBuffers, 1500);
       installLiveRefresh();
@@ -4970,7 +4971,10 @@
     // A row redrawn while the menu was being opened is no longer on the page; the pointer is used then.
     const owner = anchor || event.target?.closest?.(MENU_ROWS) || targetRow;
     const box = owner?.isConnected ? owner.getBoundingClientRect() : null;
-    const below = box ? window.innerHeight - 8 - (box.bottom + 4) : 0, above = box ? box.top - 4 - 8 : 0;
+    // The visible bottom of the page: on an iPhone, Safari's floating toolbar covers the bottom of the
+    // window, and the layout (100dvh) ends above it.
+    const viewBottom = Math.min(window.innerHeight, $("#app-layout")?.getBoundingClientRect().bottom || window.innerHeight);
+    const below = box ? viewBottom - 8 - (box.bottom + 4) : 0, above = box ? box.top - 4 - 8 : 0;
     const keyboard = event.detail === 0;
     let left = box && (anchor || keyboard) ? box.left : event.clientX, top;
     if (left + width > window.innerWidth - 8) left = (anchor ? box.right : left) - width;
@@ -4985,10 +4989,10 @@
       top = downward ? box.bottom + 4 : box.top - 4 - height;
     } else {
       top = event.clientY;
-      if (top + height > window.innerHeight - 8) top -= height;
+      if (top + height > viewBottom - 8) top -= height;
     }
     menu.style.left = `${Math.max(8, Math.min(left, window.innerWidth - width - 8))}px`;
-    menu.style.top = `${Math.max(8, Math.min(top, window.innerHeight - height - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(top, viewBottom - height - 8))}px`;
     const items = () => [...menu.querySelectorAll(".ctx-item")];
     const close = (outside, {restoreFocus = false} = {}) => {
       if (outside && menu.contains(outside.target)) return;

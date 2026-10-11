@@ -386,6 +386,19 @@ test("a mouse that moves with no button pressed ends a press at once", async t =
   await context.close();
 });
 
+test("on opening, the status bar counts the items of the open folder and follows a new file", async t => {
+  removeAfter(t, "counted.txt");
+  const {context, page, errors} = await openLive(t);
+  const count = async () => Number((await page.locator("#app-status").textContent()).match(/^(\d+) ite(?:m|ns) nesta pasta\./)?.[1] ?? NaN);
+  const before = await count();
+  assert.ok(Number.isInteger(before), `status bar: ${await page.locator("#app-status").textContent()}`);
+  writeFileSync(inDocuments("counted.txt"), "x\n");
+  await listingRow(page, "counted.txt").waitFor({timeout: LIVE});
+  assert.equal(await count(), before + 1);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("a folder that changes while it is read is read again instead of showing an error", async t => {
   const {context, page, errors} = await openLive(t);
   let answered = 0;

@@ -125,6 +125,28 @@ test("on a short phone screen, a long press opens the menu above a row near the 
   await context.close();
 });
 
+test("on an iPhone, the menu stays above Safari's floating toolbar, which covers the bottom of the window", async () => {
+  const {context, page, errors} = await openApp(fixture, {profile: "iphone"});
+  await showDocuments(page);
+  // The layout takes the visible height (100dvh); the window goes on under the toolbar.
+  const visible = await page.evaluate(() => {
+    const layout = document.querySelector("#app-layout"), height = window.innerHeight - 120;
+    layout.style.height = `${height}px`;
+    return height;
+  });
+  // The first row: the menu opens below it, toward the toolbar.
+  const row = page.locator("#results tr.item").first();
+  await longPress(page, row);
+  await menu(page).waitFor({state: "visible"});
+  const box = await menu(page).boundingBox(), rowBox = await row.boundingBox();
+  assert.ok(box.y >= rowBox.y + rowBox.height - 0.5, "the menu opens below the first row");
+  assert.ok(box.y + box.height <= visible - 8 + 0.5, `menu ends at ${box.y + box.height}, visible area at ${visible}`);
+  assert.ok(box.y + box.height <= rowBox.y + 0.5 || box.y >= rowBox.y + rowBox.height - 0.5, "the menu does not cover the row");
+  await page.keyboard.press("Escape");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the menu of a file copies its absolute path", async () => {
   const {context, page, errors} = await openApp(fixture);
   await listingRow(page, "texto.txt").click({button: "right"});

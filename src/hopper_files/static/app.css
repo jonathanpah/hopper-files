@@ -1783,8 +1783,8 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 .login-cartao h1 { font: var(--text-titulo-login); letter-spacing: -.02em; margin-bottom: 4px; }
 .login-sub { color: var(--text2); font-size: 13px; margin-bottom: 22px; }
 .login-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.login-cartao input[type="password"] { width: 100%; height: var(--campo-h); padding: 0 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: var(--r-campo); outline: none; margin-bottom: 12px; text-align: center; }
-.login-cartao input[type="password"]:focus { border-color: var(--accent); box-shadow: var(--foco-campo); }
+.login-cartao input[type="password"], .login-cartao input[type="text"] { width: 100%; height: var(--campo-h); padding: 0 13px; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--borda-forte); border-radius: var(--r-campo); outline: none; margin-bottom: 12px; text-align: center; }
+.login-cartao input[type="password"]:focus, .login-cartao input[type="text"]:focus { border-color: var(--accent); box-shadow: var(--foco-campo); }
 .login-cartao button { width: 100%; height: var(--campo-h); font: inherit; font-weight: 590; color: var(--on-accent); background: var(--primaria-bg); border: 0; border-radius: var(--r-campo); cursor: pointer; }
 .login-cartao button:active { transform: scale(.97); }
 .login-cartao button:disabled { opacity: .4; cursor: default; }
@@ -1795,7 +1795,7 @@ main.login { display: flex; align-items: center; justify-content: center; min-he
 .login-trocar a { color: var(--accent-texto); text-decoration: none; }
 .login-trocar a:hover, .login-trocar a:focus-visible { text-decoration: underline; }
 @media (pointer: coarse) { .login-trocar a { display: inline-block; padding: 12px 10px; margin: -12px 0; } }
-@media (pointer: coarse) { .login-cartao input[type="password"] { font-size: 16px; } }
+@media (pointer: coarse) { .login-cartao input[type="password"], .login-cartao input[type="text"] { font-size: 16px; } }
 @media (min-width: 721px) { #sidebar.sidebar-collapsed { width: 0; min-width: 0; padding-left: 0; padding-right: 0; border-right-width: 0; overflow: hidden; } }
 
 /* Maps the running app's element IDs onto the styles defined above. */

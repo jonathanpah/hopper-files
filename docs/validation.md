@@ -1,14 +1,16 @@
 # Validation summary
 
-This page summarizes how releases 0.1.0 to 0.1.6 were checked and what
+This page summarizes how releases 0.1.0 to 0.1.7 were checked and what
 remains open. It does not change the [specification](specification.md). A check listed here
 does not by itself pass an acceptance requirement of specification section 13.
 All checks used synthetic files and synthetic passwords.
 
-## Release 0.1.6
+## Release 0.1.7
 
-Release 0.1.6 changes the interface and the sign-in, and keeps its browser
-checks in the repository:
+Release 0.1.7 changes the interface and the sign-in, and keeps its browser
+checks in the repository. Release 0.1.6 was not published: its sign-in and
+password change pages drew the new user name field without style, which a
+check of both fields' size now catches.
 
 - **Sign-in:** the login and password change pages ask for the user name, the
   account the instance runs as, besides the password, with the hints that let
@@ -45,8 +47,9 @@ application does not use.
 
 On the development machine, these checks passed:
 
-- the browser suite in `frontend/browser/` in WebKit, 91 tests in 11 files, run
-  twice in a row; the checks of the new interface behavior fail on 0.1.5;
+- the browser suite in `frontend/browser/` in WebKit, 92 tests in 11 files, run
+  twice in a row, including a layout audit of the sign-in and password change
+  pages; the checks of the new interface behavior fail on 0.1.5;
 - the frontend tests and two identical frontend builds;
 - the Python tests, with the private marker list, including the new sign-in,
   session renewal, and repository verifier tests;
@@ -167,8 +170,8 @@ On the development machine:
 - **Frontend tests:** all passed, with Node.js `v24.21.0` and npm `11.19.0`.
 - **Integration scripts:** the five loopback scripts passed.
 - **Browser suite:** the WebKit checks in `frontend/browser/` passed (from
-  0.1.6 on).
-- **Dependency advisories:** `npm audit` and `pip-audit` found none (from 0.1.6
+  0.1.7 on).
+- **Dependency advisories:** `npm audit` and `pip-audit` found none (from 0.1.7
   on).
 - **Repository verifier:** passed.
 - **Reproducible builds:** two frontend builds from a clean export matched

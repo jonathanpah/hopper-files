@@ -155,9 +155,10 @@ export async function auditLayout(page, {touch = false, ignore = []} = {}) {
       return element.tagName.toLowerCase() + (element.id ? `#${element.id}` : "") + (classes ? `.${classes}` : "") + (text ? ` "${text}"` : "");
     };
     const add = (kind, element, detail) => { if (!ignore.some(selector => element.closest(selector))) problems.push({kind, target: describe(element), detail}); };
+    // Elements hidden for screen readers only (1 px, clipped) are not drawn on screen.
     const shown = element => {
       const box = element.getBoundingClientRect();
-      if (box.width < 1 || box.height < 1) return false;
+      if (box.width < 2 || box.height < 2) return false;
       const style = getComputedStyle(element);
       return style.visibility !== "hidden" && style.display !== "none";
     };
